@@ -15,7 +15,9 @@ class View
     public function render(string $template, array $data = []): void
     {
         $this->data = $data;
-        extract($data, EXTR_SKIP);
+        // Use a prefixed variable to avoid extract() collision with key named 'data'
+        $__viewData = $data;
+        extract($__viewData);
 
         $viewFile = ROOT_PATH . '/app/Views/' . $template . '.php';
         if (!file_exists($viewFile)) {
