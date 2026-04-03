@@ -151,7 +151,7 @@ RESULT=$("$PHP_CMD" -r "
 );
 \$hash = password_hash('$(printf '%s' "$NEW_PASS" | sed "s/'/'\\\\''/g")', PASSWORD_BCRYPT, ['cost' => 12]);
 \$field = is_numeric('$INPUT_USER') ? 'id' : 'username';
-\$stmt = \$pdo->prepare(\"UPDATE users SET password_hash = ? WHERE {\$field} = ?\");
+\$stmt = \$pdo->prepare(\"UPDATE users SET password = ? WHERE {\$field} = ?\");
 \$stmt->execute([\$hash, '$INPUT_USER']);
 echo \$stmt->rowCount();
 " 2>&1) || die "Błąd podczas aktualizacji hasła: ${RESULT}"
