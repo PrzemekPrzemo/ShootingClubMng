@@ -473,9 +473,20 @@ if [[ -n "$WWW_USER" ]]; then
             warn "Brak uprawnień do zmiany właściciela (uruchom jako root)."
         success "Właściciel logs/ i uploads/ → ${WWW_USER}"
     fi
+
+    # Pliki konfiguracyjne — właściciel root, grupa www-user, chmod 640
+    # Dzięki temu serwer WWW może odczytać hasła DB, a inni użytkownicy nie
+    chown "root:${WWW_USER}" "${INSTALL_DIR}/config/database.local.php" \
+                              "${INSTALL_DIR}/config/app.local.php" 2>/dev/null || true
+    chmod 640 "${INSTALL_DIR}/config/database.local.php" \
+              "${INSTALL_DIR}/config/app.local.php"
+    success "config/*.local.php: 640 (root:${WWW_USER}) — tylko serwer WWW może odczytać"
 else
     warn "Nie wykryto użytkownika serwera WWW (www-data/apache/nginx)."
-    warn "Ustaw ręcznie: chown -R <www-user>: ${INSTALL_DIR}/logs ${INSTALL_DIR}/public/uploads"
+    warn "Ustaw ręcznie:"
+    warn "  chown root:<www-user> ${INSTALL_DIR}/config/*.local.php"
+    warn "  chmod 640 ${INSTALL_DIR}/config/*.local.php"
+    warn "  chown -R <www-user>: ${INSTALL_DIR}/logs ${INSTALL_DIR}/public/uploads"
 fi
 
 echo
