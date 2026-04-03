@@ -195,35 +195,87 @@ DB_USER=$(ask "Użytkownik bazy danych" "root")
 read -rsp "$(echo -e "  ${BOLD}Hasło użytkownika bazy danych${NC}: ")" DB_PASS
 echo
 
+# ── Tymczasowy plik opcji MySQL (bezpieczne przekazywanie hasła) ──────────────
+# Unikamy -p<hasło> w argumentach (widoczne w ps, problemy ze znakami specjalnymi)
+MYSQL_CNF=$(mktemp /tmp/.mysql_install_XXXXXX.cnf)
+chmod 600 "$MYSQL_CNF"
+cat > "$MYSQL_CNF" <<CNF
+[client]
+host=${DB_HOST}
+port=${DB_PORT}
+user=${DB_USER}
+password=${DB_PASS}
+CNF
+# Usuń plik tymczasowy przy wyjściu (normalnym i błędzie)
+trap 'rm -f "$MYSQL_CNF"' EXIT
+
+# Wrapper — używa pliku opcji zamiast flag
+mysql_cmd() { $MYSQL_CMD --defaults-extra-file="$MYSQL_CNF" "$@"; }
+
 echo
 info "Testowanie połączenia z bazą danych…"
 
-MYSQL_CONN_ARGS="-h${DB_HOST} -P${DB_PORT} -u${DB_USER}"
-if [[ -n "$DB_PASS" ]]; then
-    MYSQL_CONN_ARGS="${MYSQL_CONN_ARGS} -p${DB_PASS}"
-fi
-
-if ! $MYSQL_CMD ${MYSQL_CONN_ARGS} -e "SELECT 1;" &>/dev/null; then
-    die "Nie można połączyć się z bazą danych. Sprawdź dane i spróbuj ponownie."
+# Pokaż rzeczywisty błąd jeśli coś nie gra
+if ! MYSQL_ERR=$(mysql_cmd -e "SELECT 1;" 2>&1); then
+    error "Nie można połączyć się z bazą danych."
+    echo -e "  ${YELLOW}Szczegóły błędu:${NC} ${MYSQL_ERR}"
+    echo
+    echo -e "  ${BOLD}Wskazówki Plesk:${NC}"
+    echo -e "  • Bazę danych i użytkownika utwórz najpierw w panelu Plesk:"
+    echo -e "    Strony → wksfg.pl → Bazy danych → Dodaj bazę danych"
+    echo -e "  • Użytkownik bazy = ten przypisany w Plesk (np. u_wksfg_)"
+    echo -e "  • Host = 'localhost' lub '127.0.0.1'"
+    echo -e "  • Hasło = podane przy tworzeniu użytkownika w Plesk"
+    echo
+    die "Popraw dane i uruchom install.sh ponownie."
 fi
 success "Połączenie z bazą danych działa."
 
-# Sprawdź czy baza istnieje
-DB_EXISTS=$($MYSQL_CMD ${MYSQL_CONN_ARGS} -se "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='${DB_NAME}';" 2>/dev/null || true)
+# ── Sprawdź czy baza danych istnieje i jest dostępna ─────────────────────────
+info "Sprawdzanie bazy danych '${DB_NAME}'…"
+DB_EXISTS=$(mysql_cmd -se "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='${DB_NAME}';" 2>/dev/null || true)
+
 if [[ -n "$DB_EXISTS" ]]; then
     warn "Baza danych '${DB_NAME}' już istnieje."
-    if ask_yn "Czy chcesz ją usunąć i stworzyć od nowa? (UWAGA: usunie wszystkie dane!)" "n"; then
-        $MYSQL_CMD ${MYSQL_CONN_ARGS} -e "DROP DATABASE \`${DB_NAME}\`;"
-        info "Baza '${DB_NAME}' usunięta."
-        $MYSQL_CMD ${MYSQL_CONN_ARGS} -e "CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-        success "Baza '${DB_NAME}' utworzona."
+    # Sprawdź czy ma już tabele (reinstalacja?)
+    TABLE_COUNT=$(mysql_cmd -se "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='${DB_NAME}';" 2>/dev/null || echo "0")
+    if [[ "$TABLE_COUNT" -gt 0 ]]; then
+        warn "Baza zawiera już ${TABLE_COUNT} tabel(e)!"
+        if ask_yn "Czy wyczyścić bazę i zainstalować od nowa? (UWAGA: usunie wszystkie dane!)" "n"; then
+            info "Czyszczenie bazy danych '${DB_NAME}'…"
+            # Wyczyść tabele zamiast DROP DATABASE (user może nie mieć DROP privilege)
+            mysql_cmd "${DB_NAME}" -e "
+                SET FOREIGN_KEY_CHECKS=0;
+                SET GROUP_CONCAT_MAX_LEN=32768;
+                SET @tables = NULL;
+                SELECT GROUP_CONCAT('\`', table_name, '\`') INTO @tables
+                  FROM information_schema.tables WHERE table_schema = DATABASE();
+                SET @tables = IFNULL(@tables, '1');
+                SET @drop = CONCAT('DROP TABLE IF EXISTS ', @tables);
+                PREPARE stmt FROM @drop;
+                EXECUTE stmt;
+                DEALLOCATE PREPARE stmt;
+                SET FOREIGN_KEY_CHECKS=1;
+            " 2>/dev/null && success "Baza wyczyszczona." || warn "Nie udało się wyczyścić — import może nadpisać istniejące tabele."
+        else
+            info "Kontynuuję z istniejącą bazą (tabele zostaną nadpisane jeśli istnieją)."
+        fi
     else
-        info "Używam istniejącej bazy danych."
+        success "Baza '${DB_NAME}' jest pusta — gotowa do instalacji."
     fi
 else
-    info "Tworzenie bazy danych '${DB_NAME}'…"
-    $MYSQL_CMD ${MYSQL_CONN_ARGS} -e "CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-    success "Baza '${DB_NAME}' utworzona."
+    # Baza nie istnieje — spróbuj utworzyć
+    info "Baza '${DB_NAME}' nie istnieje. Próba utworzenia…"
+    if mysql_cmd -e "CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>/dev/null; then
+        success "Baza '${DB_NAME}' utworzona."
+    else
+        error "Nie można automatycznie utworzyć bazy danych."
+        echo -e "  ${YELLOW}Na Plesk utwórz bazę ręcznie:${NC}"
+        echo -e "  Panel Plesk → Strony → Bazy danych → Dodaj bazę danych"
+        echo -e "  Nazwa bazy: ${CYAN}${DB_NAME}${NC}"
+        echo
+        die "Utwórz bazę w Plesk i uruchom install.sh ponownie."
+    fi
 fi
 
 echo
@@ -333,12 +385,12 @@ echo -e "  ${BOLD}KROK 5 — Import schematu bazy danych${NC}"
 separator
 
 info "Importowanie ${INSTALL_DIR}/database/schema.sql…"
-$MYSQL_CMD ${MYSQL_CONN_ARGS} "${DB_NAME}" < "${INSTALL_DIR}/database/schema.sql"
+mysql_cmd "${DB_NAME}" < "${INSTALL_DIR}/database/schema.sql"
 success "Schemat bazy danych zaimportowany."
 
 # Aktualizacja nazwy klubu i e-maila w settings
 info "Aktualizacja ustawień klubu w bazie danych…"
-$MYSQL_CMD ${MYSQL_CONN_ARGS} "${DB_NAME}" <<SQL
+mysql_cmd "${DB_NAME}" <<SQL
 UPDATE settings SET value = '${APP_CLUB_NAME}'  WHERE \`key\` = 'club_name';
 UPDATE settings SET value = '${APP_CLUB_EMAIL}' WHERE \`key\` = 'club_email';
 UPDATE settings SET value = '${APP_CLUB_PHONE}' WHERE \`key\` = 'club_phone';
@@ -349,7 +401,7 @@ success "Ustawienia klubu zapisane."
 info "Generowanie konta administratora…"
 ADMIN_HASH=$($PHP_CMD -r "echo password_hash('${ADMIN_PASS}', PASSWORD_BCRYPT, ['cost' => 12]);")
 
-$MYSQL_CMD ${MYSQL_CONN_ARGS} "${DB_NAME}" <<SQL
+mysql_cmd "${DB_NAME}" <<SQL
 -- Usuń domyślnego admina z seeda, jeśli istnieje
 DELETE FROM users WHERE username = 'admin';
 
@@ -454,7 +506,7 @@ ERRORS=0
 info "Sprawdzanie struktury bazy danych…"
 EXPECTED_TABLES="users members member_age_categories member_disciplines member_medical_exams licenses payments payment_types disciplines competitions competition_entries competition_results competition_groups settings activity_log"
 for tbl in $EXPECTED_TABLES; do
-    COUNT=$($MYSQL_CMD ${MYSQL_CONN_ARGS} "${DB_NAME}" -se "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='${DB_NAME}' AND TABLE_NAME='${tbl}';" 2>/dev/null)
+    COUNT=$(mysql_cmd "${DB_NAME}" -se "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='${DB_NAME}' AND TABLE_NAME='${tbl}';" 2>/dev/null)
     if [[ "$COUNT" == "1" ]]; then
         success "Tabela: ${tbl}"
     else
@@ -465,7 +517,7 @@ done
 
 # Sprawdź konto admina
 info "Sprawdzanie konta administratora…"
-ADMIN_COUNT=$($MYSQL_CMD ${MYSQL_CONN_ARGS} "${DB_NAME}" -se "SELECT COUNT(*) FROM users WHERE username='${ADMIN_USERNAME}' AND role='admin';" 2>/dev/null)
+ADMIN_COUNT=$(mysql_cmd "${DB_NAME}" -se "SELECT COUNT(*) FROM users WHERE username='${ADMIN_USERNAME}' AND role='admin';" 2>/dev/null)
 if [[ "$ADMIN_COUNT" == "1" ]]; then
     success "Konto administratora: ${ADMIN_USERNAME}"
 else
