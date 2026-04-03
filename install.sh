@@ -80,17 +80,81 @@ info "Sprawdzanie wymagań systemowych…"
 INSTALL_DIR="$(cd "$(dirname "$0")" && pwd)"
 info "Katalog instalacji: ${INSTALL_DIR}"
 
-# PHP
-if ! command -v php &>/dev/null; then
-    die "PHP nie jest zainstalowane. Zainstaluj PHP 8.1 lub nowsze."
+# PHP — szukaj PHP >= 8.1 w typowych lokalizacjach (Plesk, Ubuntu, Debian, RHEL)
+# Można nadpisać z zewnątrz: PHP_CMD=/opt/plesk/php/8.3/bin/php bash install.sh
+PHP_CMD="${PHP_CMD:-}"
+
+if [[ -n "$PHP_CMD" ]]; then
+    # Użytkownik podał ścieżkę ręcznie — tylko zweryfikuj wersję
+    if ! command -v "$PHP_CMD" &>/dev/null && [[ ! -x "$PHP_CMD" ]]; then
+        die "Podany PHP_CMD nie istnieje lub nie jest wykonywalny: ${PHP_CMD}"
+    fi
+    PHP_VER=$("$PHP_CMD" -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')
+    _major=$("$PHP_CMD" -r 'echo PHP_MAJOR_VERSION;')
+    _minor=$("$PHP_CMD" -r 'echo PHP_MINOR_VERSION;')
+    if (( _major < 8 )) || { (( _major == 8 )) && (( _minor < 1 )); }; then
+        die "Podany PHP_CMD to wersja ${PHP_VER} — wymagane >= 8.1"
+    fi
+    success "PHP ${PHP_VER} → ${PHP_CMD} (ręcznie)"
+else
+
+# Lista kandydatów od najnowszego
+PHP_CANDIDATES=(
+    # Plesk — /opt/plesk/php/X.Y/bin/php
+    /opt/plesk/php/8.4/bin/php
+    /opt/plesk/php/8.3/bin/php
+    /opt/plesk/php/8.2/bin/php
+    /opt/plesk/php/8.1/bin/php
+    # Ubuntu/Debian — php8.X z PPA
+    php8.4 php8.3 php8.2 php8.1
+    # RHEL/CentOS — SCL lub Remi
+    /opt/remi/php84/root/usr/bin/php
+    /opt/remi/php83/root/usr/bin/php
+    /opt/remi/php82/root/usr/bin/php
+    /opt/remi/php81/root/usr/bin/php
+    # Domyślne php (może być 8.x)
+    php
+)
+
+for candidate in "${PHP_CANDIDATES[@]}"; do
+    if command -v "$candidate" &>/dev/null || [[ -x "$candidate" ]]; then
+        _ver=$("$candidate" -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;' 2>/dev/null || true)
+        _major=$("$candidate" -r 'echo PHP_MAJOR_VERSION;' 2>/dev/null || true)
+        _minor=$("$candidate" -r 'echo PHP_MINOR_VERSION;' 2>/dev/null || true)
+        if (( _major > 8 )) || { (( _major == 8 )) && (( _minor >= 1 )); }; then
+            PHP_CMD="$candidate"
+            PHP_VER="$_ver"
+            break
+        fi
+    fi
+done
+
+if [[ -z "$PHP_CMD" ]]; then
+    # Pokaż co jest dostępne, żeby pomóc użytkownikowi
+    echo
+    warn "Nie znaleziono PHP >= 8.1 w standardowych lokalizacjach."
+    warn "Dostępne wersje PHP na tym serwerze:"
+    for candidate in "${PHP_CANDIDATES[@]}"; do
+        if command -v "$candidate" &>/dev/null || [[ -x "$candidate" ]]; then
+            _v=$("$candidate" -r 'echo phpversion();' 2>/dev/null || echo "?")
+            echo -e "    ${CYAN}${candidate}${NC}  →  ${_v}"
+        fi
+    done
+    # Sprawdź Plesk
+    if ls /opt/plesk/php/*/bin/php &>/dev/null; then
+        echo
+        info "Zainstalowane wersje Plesk PHP:"
+        for p in /opt/plesk/php/*/bin/php; do
+            echo -e "    ${CYAN}${p}${NC}  →  $($p -r 'echo phpversion();' 2>/dev/null || echo '?')"
+        done
+    fi
+    echo
+    die "Zainstaluj PHP 8.1+ lub podaj ścieżkę ręcznie: PHP_CMD=/opt/plesk/php/8.3/bin/php bash install.sh"
 fi
-PHP_VER=$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')
-PHP_MAJOR=$(php -r 'echo PHP_MAJOR_VERSION;')
-PHP_MINOR=$(php -r 'echo PHP_MINOR_VERSION;')
-if (( PHP_MAJOR < 8 )) || { (( PHP_MAJOR == 8 )) && (( PHP_MINOR < 1 )); }; then
-    die "Wymagane PHP >= 8.1. Zainstalowane: ${PHP_VER}"
-fi
-success "PHP ${PHP_VER}"
+
+fi  # koniec bloku else (auto-detect)
+
+success "PHP ${PHP_VER} → ${PHP_CMD}"
 
 # MySQL / MariaDB client
 MYSQL_CMD=""
@@ -106,7 +170,7 @@ fi
 
 # PHP rozszerzenia
 for ext in pdo pdo_mysql mbstring json; do
-    if php -m | grep -qi "^${ext}$"; then
+    if $PHP_CMD -m | grep -qi "^${ext}$"; then
         success "Rozszerzenie PHP: ${ext}"
     else
         die "Brakuje rozszerzenia PHP: ${ext}. Zainstaluj i spróbuj ponownie."
@@ -283,7 +347,7 @@ success "Ustawienia klubu zapisane."
 
 # Generuj hash hasła administratora przez PHP
 info "Generowanie konta administratora…"
-ADMIN_HASH=$(php -r "echo password_hash('${ADMIN_PASS}', PASSWORD_BCRYPT, ['cost' => 12]);")
+ADMIN_HASH=$($PHP_CMD -r "echo password_hash('${ADMIN_PASS}', PASSWORD_BCRYPT, ['cost' => 12]);")
 
 $MYSQL_CMD ${MYSQL_CONN_ARGS} "${DB_NAME}" <<SQL
 -- Usuń domyślnego admina z seeda, jeśli istnieje
