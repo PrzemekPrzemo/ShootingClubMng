@@ -1,0 +1,20 @@
+# Configuration with credentials
+config/database.local.php
+
+# Logs
+logs/*.log
+
+# Uploads
+public/uploads/
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# PHP
+*.phar
+vendor/

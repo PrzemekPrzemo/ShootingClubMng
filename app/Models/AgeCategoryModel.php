@@ -1,0 +1,31 @@
+<?php
+
+namespace App\Models;
+
+class AgeCategoryModel extends BaseModel
+{
+    protected string $table = 'member_age_categories';
+
+    public function getAll(): array
+    {
+        return $this->db->query("SELECT * FROM member_age_categories ORDER BY sort_order, age_from")->fetchAll();
+    }
+
+    public function detectCategory(int $age): ?array
+    {
+        $stmt = $this->db->prepare("SELECT * FROM member_age_categories WHERE age_from <= ? AND age_to >= ? ORDER BY sort_order LIMIT 1");
+        $stmt->execute([$age, $age]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    public function save(array $data): int
+    {
+        return $this->insert($data);
+    }
+
+    public function saveUpdate(int $id, array $data): bool
+    {
+        return $this->update($id, $data);
+    }
+}

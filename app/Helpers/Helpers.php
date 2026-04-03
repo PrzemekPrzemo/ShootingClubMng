@@ -1,0 +1,92 @@
+<?php
+// ============================================================
+// Global helper functions (loaded via require in index.php)
+// ============================================================
+
+if (!function_exists('url')) {
+    function url(string $path = ''): string
+    {
+        $base = rtrim(BASE_URL, '/');
+        $path = ltrim($path, '/');
+        return $base . '/' . $path;
+    }
+}
+
+if (!function_exists('redirect')) {
+    function redirect(string $path): never
+    {
+        header('Location: ' . url($path));
+        exit;
+    }
+}
+
+if (!function_exists('e')) {
+    function e(mixed $value): string
+    {
+        return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+}
+
+if (!function_exists('old')) {
+    function old(string $key, mixed $default = ''): mixed
+    {
+        return \App\Helpers\Session::getFlash('_old_input')[$key] ?? $default;
+    }
+}
+
+if (!function_exists('flash')) {
+    function flash(string $key, mixed $default = null): mixed
+    {
+        return \App\Helpers\Session::getFlash($key, $default);
+    }
+}
+
+if (!function_exists('csrf_field')) {
+    function csrf_field(): string
+    {
+        return \App\Helpers\Csrf::field();
+    }
+}
+
+if (!function_exists('format_date')) {
+    function format_date(?string $date, string $format = 'd.m.Y'): string
+    {
+        if (!$date) return '—';
+        $dt = DateTime::createFromFormat('Y-m-d', $date);
+        return $dt ? $dt->format($format) : $date;
+    }
+}
+
+if (!function_exists('format_money')) {
+    function format_money(mixed $amount): string
+    {
+        return number_format((float)$amount, 2, ',', ' ') . ' zł';
+    }
+}
+
+if (!function_exists('days_until')) {
+    /** Returns days from today to $date (negative = overdue) */
+    function days_until(string $date): int
+    {
+        $today = new DateTime('today');
+        $target = new DateTime($date);
+        return (int)$today->diff($target)->days * ($target >= $today ? 1 : -1);
+    }
+}
+
+if (!function_exists('alert_class')) {
+    /** Bootstrap badge class based on days remaining */
+    function alert_class(int $days, int $warnDays = 30): string
+    {
+        if ($days < 0)        return 'danger';
+        if ($days <= $warnDays) return 'warning';
+        return 'success';
+    }
+}
+
+if (!function_exists('now')) {
+    function now(string $format = 'Y-m-d H:i:s'): string
+    {
+        return (new DateTime())->format($format);
+    }
+}
