@@ -20,13 +20,107 @@ $appConfig = file_exists($localApp)
     : require ROOT_PATH . '/config/app.php';
 date_default_timezone_set($appConfig['timezone']);
 
-if ($appConfig['debug']) {
+// ── Obsługa błędów ────────────────────────────────────────────────────────────
+$debugMode = (bool)($appConfig['debug'] ?? false);
+
+if ($debugMode) {
     ini_set('display_errors', '1');
     error_reporting(E_ALL);
 } else {
     ini_set('display_errors', '0');
-    error_reporting(0);
+    error_reporting(E_ALL);   // zbieraj do loga, nie wyświetlaj
 }
+
+// Log błędów aplikacji
+$logDir = ROOT_PATH . '/logs';
+if (!is_dir($logDir)) {
+    @mkdir($logDir, 0775, true);
+}
+ini_set('log_errors', '1');
+ini_set('error_log', $logDir . '/app.log');
+
+// Globalny handler wyjątków — czytelna strona błędu zamiast białego ekranu
+set_exception_handler(function (Throwable $e) use ($debugMode, $logDir): void {
+    http_response_code(500);
+
+    // Zawsze loguj
+    $msg = sprintf(
+        "[%s] %s: %s in %s:%d\nStack trace:\n%s\n",
+        date('Y-m-d H:i:s'),
+        get_class($e),
+        $e->getMessage(),
+        $e->getFile(),
+        $e->getLine(),
+        $e->getTraceAsString()
+    );
+    error_log($msg);
+
+    if ($debugMode) {
+        // Tryb debug — pełny opis
+        echo '<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8">'
+            . '<title>Błąd aplikacji</title>'
+            . '<style>body{font-family:monospace;background:#1e1e2e;color:#cdd6f4;padding:2em}'
+            . 'h1{color:#f38ba8} pre{background:#313244;padding:1em;border-radius:8px;overflow-x:auto}'
+            . '.badge{display:inline-block;padding:2px 8px;background:#f38ba8;color:#1e1e2e;border-radius:4px}</style></head><body>'
+            . '<h1>&#10060; Błąd aplikacji</h1>'
+            . '<p><span class="badge">' . htmlspecialchars(get_class($e)) . '</span></p>'
+            . '<p><strong>' . htmlspecialchars($e->getMessage()) . '</strong></p>'
+            . '<p style="color:#a6adc8">Plik: ' . htmlspecialchars($e->getFile()) . ' : ' . $e->getLine() . '</p>'
+            . '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>'
+            . '<hr><p style="color:#585b70;font-size:12px">Tryb debug włączony — wyłącz na produkcji (config/app.local.php → debug: false)</p>'
+            . '</body></html>';
+    } else {
+        // Tryb produkcyjny — ogólny komunikat
+        echo '<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8">'
+            . '<title>Błąd serwera</title>'
+            . '<style>body{font-family:sans-serif;background:#f8f9fa;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}'
+            . '.box{text-align:center;padding:3em}'
+            . 'h1{color:#dc3545;font-size:4em;margin:0}'
+            . 'p{color:#6c757d}</style></head><body>'
+            . '<div class="box"><h1>&#9888;</h1>'
+            . '<h2>Błąd serwera</h2>'
+            . '<p>Wystąpił nieoczekiwany błąd. Administrator został powiadomiony.</p>'
+            . '<p style="font-size:12px;color:#adb5bd">Błąd zapisany do: logs/app.log</p>'
+            . '<a href="' . BASE_URL . '">Wróć na stronę główną</a></div>'
+            . '</body></html>';
+    }
+    exit(1);
+});
+
+// Handler błędów PHP (E_ERROR, E_PARSE itp.) — konwertuj na wyjątki
+set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline): bool {
+    if (!(error_reporting() & $errno)) {
+        return false;
+    }
+    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+});
+
+// Fatal errors (parse error, out of memory) — złap przez shutdown
+register_shutdown_function(function () use ($debugMode, $logDir): void {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        http_response_code(500);
+        $msg = sprintf(
+            "[%s] FATAL %s in %s:%d\n",
+            date('Y-m-d H:i:s'),
+            $error['message'],
+            $error['file'],
+            $error['line']
+        );
+        error_log($msg);
+
+        if ($debugMode) {
+            echo '<pre style="background:#1e1e2e;color:#f38ba8;padding:1em">'
+                . '&#128680; FATAL ERROR&#10;'
+                . htmlspecialchars($msg)
+                . '</pre>';
+        } else {
+            echo '<p style="font-family:sans-serif;text-align:center;color:#dc3545">'
+                . 'Krytyczny błąd serwera. Sprawdź logs/app.log</p>';
+        }
+    }
+});
+
 
 // Autoloader (simple PSR-4 style)
 spl_autoload_register(function (string $class): void {

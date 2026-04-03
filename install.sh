@@ -494,6 +494,75 @@ fi
 echo
 
 # =============================================================================
+# 8b. Weryfikacja PHP serwera WWW (Plesk)
+# =============================================================================
+separator
+echo -e "  ${BOLD}KROK 6b — Weryfikacja PHP serwera WWW${NC}"
+separator
+
+# Wygeneruj tymczasowy plik testowy w public/
+PHP_TEST_FILE="${INSTALL_DIR}/public/_phpcheck_$$.php"
+cat > "$PHP_TEST_FILE" <<'PHPTEST'
+<?php header('Content-Type: text/plain'); echo PHP_VERSION;
+PHPTEST
+chmod 644 "$PHP_TEST_FILE"
+
+# Wykryj URL aplikacji (spróbuj z certyfikatem lub bez)
+SITE_URL=""
+for proto in https http; do
+    for domain in "${APP_CLUB_NAME}" "localhost"; do
+        _url="${proto}://wksfg.pl"  # fallback jeśli brak zmiennej
+        break 2
+    done
+done
+
+# Spróbuj pobrać przez curl wersję PHP z serwera WWW
+WEB_PHP_VER=""
+if command -v curl &>/dev/null; then
+    # Czekaj chwilę aż serwer "zobaczy" nowy plik
+    _test_filename="$(basename "$PHP_TEST_FILE")"
+    for _attempt in 1 2 3; do
+        WEB_PHP_VER=$(curl -sk --max-time 5 "${_url}/${_test_filename}" 2>/dev/null || true)
+        if [[ "$WEB_PHP_VER" =~ ^[0-9]+\.[0-9]+ ]]; then
+            break
+        fi
+        sleep 1
+    done
+fi
+rm -f "$PHP_TEST_FILE"
+
+if [[ -n "$WEB_PHP_VER" ]]; then
+    WEB_MAJOR=$(echo "$WEB_PHP_VER" | cut -d. -f1)
+    WEB_MINOR=$(echo "$WEB_PHP_VER" | cut -d. -f2)
+    if (( WEB_MAJOR > 8 )) || { (( WEB_MAJOR == 8 )) && (( WEB_MINOR >= 1 )); }; then
+        success "PHP serwera WWW: ${WEB_PHP_VER} ✓"
+    else
+        echo
+        error "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        error " PHP SERWERA WWW: ${WEB_PHP_VER} — TO JEST PRZYCZYNĄ BŁĘDU 500!"
+        error "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo
+        warn  "Instalacja używała ${PHP_VER} (${PHP_CMD})"
+        warn  "Serwer WWW używa   ${WEB_PHP_VER}"
+        echo
+        echo -e "  ${BOLD}Jak naprawić w Plesk:${NC}"
+        echo -e "  1. Zaloguj się do Plesk"
+        echo -e "  2. Strony → wksfg.pl → PHP"
+        echo -e "  3. Zmień wersję PHP na: ${CYAN}8.3${NC} (lub 8.1/8.2)"
+        echo -e "  4. Kliknij OK/Zastosuj"
+        echo -e "  5. Odśwież stronę"
+        echo
+    fi
+else
+    warn "Nie udało się sprawdzić PHP serwera WWW automatycznie."
+    warn "Otwórz w przeglądarce: diagnose.php?token=... aby sprawdzić ręcznie."
+    warn "Jeśli widzisz błąd 500 — w Plesk zmień PHP na 8.3:"
+    warn "  Panel Plesk → Strony → wksfg.pl → PHP → wybierz 8.3"
+fi
+
+echo
+
+# =============================================================================
 # 9. Weryfikacja instalacji
 # =============================================================================
 separator
@@ -557,13 +626,25 @@ echo -e "    Document Root → ${CYAN}${INSTALL_DIR}/public/${NC}"
 echo
 echo -e "  ${BOLD}Następne kroki:${NC}"
 echo -e "    1. Ustaw Document Root serwera na: ${CYAN}${INSTALL_DIR}/public${NC}"
-echo -e "    2. Włącz mod_rewrite (Apache) lub odpowiednik (Nginx/Plesk)"
-echo -e "    3. Otwórz aplikację i zaloguj się"
-echo -e "    4. Uzupełnij dane klubu w: ${CYAN}Konfiguracja → Ustawienia${NC}"
+echo -e "       Plesk: Strony → wksfg.pl → Ustawienia hostingu → Katalog główny dokumentów"
+echo -e "    2. Ustaw PHP >= 8.1 dla domeny:"
+echo -e "       Plesk: Strony → wksfg.pl → PHP → wybierz ${CYAN}8.3${NC} → OK"
+echo -e "    3. Włącz mod_rewrite / Apache handlers"
+echo -e "    4. Otwórz aplikację i zaloguj się"
+echo -e "    5. Uzupełnij dane klubu w: ${CYAN}Konfiguracja → Ustawienia${NC}"
+echo
+echo -e "  ${BOLD}Narzędzie diagnostyczne (jeśli coś nie działa):${NC}"
+
+# Wygeneruj token dla diagnose.php
+if [[ -f "${INSTALL_DIR}/config/database.local.php" ]]; then
+    DIAG_TOKEN=$(php -r "echo md5(filemtime('${INSTALL_DIR}/config/database.local.php'));")
+    echo -e "    ${CYAN}https://wksfg.pl/diagnose.php?token=${DIAG_TOKEN}${NC}"
+    echo -e "    (sprawdza PHP, bazę, uprawnienia, error log — usuń po diagnozie!)"
+fi
 echo
 if [[ "$APP_DEBUG" == "true" ]]; then
-    warn "Tryb DEBUG jest włączony. Wyłącz go przed wdrożeniem produkcyjnym!"
-    warn "Edytuj: config/app.local.php → 'debug' => false"
+    warn "Tryb DEBUG jest włączony — błędy PHP wyświetlane w przeglądarce."
+    warn "Wyłącz przed wdrożeniem: config/app.local.php → 'debug' => false"
 fi
 separator
 echo
