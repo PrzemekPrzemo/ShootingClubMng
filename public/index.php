@@ -13,8 +13,11 @@ $host     = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $baseDir  = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
 define('BASE_URL', $scheme . '://' . $host . $baseDir);
 
-// App config
-$appConfig = require ROOT_PATH . '/config/app.php';
+// App config (app.local.php overrides app.php when present)
+$localApp  = ROOT_PATH . '/config/app.local.php';
+$appConfig = file_exists($localApp)
+    ? require $localApp
+    : require ROOT_PATH . '/config/app.php';
 date_default_timezone_set($appConfig['timezone']);
 
 if ($appConfig['debug']) {
