@@ -497,8 +497,11 @@ echo
 # 8b. Weryfikacja PHP serwera WWW (Plesk)
 # =============================================================================
 separator
-echo -e "  ${BOLD}KROK 6b — Weryfikacja PHP serwera WWW${NC}"
+echo -e "  ${BOLD}KROK 6b — Konfiguracja PHP serwera WWW${NC}"
 separator
+
+# Zapytaj o domenę żeby móc skonstruować link
+SITE_DOMAIN=$(ask "Domena serwisu (np. wksfg.pl)" "$(hostname -f 2>/dev/null || echo 'localhost')")
 
 # Wygeneruj tymczasowy plik testowy w public/
 PHP_TEST_FILE="${INSTALL_DIR}/public/_phpcheck_$$.php"
@@ -506,27 +509,20 @@ cat > "$PHP_TEST_FILE" <<'PHPTEST'
 <?php header('Content-Type: text/plain'); echo PHP_VERSION;
 PHPTEST
 chmod 644 "$PHP_TEST_FILE"
+_test_filename="$(basename "$PHP_TEST_FILE")"
 
-# Wykryj URL aplikacji (spróbuj z certyfikatem lub bez)
-SITE_URL=""
-for proto in https http; do
-    for domain in "${APP_CLUB_NAME}" "localhost"; do
-        _url="${proto}://wksfg.pl"  # fallback jeśli brak zmiennej
-        break 2
-    done
-done
-
-# Spróbuj pobrać przez curl wersję PHP z serwera WWW
+# Spróbuj pobrać wersję PHP przez curl
 WEB_PHP_VER=""
 if command -v curl &>/dev/null; then
-    # Czekaj chwilę aż serwer "zobaczy" nowy plik
-    _test_filename="$(basename "$PHP_TEST_FILE")"
-    for _attempt in 1 2 3; do
-        WEB_PHP_VER=$(curl -sk --max-time 5 "${_url}/${_test_filename}" 2>/dev/null || true)
-        if [[ "$WEB_PHP_VER" =~ ^[0-9]+\.[0-9]+ ]]; then
-            break
-        fi
-        sleep 1
+    for _proto in https http; do
+        for _attempt in 1 2; do
+            _response=$(curl -sk --max-time 8 "${_proto}://${SITE_DOMAIN}/${_test_filename}" 2>/dev/null || true)
+            if [[ "$_response" =~ ^[0-9]+\.[0-9]+ ]]; then
+                WEB_PHP_VER="$_response"
+                break 2
+            fi
+            sleep 1
+        done
     done
 fi
 rm -f "$PHP_TEST_FILE"
@@ -535,29 +531,32 @@ if [[ -n "$WEB_PHP_VER" ]]; then
     WEB_MAJOR=$(echo "$WEB_PHP_VER" | cut -d. -f1)
     WEB_MINOR=$(echo "$WEB_PHP_VER" | cut -d. -f2)
     if (( WEB_MAJOR > 8 )) || { (( WEB_MAJOR == 8 )) && (( WEB_MINOR >= 1 )); }; then
-        success "PHP serwera WWW: ${WEB_PHP_VER} ✓"
+        success "PHP serwera WWW: ${WEB_PHP_VER} ✓  (zgodny z instalacją: ${PHP_VER})"
     else
         echo
         error "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        error " PHP SERWERA WWW: ${WEB_PHP_VER} — TO JEST PRZYCZYNĄ BŁĘDU 500!"
+        error " PHP SERWERA WWW: ${WEB_PHP_VER} — PRZYCZYNA BŁĘDU 500!"
         error "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo
         warn  "Instalacja używała ${PHP_VER} (${PHP_CMD})"
-        warn  "Serwer WWW używa   ${WEB_PHP_VER}"
+        warn  "Serwer WWW używa ${WEB_PHP_VER}"
         echo
         echo -e "  ${BOLD}Jak naprawić w Plesk:${NC}"
         echo -e "  1. Zaloguj się do Plesk"
-        echo -e "  2. Strony → wksfg.pl → PHP"
-        echo -e "  3. Zmień wersję PHP na: ${CYAN}8.3${NC} (lub 8.1/8.2)"
-        echo -e "  4. Kliknij OK/Zastosuj"
-        echo -e "  5. Odśwież stronę"
+        echo -e "  2. Strony → ${SITE_DOMAIN} → PHP"
+        echo -e "  3. Zmień wersję PHP na: ${CYAN}${PHP_VER}${NC}"
+        echo -e "  4. Kliknij OK → odśwież stronę"
         echo
     fi
 else
-    warn "Nie udało się sprawdzić PHP serwera WWW automatycznie."
-    warn "Otwórz w przeglądarce: diagnose.php?token=... aby sprawdzić ręcznie."
-    warn "Jeśli widzisz błąd 500 — w Plesk zmień PHP na 8.3:"
-    warn "  Panel Plesk → Strony → wksfg.pl → PHP → wybierz 8.3"
+    warn "Nie udało się sprawdzić PHP serwera WWW przez curl."
+    warn "Sprawdź ręcznie lub poczekaj na diagnose.php po konfiguracji Plesk."
+    echo
+    echo -e "  ${BOLD}Wymagana konfiguracja Plesk:${NC}"
+    echo -e "  • Strony → ${SITE_DOMAIN} → PHP → ustaw: ${CYAN}${PHP_VER}${NC}"
+    echo -e "  • Strony → ${SITE_DOMAIN} → Ustawienia hostingu → Document Root:"
+    echo -e "    ${CYAN}${INSTALL_DIR#/var/www/vhosts/*/}${NC}"
+    echo -e "    (ścieżka względna od httpdocs, np.: shootingclubmng/public)"
 fi
 
 echo
