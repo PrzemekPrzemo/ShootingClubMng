@@ -14,6 +14,16 @@
         </a>
     </div>
     <div class="col-auto">
+        <a href="<?= url('config/disciplines') ?>" class="btn btn-outline-secondary btn-sm <?= str_contains($_SERVER['REQUEST_URI'],'/disciplines') ? 'active':'' ?>">
+            <i class="bi bi-bullseye"></i> Dyscypliny
+        </a>
+    </div>
+    <div class="col-auto">
+        <a href="<?= url('config/member-classes') ?>" class="btn btn-outline-secondary btn-sm <?= str_contains($_SERVER['REQUEST_URI'],'/member-classes') ? 'active':'' ?>">
+            <i class="bi bi-award"></i> Klasy zawodników
+        </a>
+    </div>
+    <div class="col-auto">
         <a href="<?= url('config/users') ?>" class="btn btn-outline-secondary btn-sm <?= str_contains($_SERVER['REQUEST_URI'],'/users') ? 'active':'' ?>">
             <i class="bi bi-people"></i> Użytkownicy
         </a>

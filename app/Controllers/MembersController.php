@@ -8,6 +8,7 @@ use App\Helpers\Session;
 use App\Models\MemberModel;
 use App\Models\AgeCategoryModel;
 use App\Models\DisciplineModel;
+use App\Models\MemberClassModel;
 use App\Models\UserModel;
 
 class MembersController extends BaseController
@@ -15,16 +16,18 @@ class MembersController extends BaseController
     private MemberModel $memberModel;
     private AgeCategoryModel $categoryModel;
     private DisciplineModel $disciplineModel;
+    private MemberClassModel $memberClassModel;
     private UserModel $userModel;
 
     public function __construct()
     {
         parent::__construct();
         $this->requireLogin();
-        $this->memberModel     = new MemberModel();
-        $this->categoryModel   = new AgeCategoryModel();
-        $this->disciplineModel = new DisciplineModel();
-        $this->userModel       = new UserModel();
+        $this->memberModel      = new MemberModel();
+        $this->categoryModel    = new AgeCategoryModel();
+        $this->disciplineModel  = new DisciplineModel();
+        $this->memberClassModel = new MemberClassModel();
+        $this->userModel        = new UserModel();
     }
 
     public function index(): void
@@ -49,12 +52,13 @@ class MembersController extends BaseController
     public function create(): void
     {
         $this->render('members/form', [
-            'title'       => 'Dodaj zawodnika',
-            'member'      => null,
-            'categories'  => $this->categoryModel->getAll(),
-            'disciplines' => $this->disciplineModel->getActive(),
-            'instructors' => $this->userModel->getInstructors(),
-            'mode'        => 'create',
+            'title'         => 'Dodaj zawodnika',
+            'member'        => null,
+            'categories'    => $this->categoryModel->getAll(),
+            'memberClasses' => $this->memberClassModel->getActive(),
+            'disciplines'   => $this->disciplineModel->getActive(),
+            'instructors'   => $this->userModel->getInstructors(),
+            'mode'          => 'create',
         ]);
     }
 
@@ -107,13 +111,14 @@ class MembersController extends BaseController
         }
 
         $this->render('members/form', [
-            'title'       => 'Edytuj zawodnika',
-            'member'      => $member,
-            'categories'  => $this->categoryModel->getAll(),
-            'disciplines' => $this->disciplineModel->getActive(),
-            'instructors' => $this->userModel->getInstructors(),
-            'memberDiscs' => $this->memberModel->getDisciplines((int)$id),
-            'mode'        => 'edit',
+            'title'         => 'Edytuj zawodnika',
+            'member'        => $member,
+            'categories'    => $this->categoryModel->getAll(),
+            'memberClasses' => $this->memberClassModel->getActive(),
+            'disciplines'   => $this->disciplineModel->getActive(),
+            'instructors'   => $this->userModel->getInstructors(),
+            'memberDiscs'   => $this->memberModel->getDisciplines((int)$id),
+            'mode'          => 'edit',
         ]);
     }
 
@@ -167,7 +172,8 @@ class MembersController extends BaseController
             'pesel'           => trim($_POST['pesel'] ?? '') ?: null,
             'birth_date'      => $_POST['birth_date'] ?: null,
             'gender'          => $_POST['gender'] ?: null,
-            'age_category_id' => $_POST['age_category_id'] ?: null,
+            'age_category_id'  => $_POST['age_category_id'] ?: null,
+            'member_class_id'  => $_POST['member_class_id'] ?: null,
             'member_type'     => $_POST['member_type'] ?? 'rekreacyjny',
             'card_number'     => trim($_POST['card_number'] ?? '') ?: null,
             'email'           => trim($_POST['email'] ?? '') ?: null,

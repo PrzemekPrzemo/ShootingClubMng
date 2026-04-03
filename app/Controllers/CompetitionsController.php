@@ -78,6 +78,7 @@ class CompetitionsController extends BaseController
             'entries'     => $this->competitionModel->getEntries((int)$id),
             'groups'      => $this->competitionModel->getGroups((int)$id),
             'results'     => $this->competitionModel->getResults((int)$id),
+            'events'      => $this->competitionModel->getEvents((int)$id),
         ]);
     }
 
@@ -219,7 +220,129 @@ class CompetitionsController extends BaseController
         $this->redirect("competitions/{$id}/results");
     }
 
-    // ----------------------------------------------------------------
+    // ── Competition Events ───────────────────────────────────────────
+
+    public function events(string $id): void
+    {
+        $competition = $this->getCompetition((int)$id);
+        $this->render('competitions/events', [
+            'title'       => 'Konkurencje — ' . $competition['name'],
+            'competition' => $competition,
+            'events'      => $this->competitionModel->getEvents((int)$id),
+        ]);
+    }
+
+    public function addEvent(string $id): void
+    {
+        Csrf::verify();
+        $this->getCompetition((int)$id);
+
+        $name = trim($_POST['name'] ?? '');
+        if (empty($name)) {
+            Session::flash('error', 'Nazwa konkurencji jest wymagana.');
+            $this->redirect("competitions/{$id}/events");
+        }
+
+        $this->competitionModel->addEvent([
+            'competition_id' => (int)$id,
+            'name'           => $name,
+            'shots_count'    => $_POST['shots_count'] !== '' ? (int)$_POST['shots_count'] : null,
+            'scoring_type'   => in_array($_POST['scoring_type'] ?? '', ['decimal','integer','hit_miss'])
+                                    ? $_POST['scoring_type'] : 'decimal',
+            'sort_order'     => (int)($_POST['sort_order'] ?? 0),
+        ]);
+
+        Session::flash('success', 'Konkurencja dodana.');
+        $this->redirect("competitions/{$id}/events");
+    }
+
+    public function deleteEvent(string $id, string $eid): void
+    {
+        Csrf::verify();
+        $this->getCompetition((int)$id);
+        $this->competitionModel->deleteEvent((int)$eid);
+        Session::flash('success', 'Konkurencja usunięta.');
+        $this->redirect("competitions/{$id}/events");
+    }
+
+    public function eventResults(string $id, string $eid): void
+    {
+        $competition = $this->getCompetition((int)$id);
+        $event       = $this->competitionModel->getEvent((int)$eid);
+        if (!$event || $event['competition_id'] != (int)$id) {
+            Session::flash('error', 'Konkurencja nie istnieje.');
+            $this->redirect("competitions/{$id}/events");
+        }
+
+        $this->render('competitions/event_results', [
+            'title'       => 'Wyniki: ' . $event['name'],
+            'competition' => $competition,
+            'event'       => $event,
+            'entries'     => $this->competitionModel->getEntries((int)$id),
+            'resultsMap'  => $this->competitionModel->getEventResultsMap((int)$eid),
+            'members'     => $this->memberModel->getAllActive(),
+        ]);
+    }
+
+    public function saveEventResults(string $id, string $eid): void
+    {
+        Csrf::verify();
+        $this->getCompetition((int)$id);
+        $event = $this->competitionModel->getEvent((int)$eid);
+        if (!$event || $event['competition_id'] != (int)$id) {
+            $this->redirect("competitions/{$id}/events");
+        }
+
+        $memberIds   = $_POST['member_id']   ?? [];
+        $scores      = $_POST['score']       ?? [];
+        $scoreInners = $_POST['score_inner'] ?? [];
+        $places      = $_POST['place']       ?? [];
+        $notes       = $_POST['notes']       ?? [];
+
+        foreach ($memberIds as $i => $memberId) {
+            if (!$memberId) continue;
+            // Skip rows with no data at all
+            if ($scores[$i] === '' && $places[$i] === '' && trim($notes[$i] ?? '') === '') continue;
+
+            $this->competitionModel->upsertEventResult([
+                'competition_event_id' => (int)$eid,
+                'member_id'            => (int)$memberId,
+                'score'                => $scores[$i],
+                'score_inner'          => $scoreInners[$i] ?? '',
+                'place'                => $places[$i],
+                'notes'                => trim($notes[$i] ?? '') ?: null,
+                'entered_by'           => Auth::id(),
+            ]);
+        }
+
+        Session::flash('success', 'Wyniki zapisane.');
+        $this->redirect("competitions/{$id}/events/{$eid}/results");
+    }
+
+    public function startCard(string $id, string $eid): void
+    {
+        $competition = $this->getCompetition((int)$id);
+        $event       = $this->competitionModel->getEvent((int)$eid);
+        if (!$event || $event['competition_id'] != (int)$id) {
+            Session::flash('error', 'Konkurencja nie istnieje.');
+            $this->redirect("competitions/{$id}/events");
+        }
+
+        $entries = $this->competitionModel->getEntries((int)$id);
+
+        // Render without layout
+        $view = new \App\Helpers\View();
+        $view->setLayout('print');
+        $view->render('competitions/startcard', [
+            'title'       => 'Metryczka — ' . $event['name'],
+            'competition' => $competition,
+            'event'       => $event,
+            'entries'     => $entries,
+        ]);
+        exit;
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────
 
     private function getCompetition(int $id): array
     {

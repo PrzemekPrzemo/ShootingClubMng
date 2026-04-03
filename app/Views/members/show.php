@@ -34,6 +34,12 @@
                     <dd class="col-sm-8"><?= $member['gender'] === 'M' ? 'Mężczyzna' : ($member['gender'] === 'K' ? 'Kobieta' : '—') ?></dd>
                     <dt class="col-sm-4">Kategoria wiekowa</dt>
                     <dd class="col-sm-8"><?= e($member['age_category_name'] ?? '—') ?></dd>
+                    <dt class="col-sm-4">Klasa zawodnika</dt>
+                    <dd class="col-sm-8">
+                        <?php if (!empty($member['member_class_name'])): ?>
+                            <span class="badge bg-info text-dark"><?= e($member['member_class_name']) ?></span>
+                        <?php else: ?>—<?php endif; ?>
+                    </dd>
                     <dt class="col-sm-4">E-mail</dt>
                     <dd class="col-sm-8"><?= $member['email'] ? '<a href="mailto:' . e($member['email']) . '">' . e($member['email']) . '</a>' : '—' ?></dd>
                     <dt class="col-sm-4">Telefon</dt>

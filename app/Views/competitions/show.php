@@ -11,8 +11,11 @@ $sc = match($competition['status']) {
         <a href="<?= url('competitions/' . $competition['id'] . '/entries') ?>" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-person-plus"></i> Zgłoszenia (<?= count($entries) ?>)
         </a>
+        <a href="<?= url('competitions/' . $competition['id'] . '/events') ?>" class="btn btn-sm btn-outline-info">
+            <i class="bi bi-bullseye"></i> Konkurencje (<?= count($events) ?>)
+        </a>
         <a href="<?= url('competitions/' . $competition['id'] . '/results') ?>" class="btn btn-sm btn-outline-success">
-            <i class="bi bi-list-ol"></i> Wyniki
+            <i class="bi bi-list-ol"></i> Wyniki ogólne
         </a>
         <a href="<?= url('competitions/' . $competition['id'] . '/edit') ?>" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-pencil"></i> Edytuj
@@ -45,9 +48,45 @@ $sc = match($competition['status']) {
     </div>
 
     <div class="col-md-8">
+        <!-- Konkurencje -->
+        <?php if (!empty($events)): ?>
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong><i class="bi bi-bullseye"></i> Konkurencje</strong>
+                <a href="<?= url('competitions/' . $competition['id'] . '/events') ?>"
+                   class="btn btn-xs btn-outline-info py-0 px-2">Zarządzaj</a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Nazwa</th><th class="text-center">Strzały</th><th class="text-center">Wyniki</th><th></th></tr></thead>
+                    <tbody>
+                    <?php foreach ($events as $ev): ?>
+                        <tr>
+                            <td><?= e($ev['name']) ?></td>
+                            <td class="text-center"><?= $ev['shots_count'] ?? '—' ?></td>
+                            <td class="text-center">
+                                <span class="badge bg-<?= $ev['result_count'] > 0 ? 'success':'secondary' ?>">
+                                    <?= $ev['result_count'] ?>
+                                </span>
+                            </td>
+                            <td class="text-end" style="white-space:nowrap">
+                                <a href="<?= url('competitions/' . $competition['id'] . '/events/' . $ev['id'] . '/results') ?>"
+                                   class="btn btn-xs btn-outline-primary py-0 px-1">Wyniki</a>
+                                <a href="<?= url('competitions/' . $competition['id'] . '/events/' . $ev['id'] . '/startcard') ?>"
+                                   target="_blank"
+                                   class="btn btn-xs btn-outline-secondary py-0 px-1"><i class="bi bi-printer"></i></a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <!-- Top wyniki -->
         <div class="card">
-            <div class="card-header"><strong>Wyniki</strong></div>
+            <div class="card-header"><strong>Wyniki ogólne</strong></div>
             <div class="card-body p-0">
                 <?php if ($results): ?>
                 <table class="table table-sm mb-0">

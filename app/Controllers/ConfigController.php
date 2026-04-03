@@ -7,20 +7,26 @@ use App\Helpers\Session;
 use App\Models\SettingModel;
 use App\Models\AgeCategoryModel;
 use App\Models\UserModel;
+use App\Models\DisciplineModel;
+use App\Models\MemberClassModel;
 
 class ConfigController extends BaseController
 {
     private SettingModel $settingModel;
     private AgeCategoryModel $categoryModel;
     private UserModel $userModel;
+    private DisciplineModel $disciplineModel;
+    private MemberClassModel $memberClassModel;
 
     public function __construct()
     {
         parent::__construct();
         $this->requireRole(['admin', 'zarzad']);
-        $this->settingModel  = new SettingModel();
-        $this->categoryModel = new AgeCategoryModel();
-        $this->userModel     = new UserModel();
+        $this->settingModel     = new SettingModel();
+        $this->categoryModel    = new AgeCategoryModel();
+        $this->userModel        = new UserModel();
+        $this->disciplineModel  = new DisciplineModel();
+        $this->memberClassModel = new MemberClassModel();
     }
 
     public function index(): void
@@ -169,7 +175,126 @@ class ConfigController extends BaseController
         $this->redirect('config/users');
     }
 
-    // ----------------------------------------------------------------
+    // ── Disciplines ──────────────────────────────────────────────────
+
+    public function disciplines(): void
+    {
+        $editId   = (int)($_GET['edit'] ?? 0);
+        $editItem = $editId ? $this->disciplineModel->findById($editId) : null;
+
+        $this->render('config/disciplines', [
+            'title'       => 'Słownik dyscyplin',
+            'disciplines' => $this->disciplineModel->getAll(),
+            'editItem'    => $editItem,
+        ]);
+    }
+
+    public function saveDiscipline(): void
+    {
+        Csrf::verify();
+
+        $id   = (int)($_POST['id'] ?? 0);
+        $data = [
+            'name'       => trim($_POST['name'] ?? ''),
+            'short_code' => strtoupper(trim($_POST['short_code'] ?? '')),
+            'description'=> trim($_POST['description'] ?? ''),
+            'is_active'  => isset($_POST['is_active']) ? 1 : 0,
+        ];
+
+        if (empty($data['name']) || empty($data['short_code'])) {
+            Session::flash('error', 'Nazwa i kod skrócony są wymagane.');
+            $this->redirect('config/disciplines');
+        }
+
+        if ($id > 0) {
+            $this->disciplineModel->saveUpdate($id, $data);
+            Session::flash('success', 'Dyscyplina zaktualizowana.');
+        } else {
+            $this->disciplineModel->save($data);
+            Session::flash('success', 'Dyscyplina dodana.');
+        }
+
+        $this->redirect('config/disciplines');
+    }
+
+    public function deleteDiscipline(string $id): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin']);
+
+        $intId = (int)$id;
+        if ($this->disciplineModel->isUsed($intId)) {
+            // Dezaktywuj zamiast usuwać — są powiązane rekordy
+            $this->disciplineModel->toggle($intId);
+            Session::flash('success', 'Dyscyplina dezaktywowana (ma powiązane dane).');
+        } else {
+            $this->disciplineModel->delete($intId);
+            Session::flash('success', 'Dyscyplina usunięta.');
+        }
+
+        $this->redirect('config/disciplines');
+    }
+
+    public function toggleDiscipline(string $id): void
+    {
+        Csrf::verify();
+        $this->disciplineModel->toggle((int)$id);
+        Session::flash('success', 'Status dyscypliny zmieniony.');
+        $this->redirect('config/disciplines');
+    }
+
+    // ── Member classes ───────────────────────────────────────────────
+
+    public function memberClasses(): void
+    {
+        $editId   = (int)($_GET['edit'] ?? 0);
+        $editItem = $editId ? $this->memberClassModel->findById($editId) : null;
+
+        $this->render('config/member_classes', [
+            'title'    => 'Klasy zawodników',
+            'classes'  => $this->memberClassModel->getAll(),
+            'editItem' => $editItem,
+        ]);
+    }
+
+    public function saveMemberClass(): void
+    {
+        Csrf::verify();
+
+        $id   = (int)($_POST['id'] ?? 0);
+        $data = [
+            'name'       => trim($_POST['name'] ?? ''),
+            'short_code' => strtoupper(trim($_POST['short_code'] ?? '')),
+            'sort_order' => (int)($_POST['sort_order'] ?? 0),
+            'is_active'  => isset($_POST['is_active']) ? 1 : 0,
+        ];
+
+        if (empty($data['name']) || empty($data['short_code'])) {
+            Session::flash('error', 'Nazwa i kod skrócony są wymagane.');
+            $this->redirect('config/member-classes');
+        }
+
+        if ($id > 0) {
+            $this->memberClassModel->saveUpdate($id, $data);
+            Session::flash('success', 'Klasa zaktualizowana.');
+        } else {
+            $this->memberClassModel->save($data);
+            Session::flash('success', 'Klasa dodana.');
+        }
+
+        $this->redirect('config/member-classes');
+    }
+
+    public function deleteMemberClass(string $id): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin']);
+        $this->memberClassModel->delete((int)$id);
+        Session::flash('success', 'Klasa usunięta.');
+        $this->redirect('config/member-classes');
+    }
+
+    // ── Users ────────────────────────────────────────────────────────
 
     private function collectUserData(): array
     {

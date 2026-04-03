@@ -198,6 +198,13 @@ $router->post('/competitions/:id/entries/add',       [\App\Controllers\Competiti
 $router->post('/competitions/:id/entries/:eid/remove', [\App\Controllers\CompetitionsController::class, 'removeEntry']);
 $router->get('/competitions/:id/results',            [\App\Controllers\CompetitionsController::class, 'results']);
 $router->post('/competitions/:id/results/save',      [\App\Controllers\CompetitionsController::class, 'saveResults']);
+// Competition events (konkurencje)
+$router->get('/competitions/:id/events',                          [\App\Controllers\CompetitionsController::class, 'events']);
+$router->post('/competitions/:id/events/add',                     [\App\Controllers\CompetitionsController::class, 'addEvent']);
+$router->post('/competitions/:id/events/:eid/delete',             [\App\Controllers\CompetitionsController::class, 'deleteEvent']);
+$router->get('/competitions/:id/events/:eid/results',             [\App\Controllers\CompetitionsController::class, 'eventResults']);
+$router->post('/competitions/:id/events/:eid/results/save',       [\App\Controllers\CompetitionsController::class, 'saveEventResults']);
+$router->get('/competitions/:id/events/:eid/startcard',           [\App\Controllers\CompetitionsController::class, 'startCard']);
 
 // Reports
 $router->get('/reports',                [\App\Controllers\ReportsController::class, 'index']);
@@ -211,7 +218,16 @@ $router->get('/config',                 [\App\Controllers\ConfigController::clas
 $router->post('/config',                [\App\Controllers\ConfigController::class, 'save']);
 $router->get('/config/categories',      [\App\Controllers\ConfigController::class, 'categories']);
 $router->post('/config/categories',     [\App\Controllers\ConfigController::class, 'saveCategory']);
-$router->post('/config/categories/:id/delete', [\App\Controllers\ConfigController::class, 'deleteCategory']);
+$router->post('/config/categories/:id/delete',    [\App\Controllers\ConfigController::class, 'deleteCategory']);
+// Disciplines
+$router->get('/config/disciplines',               [\App\Controllers\ConfigController::class, 'disciplines']);
+$router->post('/config/disciplines',              [\App\Controllers\ConfigController::class, 'saveDiscipline']);
+$router->post('/config/disciplines/:id/delete',   [\App\Controllers\ConfigController::class, 'deleteDiscipline']);
+$router->post('/config/disciplines/:id/toggle',   [\App\Controllers\ConfigController::class, 'toggleDiscipline']);
+// Member classes
+$router->get('/config/member-classes',            [\App\Controllers\ConfigController::class, 'memberClasses']);
+$router->post('/config/member-classes',           [\App\Controllers\ConfigController::class, 'saveMemberClass']);
+$router->post('/config/member-classes/:id/delete',[\App\Controllers\ConfigController::class, 'deleteMemberClass']);
 $router->get('/config/users',           [\App\Controllers\ConfigController::class, 'users']);
 $router->get('/config/users/create',    [\App\Controllers\ConfigController::class, 'createUser']);
 $router->post('/config/users/create',   [\App\Controllers\ConfigController::class, 'storeUser']);

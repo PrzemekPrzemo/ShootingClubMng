@@ -42,9 +42,11 @@ class MemberModel extends BaseModel
     public function getWithDetails(int $id): ?array
     {
         $stmt = $this->db->prepare("
-            SELECT m.*, ac.name AS age_category_name
+            SELECT m.*, ac.name AS age_category_name,
+                   mc.name AS member_class_name, mc.short_code AS member_class_code
             FROM members m
             LEFT JOIN member_age_categories ac ON ac.id = m.age_category_id
+            LEFT JOIN member_classes mc ON mc.id = m.member_class_id
             WHERE m.id = ?
         ");
         $stmt->execute([$id]);

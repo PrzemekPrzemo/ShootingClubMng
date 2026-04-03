@@ -197,6 +197,19 @@
                         </select>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Dodatkowa klasa zawodnika</label>
+                        <select name="member_class_id" class="form-select">
+                            <option value="">— brak —</option>
+                            <?php foreach ($memberClasses ?? [] as $mc): ?>
+                                <option value="<?= $mc['id'] ?>"
+                                    <?= (old('member_class_id', $member['member_class_id'] ?? '')) == $mc['id'] ? 'selected' : '' ?>>
+                                    <?= e($mc['name']) ?> (<?= e($mc['short_code']) ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text">Klasa zdefiniowana w słowniku (<a href="<?= url('config/member-classes') ?>">Konfiguracja</a>)</div>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Numer karty dostępu</label>
                         <input type="text" name="card_number" class="form-control"
                                value="<?= e(old('card_number', $member['card_number'] ?? '')) ?>">
