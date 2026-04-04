@@ -9,6 +9,8 @@ use App\Models\CompetitionModel;
 use App\Models\MemberModel;
 use App\Models\DisciplineModel;
 use App\Models\JudgeLicenseModel;
+use App\Models\LicenseModel;
+use App\Models\SettingModel;
 
 class CompetitionsController extends BaseController
 {
@@ -438,14 +440,19 @@ class CompetitionsController extends BaseController
             $resultsMaps[(int)$ev['id']] = $this->competitionModel->getEventResultsMap((int)$ev['id']);
         }
 
+        // Load club name and license numbers
+        $clubName   = (new SettingModel())->get('club_name', '');
+        $licenseMap = (new LicenseModel())->getLicenseMapForMembers($memberIds);
+
         // Build cards: member × event (member outer, event inner)
         $cards = [];
         foreach ($selectedEntries as $entry) {
             foreach ($selectedEvts as $ev) {
                 $cards[] = [
-                    'member' => $entry,
-                    'event'  => $ev,
-                    'result' => $resultsMaps[(int)$ev['id']][(int)$entry['member_id']] ?? null,
+                    'member'         => $entry,
+                    'event'          => $ev,
+                    'result'         => $resultsMaps[(int)$ev['id']][(int)$entry['member_id']] ?? null,
+                    'license_number' => $licenseMap[(int)$entry['member_id']] ?? '',
                 ];
             }
         }
@@ -455,6 +462,7 @@ class CompetitionsController extends BaseController
         $view->render('competitions/scorecard_print', [
             'title'       => 'Metryczki — ' . $competition['name'],
             'competition' => $competition,
+            'clubName'    => $clubName,
             'cards'       => $cards,
         ]);
         exit;

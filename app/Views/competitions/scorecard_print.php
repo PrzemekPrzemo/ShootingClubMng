@@ -2,44 +2,41 @@
 /**
  * A5 landscape per-competitor scorecards.
  * One card per member × event combination.
- * Layout: print_scorecard (A5 landscape, @page { size: A5 landscape; margin: 0; })
+ * Layout: print_scorecard
  *
- * Available vars:
- *   $competition  — array  competition row
- *   $cards        — array  of [ 'member' => [...], 'event' => [...], 'result' => [...|null] ]
+ * Vars: $competition, $clubName, $cards[]
+ *   card: ['member'=>[...], 'event'=>[...], 'result'=>[...|null], 'license_number'=>'...']
  */
 ?>
 <?php foreach ($cards as $card):
-    $member  = $card['member'];
-    $event   = $card['event'];
-    $result  = $card['result'];
+    $member        = $card['member'];
+    $event         = $card['event'];
+    $result        = $card['result'];
+    $licenseNumber = $card['license_number'] ?? '';
 
-    $shots   = (int)($event['shots_count'] ?? 0);
-    $type    = $event['scoring_type'] ?? 'decimal';
-    $isHM    = $type === 'hit_miss';
-
-    /* ── Series layout ─────────────────────────────────────────────
-     * Up to 60 shots: 6 series × 10, or shots_count / 10 series
-     * For hit/miss use 5-shot series, max 5 cols wide
-     */
+    $shots     = (int)($event['shots_count'] ?? 0);
+    $type      = $event['scoring_type'] ?? 'decimal';
+    $isHM      = $type === 'hit_miss';
     $serieSize = $isHM ? 5 : 10;
+
     if ($shots > 0) {
         $serieCount = (int)ceil($shots / $serieSize);
     } else {
-        $serieCount = 6;   // blank card
+        $serieCount = 6;
         $shots      = $serieCount * $serieSize;
     }
-    $colsPerRow = min($serieCount, 6);   // max 6 series across
 
-    /* Pre-fill existing scores if available */
     $score      = $result['score']       ?? null;
     $scoreInner = $result['score_inner'] ?? null;
     $place      = $result['place']       ?? null;
     $notes      = $result['notes']       ?? '';
+
+    // Sport class from competition_entries
+    $sportClass = $member['class'] ?? '';
 ?>
 <div class="scorecard">
 
-    <!-- ── Top header: competition name + date/location ─────────── -->
+    <!-- ── Nagłówek: zawody + data/miejsce ──────────────────── -->
     <div class="sc-top">
         <div class="sc-competition"><?= e($competition['name']) ?></div>
         <div class="sc-date-loc">
@@ -50,32 +47,57 @@
         </div>
     </div>
 
-    <!-- ── Competitor info strip ────────────────────────────────── -->
+    <!-- ── Dane zawodnika ───────────────────────────────────── -->
     <div class="sc-member">
-        <div class="sc-member-name">
-            <?= e($member['last_name']) ?> <?= e($member['first_name']) ?>
-            <small class="text-muted" style="font-size:8pt;font-weight:normal">
-                &nbsp;<?= e($member['member_number'] ?? '') ?>
-            </small>
+
+        <!-- Wiersz 1: imię/nazwisko + badge konkurencji -->
+        <div class="sc-member-row1">
+            <div class="sc-member-name">
+                <?= e($member['last_name']) ?> <?= e($member['first_name']) ?>
+            </div>
+            <div class="sc-event-badge"><?= e($event['name']) ?></div>
         </div>
-        <div class="sc-member-meta">
-            <?php if (!empty($member['class'])): ?>
-            <span><span class="sc-lbl">klasa</span><br><?= e($member['class']) ?></span>
+
+        <!-- Wiersz 2: klub + licencja + zawody + data -->
+        <div class="sc-member-row2">
+            <?php if ($clubName): ?>
+            <span class="item"><span class="sc-lbl">Klub</span> <?= e($clubName) ?></span>
+            <span class="sep">|</span>
+            <?php endif; ?>
+            <?php if ($licenseNumber): ?>
+            <span class="item"><span class="sc-lbl">Nr licencji</span> <?= e($licenseNumber) ?></span>
+            <span class="sep">|</span>
+            <?php endif; ?>
+            <span class="item"><span class="sc-lbl">Zawody</span> <?= format_date($competition['competition_date']) ?></span>
+        </div>
+
+        <!-- Wiersz 3: klasa sportowa, kategoria wiekowa, klasa zawodnika, grupa startowa -->
+        <div class="sc-member-row3">
+            <?php if ($member['member_number'] ?? ''): ?>
+            <span><span class="sc-lbl">Nr leg.</span> <?= e($member['member_number']) ?></span>
+            <?php endif; ?>
+            <?php if ($sportClass): ?>
+            <span><span class="sc-lbl">Klasa</span> <?= e($sportClass) ?></span>
             <?php endif; ?>
             <?php if (!empty($member['age_category_name'])): ?>
-            <span><span class="sc-lbl">kat.</span><br><?= e($member['age_category_name']) ?></span>
+            <span><span class="sc-lbl">Kategoria</span> <?= e($member['age_category_name']) ?></span>
             <?php endif; ?>
             <?php if (!empty($member['member_class_name'])): ?>
-            <span><span class="sc-lbl">gr.</span><br><?= e($member['member_class_name']) ?></span>
+            <span><span class="sc-lbl">Gr. zawodnicza</span> <?= e($member['member_class_name']) ?></span>
             <?php endif; ?>
             <?php if (!empty($member['group_name'])): ?>
-            <span><span class="sc-lbl">gr. start.</span><br><?= e($member['group_name']) ?></span>
+            <span><span class="sc-lbl">Gr. startowa</span>
+                <?= e($member['group_name']) ?>
+                <?php if (!empty($member['group_start_time'])): ?>
+                    <?= e(substr($member['group_start_time'], 0, 5)) ?>
+                <?php endif; ?>
+            </span>
             <?php endif; ?>
         </div>
-        <div class="sc-event-badge"><?= e($event['name']) ?></div>
+
     </div>
 
-    <!-- ── Score grid ───────────────────────────────────────────── -->
+    <!-- ── Siatka strzałów ──────────────────────────────────── -->
     <div class="sc-shots-wrap">
     <table class="sc-shots-table">
         <thead>
@@ -89,16 +111,16 @@
             </tr>
         </thead>
         <tbody>
-        <?php
-        $shotsRendered = 0;
-        for ($s = 1; $s <= $serieCount; $s++):
-            $serieLabel = $isHM ? "S{$s}" : (($s - 1) * $serieSize + 1) . '–' . ($s * $serieSize);
+        <?php for ($s = 1; $s <= $serieCount; $s++):
+            $serieLabel = $isHM
+                ? "S{$s}"
+                : (($s - 1) * $serieSize + 1) . '–' . ($s * $serieSize);
         ?>
             <tr>
                 <td class="td-ser"><?= $serieLabel ?></td>
                 <?php for ($c = 1; $c <= $serieSize; $c++):
                     $globalShot = ($s - 1) * $serieSize + $c;
-                    $active = ($globalShot <= $shots || $shots === 0);
+                    $active = ($globalShot <= $shots);
                 ?>
                 <td class="td-score <?= $active ? '' : 'disabled-cell' ?>">
                     <?= $active ? '' : '&ndash;' ?>
@@ -111,7 +133,7 @@
         </tbody>
         <tfoot>
             <tr>
-                <th class="td-ser tfoot-label" colspan="<?= $serieSize + 1 ?>">Wynik końcowy:</th>
+                <th class="tfoot-label" colspan="<?= $serieSize + 1 ?>">Wynik końcowy:</th>
                 <td class="td-sum tfoot-total">
                     <?= $score !== null ? e((string)$score) : '' ?>
                 </td>
@@ -125,7 +147,7 @@
     </table>
     </div>
 
-    <!-- ── Bottom: place + notes ────────────────────────────────── -->
+    <!-- ── Miejsce + uwagi ──────────────────────────────────── -->
     <div class="sc-bottom">
         <div class="sc-place-box">
             <div class="sc-lbl">Miejsce</div>
@@ -137,7 +159,7 @@
         </div>
     </div>
 
-    <!-- ── Signatures ────────────────────────────────────────────── -->
+    <!-- ── Podpisy ────────────────────────────────────────────── -->
     <div class="sc-signatures">
         <div class="sc-sig">
             <div class="sc-sig-line"></div>

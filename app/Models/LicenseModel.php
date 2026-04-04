@@ -64,6 +64,32 @@ class LicenseModel extends BaseModel
         return $row ?: null;
     }
 
+    /**
+     * Returns [member_id => license_number] for the most recent active
+     * 'zawodnicza' license for each of the given member IDs.
+     */
+    public function getLicenseMapForMembers(array $memberIds): array
+    {
+        if (empty($memberIds)) return [];
+        $placeholders = implode(',', array_fill(0, count($memberIds), '?'));
+        $stmt = $this->db->prepare("
+            SELECT member_id, license_number
+            FROM licenses
+            WHERE member_id IN ($placeholders)
+              AND license_type = 'zawodnicza'
+            ORDER BY valid_until DESC
+        ");
+        $stmt->execute(array_values($memberIds));
+        $map = [];
+        foreach ($stmt->fetchAll() as $row) {
+            // Keep first (most recent) per member
+            if (!isset($map[(int)$row['member_id']])) {
+                $map[(int)$row['member_id']] = $row['license_number'];
+            }
+        }
+        return $map;
+    }
+
     public function getExpiring(int $days = 60): array
     {
         $stmt = $this->db->prepare("
