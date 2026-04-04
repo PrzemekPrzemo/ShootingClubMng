@@ -15,6 +15,7 @@ class RolePermissionModel extends BaseModel
         'competitions' => ['label' => 'Zawody',          'icon' => 'trophy',                  'url' => 'competitions'],
         'judges'       => ['label' => 'Sędziowie',       'icon' => 'person-badge',            'url' => 'judges'],
         'club_fees'    => ['label' => 'Opłaty PZSS',    'icon' => 'bank',                    'url' => 'club-fees'],
+        'equipment'    => ['label' => 'Sprzęt',          'icon' => 'tools',                   'url' => 'equipment'],
         'reports'      => ['label' => 'Raporty',         'icon' => 'file-earmark-bar-graph',  'url' => 'reports'],
         'config'       => ['label' => 'Konfiguracja',    'icon' => 'gear',                    'url' => 'config'],
     ];
@@ -28,9 +29,9 @@ class RolePermissionModel extends BaseModel
 
     /** Fallback when role_permissions table doesn't exist yet */
     public const DEFAULTS = [
-        'admin'      => ['dashboard','members','licenses','finances','competitions','judges','club_fees','reports','config'],
-        'zarzad'     => ['dashboard','members','licenses','finances','competitions','judges','club_fees','reports','config'],
-        'instruktor' => ['dashboard','members','licenses','competitions','reports'],
+        'admin'      => ['dashboard','members','licenses','finances','competitions','judges','club_fees','equipment','reports','config'],
+        'zarzad'     => ['dashboard','members','licenses','finances','competitions','judges','club_fees','equipment','reports','config'],
+        'instruktor' => ['dashboard','members','licenses','competitions','equipment','reports'],
         'sędzia'     => ['dashboard','competitions'],
     ];
 

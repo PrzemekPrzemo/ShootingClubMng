@@ -213,6 +213,18 @@ $router->get('/competitions/:id/events/:eid/scorecard',           [\App\Controll
 $router->get('/competitions/:id/scorecards',                      [\App\Controllers\CompetitionsController::class, 'scorecardSelector']);
 $router->get('/competitions/:id/scorecards/print',                [\App\Controllers\CompetitionsController::class, 'scorecardPrint']);
 
+// Equipment
+$router->get('/equipment',                             [\App\Controllers\EquipmentController::class, 'index']);
+$router->get('/equipment/weapons/create',              [\App\Controllers\EquipmentController::class, 'createWeapon']);
+$router->post('/equipment/weapons/create',             [\App\Controllers\EquipmentController::class, 'storeWeapon']);
+$router->get('/equipment/:id/edit',                    [\App\Controllers\EquipmentController::class, 'editWeapon']);
+$router->post('/equipment/:id/edit',                   [\App\Controllers\EquipmentController::class, 'updateWeapon']);
+$router->post('/equipment/:id/delete',                 [\App\Controllers\EquipmentController::class, 'destroyWeapon']);
+$router->post('/equipment/:id/assign',                 [\App\Controllers\EquipmentController::class, 'assignWeapon']);
+$router->post('/equipment/assignments/:aid/return',    [\App\Controllers\EquipmentController::class, 'returnWeapon']);
+$router->get('/equipment/ammo',                        [\App\Controllers\EquipmentController::class, 'ammo']);
+$router->post('/equipment/ammo',                       [\App\Controllers\EquipmentController::class, 'storeAmmo']);
+
 // Reports
 $router->get('/reports',                [\App\Controllers\ReportsController::class, 'index']);
 $router->get('/reports/members',        [\App\Controllers\ReportsController::class, 'members']);

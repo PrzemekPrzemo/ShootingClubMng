@@ -214,6 +214,7 @@ function isActive(string $mod, string $uri): bool {
         'competitions' => str_contains($uri, '/competitions'),
         'judges'       => str_contains($uri, '/judges'),
         'club_fees'    => str_contains($uri, '/club-fees'),
+        'equipment'    => str_contains($uri, '/equipment'),
         'reports'      => str_contains($uri, '/reports'),
         'config'       => str_contains($uri, '/config'),
         default        => false,
