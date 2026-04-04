@@ -18,6 +18,8 @@
                             <th>Nazwa konkurencji</th>
                             <th>Strzały</th>
                             <th>Punktacja</th>
+                            <th class="text-end">Broń własna</th>
+                            <th class="text-end">Broń klubowa</th>
                             <th>Wyniki</th>
                             <th></th>
                         </tr>
@@ -31,6 +33,20 @@
                             <td>
                                 <?php $stMap = ['decimal'=>'Dziesiętna','integer'=>'Całkowita','hit_miss'=>'Trafiony/Chybiony']; ?>
                                 <span class="badge bg-light text-dark border"><?= $stMap[$ev['scoring_type']] ?? $ev['scoring_type'] ?></span>
+                            </td>
+                            <td class="text-end">
+                                <?php if (isset($ev['fee_own_weapon']) && $ev['fee_own_weapon'] !== null): ?>
+                                    <span class="badge bg-info text-dark"><?= format_money($ev['fee_own_weapon']) ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-end">
+                                <?php if (isset($ev['fee_club_weapon']) && $ev['fee_club_weapon'] !== null): ?>
+                                    <span class="badge bg-secondary"><?= format_money($ev['fee_club_weapon']) ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                <?php endif; ?>
                             </td>
                             <td class="text-center">
                                 <span class="badge bg-<?= $ev['result_count'] > 0 ? 'success' : 'secondary' ?>">
@@ -137,6 +153,18 @@
                             <option value="hit_miss">Trafiony / Chybiony</option>
                         </select>
                     </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col">
+                            <label class="form-label">Cena — broń własna (zł)</label>
+                            <input type="number" name="fee_own_weapon" id="evtFeeOwn"
+                                   class="form-control form-control-sm" min="0" step="0.01" placeholder="np. 30.00">
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Cena — broń klubowa (zł)</label>
+                            <input type="number" name="fee_club_weapon" id="evtFeeClub"
+                                   class="form-control form-control-sm" min="0" step="0.01" placeholder="np. 40.00">
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label">Kolejność</label>
                         <input type="number" name="sort_order" class="form-control form-control-sm"
@@ -159,6 +187,8 @@ document.querySelectorAll('.tpl-btn').forEach(btn => {
         document.getElementById('evtShots').value   = btn.dataset.shots;
         const sel = document.getElementById('evtScoring');
         for (let o of sel.options) o.selected = (o.value === btn.dataset.scoring);
+        document.getElementById('evtFeeOwn').value  = '';
+        document.getElementById('evtFeeClub').value = '';
         document.getElementById('evtName').focus();
         document.getElementById('addEventForm').scrollIntoView({behavior:'smooth', block:'nearest'});
         // Highlight the form briefly

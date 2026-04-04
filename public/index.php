@@ -195,6 +195,8 @@ $router->post('/competitions/:id/delete',            [\App\Controllers\Competiti
 $router->get('/competitions/:id/entries',            [\App\Controllers\CompetitionsController::class, 'entries']);
 $router->post('/competitions/:id/entries/add',       [\App\Controllers\CompetitionsController::class, 'addEntry']);
 $router->post('/competitions/:id/entries/:eid/remove', [\App\Controllers\CompetitionsController::class, 'removeEntry']);
+$router->get('/competitions/:id/entries/:eid/events',  [\App\Controllers\CompetitionsController::class, 'entryEvents']);
+$router->post('/competitions/:id/entries/:eid/events', [\App\Controllers\CompetitionsController::class, 'saveEntryEvents']);
 $router->get('/competitions/:id/results',            [\App\Controllers\CompetitionsController::class, 'results']);
 $router->post('/competitions/:id/results/save',      [\App\Controllers\CompetitionsController::class, 'saveResults']);
 // Competition events (konkurencje)

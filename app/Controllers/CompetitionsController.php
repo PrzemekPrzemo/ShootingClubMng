@@ -131,13 +131,21 @@ class CompetitionsController extends BaseController
     public function entries(string $id): void
     {
         $competition = $this->getCompetition((int)$id);
+        $entries     = $this->competitionModel->getEntries((int)$id);
+
+        // Pre-compute fee per entry (sum of selected events × weapon type - discount)
+        $entryFees = [];
+        foreach ($entries as $e) {
+            $entryFees[$e['id']] = $this->competitionModel->calcEntryFee((int)$e['id']);
+        }
+
         $this->render('competitions/entries', [
             'title'       => 'Zgłoszenia — ' . $competition['name'],
             'competition' => $competition,
-            'entries'     => $this->competitionModel->getEntries((int)$id),
+            'entries'     => $entries,
+            'entryFees'   => $entryFees,
             'groups'      => $this->competitionModel->getGroups((int)$id),
             'members'     => $this->memberModel->getAllActive(),
-            'entryFee'    => isset($competition['entry_fee']) ? (float)$competition['entry_fee'] : null,
         ]);
     }
 
@@ -257,13 +265,17 @@ class CompetitionsController extends BaseController
             $this->redirect("competitions/{$id}/events");
         }
 
+        $feeOwn  = trim($_POST['fee_own_weapon']  ?? '');
+        $feeClub = trim($_POST['fee_club_weapon'] ?? '');
         $this->competitionModel->addEvent([
-            'competition_id' => (int)$id,
-            'name'           => $name,
-            'shots_count'    => $_POST['shots_count'] !== '' ? (int)$_POST['shots_count'] : null,
-            'scoring_type'   => in_array($_POST['scoring_type'] ?? '', ['decimal','integer','hit_miss'])
+            'competition_id'  => (int)$id,
+            'name'            => $name,
+            'shots_count'     => ($_POST['shots_count'] ?? '') !== '' ? (int)$_POST['shots_count'] : null,
+            'scoring_type'    => in_array($_POST['scoring_type'] ?? '', ['decimal','integer','hit_miss'])
                                     ? $_POST['scoring_type'] : 'decimal',
-            'sort_order'     => (int)($_POST['sort_order'] ?? 0),
+            'sort_order'      => (int)($_POST['sort_order'] ?? 0),
+            'fee_own_weapon'  => $feeOwn  !== '' ? (float)$feeOwn  : null,
+            'fee_club_weapon' => $feeClub !== '' ? (float)$feeClub : null,
         ]);
 
         Session::flash('success', 'Konkurencja dodana.');
@@ -402,7 +414,6 @@ class CompetitionsController extends BaseController
             'competition' => $competition,
             'entries'     => $entries,
             'events'      => $events,
-            'entryFee'    => isset($competition['entry_fee']) ? (float)$competition['entry_fee'] : null,
         ]);
     }
 
@@ -509,6 +520,64 @@ class CompetitionsController extends BaseController
         $this->redirect("competitions/{$id}");
     }
 
+    // ── Per-competitor event selection ───────────────────────────────
+
+    public function entryEvents(string $id, string $eid): void
+    {
+        $this->requireRole(['admin', 'zarzad', 'instruktor']);
+        $competition = $this->getCompetition((int)$id);
+        $events      = $this->competitionModel->getEvents((int)$id);
+
+        $db   = Database::getInstance();
+        $stmt = $db->prepare("
+            SELECT ce.*, m.first_name, m.last_name, m.member_number
+            FROM competition_entries ce
+            JOIN members m ON m.id = ce.member_id
+            WHERE ce.id = ? AND ce.competition_id = ?
+        ");
+        $stmt->execute([(int)$eid, (int)$id]);
+        $entry = $stmt->fetch();
+        if (!$entry) {
+            Session::flash('error', 'Nie znaleziono zgłoszenia.');
+            $this->redirect("competitions/{$id}/entries");
+        }
+
+        $selectedEventIds = $this->competitionModel->getEntryEventIds((int)$eid);
+
+        $this->render('competitions/entry_events', [
+            'title'            => 'Konkurencje zawodnika',
+            'competition'      => $competition,
+            'entry'            => $entry,
+            'events'           => $events,
+            'selectedEventIds' => $selectedEventIds,
+        ]);
+    }
+
+    public function saveEntryEvents(string $id, string $eid): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad', 'instruktor']);
+
+        $entryId    = (int)$eid;
+        $eventIds   = array_map('intval', (array)($_POST['event_ids'] ?? []));
+        $weaponType = in_array($_POST['weapon_type'] ?? '', ['własna', 'klubowa'])
+                        ? $_POST['weapon_type'] : 'własna';
+
+        $db = Database::getInstance();
+
+        // Save weapon type
+        try {
+            $db->prepare("UPDATE competition_entries SET weapon_type = ? WHERE id = ?")
+               ->execute([$weaponType, $entryId]);
+        } catch (\PDOException) {}
+
+        // Save selected events
+        $this->competitionModel->setEntryEvents($entryId, $eventIds);
+
+        Session::flash('success', 'Wybór konkurencji zapisany.');
+        $this->redirect("competitions/{$id}/entries");
+    }
+
     // ── Portal entry approval ────────────────────────────────────────
 
     public function approveEntry(string $id): void
@@ -556,9 +625,9 @@ class CompetitionsController extends BaseController
         $entryId = (int)$eid;
         $db      = Database::getInstance();
 
-        // Load entry with competition entry_fee and member info
+        // Load entry and member info
         $stmt = $db->prepare("
-            SELECT ce.*, c.entry_fee, c.name AS competition_name,
+            SELECT ce.*, c.name AS competition_name,
                    m.first_name, m.last_name
             FROM competition_entries ce
             JOIN competitions c ON c.id = ce.competition_id
@@ -576,10 +645,8 @@ class CompetitionsController extends BaseController
         $db->prepare("UPDATE competition_entries SET start_fee_paid = 1 WHERE id = ?")
            ->execute([$entryId]);
 
-        // Create payment record if there is a fee
-        $fee      = isset($entry['entry_fee']) ? (float)$entry['entry_fee'] : 0.0;
-        $discount = isset($entry['discount'])  ? (float)$entry['discount']  : 0.0;
-        $amount   = max(0, $fee - $discount);
+        // Create payment record using per-event fee calculation
+        $amount = $this->competitionModel->calcEntryFee($entryId);
 
         if ($amount > 0) {
             // Find or auto-create payment type "Opłata startowa"
@@ -588,7 +655,7 @@ class CompetitionsController extends BaseController
             $pt = $ptStmt->fetch();
 
             if (!$pt) {
-                $db->prepare("INSERT INTO payment_types (name, category, description, is_active, is_per_class, sort_order) VALUES ('Opłata startowa','inne','Opłata za udział w zawodach',1,0,99)")
+                $db->prepare("INSERT INTO payment_types (name, amount, is_active) VALUES ('Opłata startowa', 0, 1)")
                    ->execute();
                 $ptId = (int)$db->lastInsertId();
             } else {
@@ -650,7 +717,6 @@ class CompetitionsController extends BaseController
 
     private function collectData(): array
     {
-        $fee = trim($_POST['entry_fee'] ?? '');
         return [
             'name'             => trim($_POST['name'] ?? ''),
             'discipline_id'    => $_POST['discipline_id'] ?: null,
@@ -659,7 +725,6 @@ class CompetitionsController extends BaseController
             'description'      => trim($_POST['description'] ?? '') ?: null,
             'status'           => $_POST['status'] ?? 'planowane',
             'max_entries'      => $_POST['max_entries'] ?: null,
-            'entry_fee'        => $fee !== '' ? (float)$fee : null,
             'created_by'       => Auth::id(),
         ];
     }

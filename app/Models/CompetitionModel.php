@@ -173,14 +173,64 @@ class CompetitionModel extends BaseModel
 
     public function getEvents(int $competitionId): array
     {
-        $stmt = $this->db->prepare(
-            "SELECT ce.*, (SELECT COUNT(*) FROM competition_event_results WHERE competition_event_id = ce.id) AS result_count
-             FROM competition_events ce
-             WHERE ce.competition_id = ?
-             ORDER BY ce.sort_order, ce.id"
-        );
-        $stmt->execute([$competitionId]);
-        return $stmt->fetchAll();
+        try {
+            $stmt = $this->db->prepare(
+                "SELECT ce.*,
+                        (SELECT COUNT(*) FROM competition_event_results WHERE competition_event_id = ce.id) AS result_count
+                 FROM competition_events ce
+                 WHERE ce.competition_id = ?
+                 ORDER BY ce.sort_order, ce.id"
+            );
+            $stmt->execute([$competitionId]);
+            return $stmt->fetchAll();
+        } catch (\PDOException) {
+            // Fallback without fee columns (pre-migration)
+            $stmt = $this->db->prepare(
+                "SELECT ce.id, ce.competition_id, ce.name, ce.shots_count, ce.scoring_type, ce.sort_order,
+                        NULL AS fee_own_weapon, NULL AS fee_club_weapon,
+                        (SELECT COUNT(*) FROM competition_event_results WHERE competition_event_id = ce.id) AS result_count
+                 FROM competition_events ce
+                 WHERE ce.competition_id = ?
+                 ORDER BY ce.sort_order, ce.id"
+            );
+            $stmt->execute([$competitionId]);
+            return $stmt->fetchAll();
+        }
+    }
+
+    /**
+     * Calculate total entry fee for a competitor based on their selected events and weapon type.
+     */
+    public function calcEntryFee(int $entryId): float
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT ce.weapon_type,
+                       COALESCE(ce.discount, 0) AS discount,
+                       ev.fee_own_weapon,
+                       ev.fee_club_weapon
+                FROM competition_entries ce
+                JOIN competition_entry_events cee ON cee.competition_entry_id = ce.id
+                JOIN competition_events ev ON ev.id = cee.competition_event_id
+                WHERE ce.id = ?
+            ");
+            $stmt->execute([$entryId]);
+            $rows  = $stmt->fetchAll();
+            if (empty($rows)) return 0.0;
+
+            $total    = 0.0;
+            $discount = (float)$rows[0]['discount'];
+            foreach ($rows as $r) {
+                if ($r['weapon_type'] === 'klubowa') {
+                    $total += (float)($r['fee_club_weapon'] ?? 0);
+                } else {
+                    $total += (float)($r['fee_own_weapon'] ?? 0);
+                }
+            }
+            return max(0.0, $total - $discount);
+        } catch (\PDOException) {
+            return 0.0;
+        }
     }
 
     public function getEvent(int $eventId): ?array
