@@ -8,10 +8,9 @@
 
 <div class="row g-3">
     <!-- Lista konkurencji -->
-    <div class="col-lg-8">
+    <div class="col-12">
         <div class="card">
             <div class="card-body p-0">
-            <div class="table-responsive">
                 <table class="table table-hover table-sm mb-0">
                     <thead class="table-dark">
                         <tr>
@@ -90,95 +89,104 @@
                     </tbody>
                 </table>
             </div>
-            </div>
         </div>
     </div>
 
-    <!-- Formularz dodawania + szablony -->
-    <div class="col-lg-4">
+    <!-- Szablony + Formularz poniżej tabeli -->
+    <div class="col-12">
+        <div class="row g-3">
 
-        <!-- Szablony (jeśli są zdefiniowane) -->
-        <?php if (!empty($templateGroups)): ?>
-        <div class="card mb-3">
-            <div class="card-header d-flex align-items-center gap-2">
-                <strong><i class="bi bi-lightning"></i> Wstaw z szablonu</strong>
-                <span class="badge bg-info text-dark ms-1">szybkie dodawanie</span>
-            </div>
-            <div class="card-body p-2">
-                <?php foreach ($templateGroups as $group): ?>
-                <div class="mb-2">
-                    <div class="small fw-bold text-muted mb-1">
-                        <i class="bi bi-bullseye"></i> <?= e($group['discipline']['name']) ?>
+            <!-- Szablony (jeśli są zdefiniowane) -->
+            <?php if (!empty($templateGroups)): ?>
+            <div class="col-lg-8">
+                <div class="card h-100">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <strong><i class="bi bi-lightning"></i> Wstaw z szablonu</strong>
+                        <span class="badge bg-info text-dark ms-1">szybkie dodawanie</span>
                     </div>
-                    <div class="d-flex flex-wrap gap-1">
-                    <?php foreach ($group['templates'] as $tpl): ?>
-                        <button type="button"
-                                class="btn btn-xs btn-outline-secondary py-0 px-2 tpl-btn"
-                                data-name="<?= e($tpl['name']) ?>"
-                                data-shots="<?= e($tpl['shots_count'] ?? '') ?>"
-                                data-scoring="<?= e($tpl['scoring_type']) ?>"
-                                title="<?= e($tpl['description'] ?? $tpl['name']) ?>">
-                            <?= e($tpl['name']) ?>
-                            <?php if ($tpl['shots_count']): ?>
-                                <span class="text-muted">(<?= $tpl['shots_count'] ?>)</span>
-                            <?php endif; ?>
-                        </button>
-                    <?php endforeach; ?>
+                    <div class="card-body p-2">
+                        <?php foreach ($templateGroups as $group): ?>
+                        <div class="mb-2">
+                            <div class="small fw-bold text-muted mb-1">
+                                <i class="bi bi-bullseye"></i> <?= e($group['discipline']['name']) ?>
+                            </div>
+                            <div class="d-flex flex-wrap gap-1">
+                            <?php foreach ($group['templates'] as $tpl): ?>
+                                <button type="button"
+                                        class="btn btn-xs btn-outline-secondary py-0 px-2 tpl-btn"
+                                        data-name="<?= e($tpl['name']) ?>"
+                                        data-shots="<?= e($tpl['shots_count'] ?? '') ?>"
+                                        data-scoring="<?= e($tpl['scoring_type']) ?>"
+                                        title="<?= e($tpl['description'] ?? $tpl['name']) ?>">
+                                    <?= e($tpl['name']) ?>
+                                    <?php if ($tpl['shots_count']): ?>
+                                        <span class="text-muted">(<?= $tpl['shots_count'] ?>)</span>
+                                    <?php endif; ?>
+                                </button>
+                            <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
-                <?php endforeach; ?>
             </div>
-        </div>
-        <?php endif; ?>
+            <?php endif; ?>
 
-        <!-- Formularz ręczny -->
-        <div class="card">
-            <div class="card-header"><strong>Dodaj konkurencję</strong></div>
-            <div class="card-body">
-                <form method="post" action="<?= url('competitions/' . $competition['id'] . '/events/add') ?>" id="addEventForm">
-                    <?= csrf_field() ?>
-                    <div class="mb-2">
-                        <label class="form-label">Nazwa <span class="text-danger">*</span></label>
-                        <input type="text" name="name" id="evtName" class="form-control form-control-sm" required
-                               placeholder="np. 10m Pistolet Pneumatyczny">
+            <!-- Formularz ręczny -->
+            <div class="<?= !empty($templateGroups) ? 'col-lg-4' : 'col-lg-5' ?>">
+                <div class="card">
+                    <div class="card-header"><strong>Dodaj konkurencję</strong></div>
+                    <div class="card-body">
+                        <form method="post" action="<?= url('competitions/' . $competition['id'] . '/events/add') ?>" id="addEventForm">
+                            <?= csrf_field() ?>
+                            <div class="mb-2">
+                                <label class="form-label">Nazwa <span class="text-danger">*</span></label>
+                                <input type="text" name="name" id="evtName" class="form-control form-control-sm" required
+                                       placeholder="np. 10m Pistolet Pneumatyczny">
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col">
+                                    <label class="form-label">Liczba strzałów</label>
+                                    <input type="number" name="shots_count" id="evtShots" class="form-control form-control-sm"
+                                           min="1" max="255" placeholder="np. 60">
+                                </div>
+                                <div class="col">
+                                    <label class="form-label">Typ punktacji</label>
+                                    <select name="scoring_type" id="evtScoring" class="form-select form-select-sm">
+                                        <option value="decimal">Dziesiętna (np. 10.9)</option>
+                                        <option value="integer">Całkowita (np. 98)</option>
+                                        <option value="hit_miss">Trafiony / Chybiony</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col">
+                                    <label class="form-label">Cena — broń własna (zł)</label>
+                                    <input type="number" name="fee_own_weapon" id="evtFeeOwn"
+                                           class="form-control form-control-sm" min="0" step="0.01" placeholder="np. 30.00">
+                                </div>
+                                <div class="col">
+                                    <label class="form-label">Cena — broń klubowa (zł)</label>
+                                    <input type="number" name="fee_club_weapon" id="evtFeeClub"
+                                           class="form-control form-control-sm" min="0" step="0.01" placeholder="np. 40.00">
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-auto">
+                                    <label class="form-label">Kolejność</label>
+                                    <input type="number" name="sort_order" class="form-control form-control-sm"
+                                           style="width:80px" min="0" value="<?= count($events) ?>">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-sm w-100">
+                                <i class="bi bi-plus-lg"></i> Dodaj konkurencję
+                            </button>
+                        </form>
                     </div>
-                    <div class="mb-2">
-                        <label class="form-label">Liczba strzałów</label>
-                        <input type="number" name="shots_count" id="evtShots" class="form-control form-control-sm"
-                               min="1" max="255" placeholder="np. 60">
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">Typ punktacji</label>
-                        <select name="scoring_type" id="evtScoring" class="form-select form-select-sm">
-                            <option value="decimal">Dziesiętna (np. 10.9)</option>
-                            <option value="integer">Całkowita (np. 98)</option>
-                            <option value="hit_miss">Trafiony / Chybiony</option>
-                        </select>
-                    </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col">
-                            <label class="form-label">Cena — broń własna (zł)</label>
-                            <input type="number" name="fee_own_weapon" id="evtFeeOwn"
-                                   class="form-control form-control-sm" min="0" step="0.01" placeholder="np. 30.00">
-                        </div>
-                        <div class="col">
-                            <label class="form-label">Cena — broń klubowa (zł)</label>
-                            <input type="number" name="fee_club_weapon" id="evtFeeClub"
-                                   class="form-control form-control-sm" min="0" step="0.01" placeholder="np. 40.00">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Kolejność</label>
-                        <input type="number" name="sort_order" class="form-control form-control-sm"
-                               min="0" value="<?= count($events) ?>">
-                    </div>
-                    <button type="submit" class="btn btn-success btn-sm w-100">
-                        <i class="bi bi-plus-lg"></i> Dodaj konkurencję
-                    </button>
-                </form>
+                </div>
             </div>
-        </div>
 
+        </div>
     </div>
 </div>
 
