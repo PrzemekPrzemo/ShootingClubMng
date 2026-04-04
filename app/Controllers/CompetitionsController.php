@@ -237,9 +237,10 @@ class CompetitionsController extends BaseController
     {
         $competition = $this->getCompetition((int)$id);
         $this->render('competitions/events', [
-            'title'       => 'Konkurencje — ' . $competition['name'],
-            'competition' => $competition,
-            'events'      => $this->competitionModel->getEvents((int)$id),
+            'title'            => 'Konkurencje — ' . $competition['name'],
+            'competition'      => $competition,
+            'events'           => $this->competitionModel->getEvents((int)$id),
+            'templateGroups'   => $this->disciplineModel->getAllTemplatesGrouped(),
         ]);
     }
 

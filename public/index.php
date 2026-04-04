@@ -247,8 +247,12 @@ $router->post('/config/categories/:id/delete',    [\App\Controllers\ConfigContro
 // Disciplines
 $router->get('/config/disciplines',               [\App\Controllers\ConfigController::class, 'disciplines']);
 $router->post('/config/disciplines',              [\App\Controllers\ConfigController::class, 'saveDiscipline']);
-$router->post('/config/disciplines/:id/delete',   [\App\Controllers\ConfigController::class, 'deleteDiscipline']);
-$router->post('/config/disciplines/:id/toggle',   [\App\Controllers\ConfigController::class, 'toggleDiscipline']);
+$router->post('/config/disciplines/:id/delete',                    [\App\Controllers\ConfigController::class, 'deleteDiscipline']);
+$router->post('/config/disciplines/:id/toggle',                    [\App\Controllers\ConfigController::class, 'toggleDiscipline']);
+$router->get('/config/disciplines/:id/templates',                  [\App\Controllers\ConfigController::class, 'disciplineTemplates']);
+$router->post('/config/disciplines/:id/templates',                 [\App\Controllers\ConfigController::class, 'saveTemplate']);
+$router->post('/config/disciplines/:id/templates/:tid/delete',     [\App\Controllers\ConfigController::class, 'deleteTemplate']);
+$router->post('/config/disciplines/:id/templates/:tid/toggle',     [\App\Controllers\ConfigController::class, 'toggleTemplate']);
 // Member classes
 $router->get('/config/member-classes',            [\App\Controllers\ConfigController::class, 'memberClasses']);
 $router->post('/config/member-classes',           [\App\Controllers\ConfigController::class, 'saveMemberClass']);

@@ -246,6 +246,80 @@ class ConfigController extends BaseController
         $this->redirect('config/disciplines');
     }
 
+    // ── Discipline event templates ───────────────────────────────────
+
+    public function disciplineTemplates(string $id): void
+    {
+        $this->requireRole(['admin', 'zarzad']);
+        $discipline = $this->disciplineModel->findById((int)$id);
+        if (!$discipline) {
+            Session::flash('error', 'Dyscyplina nie istnieje.');
+            $this->redirect('config/disciplines');
+        }
+
+        $editTid  = (int)($_GET['edit'] ?? 0);
+        $editItem = $editTid ? $this->disciplineModel->findTemplate($editTid) : null;
+
+        $this->render('config/discipline_templates', [
+            'title'      => 'Szablony konkurencji — ' . $discipline['name'],
+            'discipline' => $discipline,
+            'templates'  => $this->disciplineModel->getEventTemplates((int)$id),
+            'editItem'   => $editItem,
+        ]);
+    }
+
+    public function saveTemplate(string $id): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad']);
+
+        $tid  = (int)($_POST['id'] ?? 0);
+        $name = trim($_POST['name'] ?? '');
+        if (empty($name)) {
+            Session::flash('error', 'Nazwa szablonu jest wymagana.');
+            $this->redirect("config/disciplines/{$id}/templates");
+        }
+
+        $data = [
+            'discipline_id' => (int)$id,
+            'name'          => $name,
+            'shots_count'   => ($_POST['shots_count'] ?? '') !== '' ? (int)$_POST['shots_count'] : null,
+            'scoring_type'  => in_array($_POST['scoring_type'] ?? '', ['decimal','integer','hit_miss'])
+                               ? $_POST['scoring_type'] : 'decimal',
+            'max_score'     => ($_POST['max_score'] ?? '') !== ''
+                               ? (float)str_replace(',', '.', $_POST['max_score']) : null,
+            'description'   => trim($_POST['description'] ?? '') ?: null,
+            'sort_order'    => (int)($_POST['sort_order'] ?? 0),
+            'is_active'     => isset($_POST['is_active']) ? 1 : 0,
+        ];
+
+        if ($tid > 0) {
+            $this->disciplineModel->updateTemplate($tid, $data);
+            Session::flash('success', 'Szablon zaktualizowany.');
+        } else {
+            $this->disciplineModel->saveTemplate($data);
+            Session::flash('success', 'Szablon dodany.');
+        }
+
+        $this->redirect("config/disciplines/{$id}/templates");
+    }
+
+    public function deleteTemplate(string $id, string $tid): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin']);
+        $this->disciplineModel->deleteTemplate((int)$tid);
+        Session::flash('success', 'Szablon usunięty.');
+        $this->redirect("config/disciplines/{$id}/templates");
+    }
+
+    public function toggleTemplate(string $id, string $tid): void
+    {
+        Csrf::verify();
+        $this->disciplineModel->toggleTemplate((int)$tid);
+        $this->redirect("config/disciplines/{$id}/templates");
+    }
+
     // ── Member classes ───────────────────────────────────────────────
 
     public function memberClasses(): void

@@ -32,6 +32,11 @@
                                 <?php endif; ?>
                             </td>
                             <td class="text-end" style="white-space:nowrap">
+                                <a href="<?= url('config/disciplines/' . $d['id'] . '/templates') ?>"
+                                   class="btn btn-xs btn-outline-info py-0 px-1"
+                                   title="Szablony konkurencji dla tej dyscypliny">
+                                    <i class="bi bi-list-check"></i>
+                                </a>
                                 <a href="<?= url('config/disciplines?edit=' . $d['id']) ?>"
                                    class="btn btn-xs btn-outline-primary py-0 px-1"><i class="bi bi-pencil"></i></a>
 

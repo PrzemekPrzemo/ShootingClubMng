@@ -76,26 +76,62 @@
         </div>
     </div>
 
-    <!-- Formularz dodawania -->
+    <!-- Formularz dodawania + szablony -->
     <div class="col-md-4">
+
+        <!-- Szablony (jeśli są zdefiniowane) -->
+        <?php if (!empty($templateGroups)): ?>
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center gap-2">
+                <strong><i class="bi bi-lightning"></i> Wstaw z szablonu</strong>
+                <span class="badge bg-info text-dark ms-1">szybkie dodawanie</span>
+            </div>
+            <div class="card-body p-2">
+                <?php foreach ($templateGroups as $group): ?>
+                <div class="mb-2">
+                    <div class="small fw-bold text-muted mb-1">
+                        <i class="bi bi-bullseye"></i> <?= e($group['discipline']['name']) ?>
+                    </div>
+                    <div class="d-flex flex-wrap gap-1">
+                    <?php foreach ($group['templates'] as $tpl): ?>
+                        <button type="button"
+                                class="btn btn-xs btn-outline-secondary py-0 px-2 tpl-btn"
+                                data-name="<?= e($tpl['name']) ?>"
+                                data-shots="<?= e($tpl['shots_count'] ?? '') ?>"
+                                data-scoring="<?= e($tpl['scoring_type']) ?>"
+                                title="<?= e($tpl['description'] ?? $tpl['name']) ?>">
+                            <?= e($tpl['name']) ?>
+                            <?php if ($tpl['shots_count']): ?>
+                                <span class="text-muted">(<?= $tpl['shots_count'] ?>)</span>
+                            <?php endif; ?>
+                        </button>
+                    <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Formularz ręczny -->
         <div class="card">
             <div class="card-header"><strong>Dodaj konkurencję</strong></div>
             <div class="card-body">
-                <form method="post" action="<?= url('competitions/' . $competition['id'] . '/events/add') ?>">
+                <form method="post" action="<?= url('competitions/' . $competition['id'] . '/events/add') ?>" id="addEventForm">
                     <?= csrf_field() ?>
                     <div class="mb-2">
                         <label class="form-label">Nazwa <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control form-control-sm" required
+                        <input type="text" name="name" id="evtName" class="form-control form-control-sm" required
                                placeholder="np. 10m Pistolet Pneumatyczny">
                     </div>
                     <div class="mb-2">
                         <label class="form-label">Liczba strzałów</label>
-                        <input type="number" name="shots_count" class="form-control form-control-sm"
+                        <input type="number" name="shots_count" id="evtShots" class="form-control form-control-sm"
                                min="1" max="255" placeholder="np. 60">
                     </div>
                     <div class="mb-2">
                         <label class="form-label">Typ punktacji</label>
-                        <select name="scoring_type" class="form-select form-select-sm">
+                        <select name="scoring_type" id="evtScoring" class="form-select form-select-sm">
                             <option value="decimal">Dziesiętna (np. 10.9)</option>
                             <option value="integer">Całkowita (np. 98)</option>
                             <option value="hit_miss">Trafiony / Chybiony</option>
@@ -104,7 +140,7 @@
                     <div class="mb-3">
                         <label class="form-label">Kolejność</label>
                         <input type="number" name="sort_order" class="form-control form-control-sm"
-                               min="0" value="0">
+                               min="0" value="<?= count($events) ?>">
                     </div>
                     <button type="submit" class="btn btn-success btn-sm w-100">
                         <i class="bi bi-plus-lg"></i> Dodaj konkurencję
@@ -113,16 +149,22 @@
             </div>
         </div>
 
-        <div class="alert alert-info mt-3 small">
-            <strong>Popularne konkurencje PZSS/ISSF:</strong><br>
-            • 10m Pistolet Pneumatyczny (60 strzałów)<br>
-            • 10m Karabin Pneumatyczny (60 strzałów)<br>
-            • 25m Pistolet Sportowy (60 strzałów)<br>
-            • 25m Pistolet Szybkostrzelny (60 strzałów)<br>
-            • 50m Karabin Leżąc (60 strzałów)<br>
-            • 50m Karabin 3×40 (120 strzałów)<br>
-            • Trap (75 rzutków)<br>
-            • Skeet (100 rzutków)
-        </div>
     </div>
 </div>
+
+<script>
+document.querySelectorAll('.tpl-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.getElementById('evtName').value    = btn.dataset.name;
+        document.getElementById('evtShots').value   = btn.dataset.shots;
+        const sel = document.getElementById('evtScoring');
+        for (let o of sel.options) o.selected = (o.value === btn.dataset.scoring);
+        document.getElementById('evtName').focus();
+        document.getElementById('addEventForm').scrollIntoView({behavior:'smooth', block:'nearest'});
+        // Highlight the form briefly
+        const card = document.getElementById('addEventForm').closest('.card');
+        card.style.outline = '2px solid #0d6efd';
+        setTimeout(() => card.style.outline = '', 1200);
+    });
+});
+</script>
