@@ -245,6 +245,8 @@ $router->post('/config',                [\App\Controllers\ConfigController::clas
 $router->get('/config/categories',      [\App\Controllers\ConfigController::class, 'categories']);
 $router->post('/config/categories',     [\App\Controllers\ConfigController::class, 'saveCategory']);
 $router->post('/config/categories/:id/delete',    [\App\Controllers\ConfigController::class, 'deleteCategory']);
+// Event templates overview
+$router->get('/config/event-templates', [\App\Controllers\ConfigController::class, 'eventTemplates']);
 // Disciplines
 $router->get('/config/disciplines',               [\App\Controllers\ConfigController::class, 'disciplines']);
 $router->post('/config/disciplines',              [\App\Controllers\ConfigController::class, 'saveDiscipline']);

@@ -14,8 +14,14 @@
         </a>
     </div>
     <div class="col-auto">
-        <a href="<?= url('config/disciplines') ?>" class="btn btn-outline-secondary btn-sm <?= str_contains($_SERVER['REQUEST_URI'],'/disciplines') ? 'active':'' ?>">
+        <?php $uri = $_SERVER['REQUEST_URI']; ?>
+        <a href="<?= url('config/disciplines') ?>" class="btn btn-outline-secondary btn-sm <?= str_contains($uri,'/disciplines') && !str_contains($uri,'/templates') ? 'active':'' ?>">
             <i class="bi bi-bullseye"></i> Dyscypliny
+        </a>
+    </div>
+    <div class="col-auto">
+        <a href="<?= url('config/event-templates') ?>" class="btn btn-outline-secondary btn-sm <?= str_contains($uri,'event-templates') || str_contains($uri,'/templates') ? 'active':'' ?>">
+            <i class="bi bi-list-check"></i> Szablony konkurencji
         </a>
     </div>
     <div class="col-auto">

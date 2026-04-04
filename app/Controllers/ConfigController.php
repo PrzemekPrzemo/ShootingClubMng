@@ -553,4 +553,25 @@ class ConfigController extends BaseController
         if (!in_array($data['role'], ['admin','zarzad','instruktor'])) $errors[] = 'Nieprawidłowa rola.';
         return $errors;
     }
+
+    // ── Event templates overview ─────────────────────────────────────
+
+    public function eventTemplates(): void
+    {
+        $this->requireRole(['admin', 'zarzad']);
+
+        $disciplines = $this->disciplineModel->getAll();
+
+        // Build [discipline_id => templates[]] for all active templates
+        $byDiscipline = [];
+        foreach ($this->disciplineModel->getAllTemplatesGrouped() as $g) {
+            $byDiscipline[$g['discipline']['id']] = $g['templates'];
+        }
+
+        $this->render('config/event_templates', [
+            'title'        => 'Szablony konkurencji',
+            'disciplines'  => $disciplines,
+            'byDiscipline' => $byDiscipline,
+        ]);
+    }
 }
