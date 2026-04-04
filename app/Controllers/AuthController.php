@@ -23,7 +23,9 @@ class AuthController extends BaseController
         if (Auth::check()) {
             $this->redirect('dashboard');
         }
-        $this->render('auth/login', ['title' => 'Logowanie']);
+        // Unified login is at /portal/login — redirect there
+        header('Location: ' . url('portal/login'));
+        exit;
     }
 
     public function login(): void
@@ -65,7 +67,7 @@ class AuthController extends BaseController
         $userId = Auth::id();
         $this->logActivity($userId, 'logout', 'users', $userId, 'Wylogowanie z systemu');
         Auth::logout();
-        $this->redirect('auth/login');
+        $this->redirect('portal/login');
     }
 
     private function logActivity(?int $userId, string $action, string $entity, ?int $entityId, string $details): void

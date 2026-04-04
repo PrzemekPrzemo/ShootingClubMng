@@ -148,7 +148,6 @@ $router->post('/auth/login',   [\App\Controllers\AuthController::class, 'login']
 $router->get('/auth/logout',   [\App\Controllers\AuthController::class, 'logout']);
 
 // Dashboard
-$router->get('/',              [\App\Controllers\DashboardController::class, 'index']);
 $router->get('/dashboard',     [\App\Controllers\DashboardController::class, 'index']);
 
 // Members
@@ -309,6 +308,26 @@ $router->post('/competitions/entries/:id/fee',       [\App\Controllers\Competiti
 
 // Notifications
 $router->post('/dashboard/notifications/read',       [\App\Controllers\DashboardController::class, 'markNotificationsRead']);
+
+// Root path: smart redirect based on session state (before router dispatches)
+(function () {
+    $method = $_SERVER['REQUEST_METHOD'];
+    $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $base   = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
+    if ($base && str_starts_with($uri, $base)) {
+        $uri = substr($uri, strlen($base));
+    }
+    $uri = '/' . ltrim($uri, '/');
+    if ($method === 'GET' && $uri === '/') {
+        if (\App\Helpers\Auth::check()) {
+            header('Location: ' . url('dashboard')); exit;
+        }
+        if (\App\Helpers\MemberAuth::check()) {
+            header('Location: ' . url('portal')); exit;
+        }
+        header('Location: ' . url('portal/login')); exit;
+    }
+})();
 
 // Dispatch
 $router->dispatch();

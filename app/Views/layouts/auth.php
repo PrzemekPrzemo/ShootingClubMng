@@ -10,7 +10,7 @@
 </head>
 <body class="bg-light">
 <div class="min-vh-100 d-flex align-items-center justify-content-center">
-    <div class="container" style="max-width:420px">
+    <div class="container" style="max-width:520px">
         <?php if (!empty($flashError)): ?>
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <?= e($flashError) ?>

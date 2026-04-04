@@ -32,7 +32,10 @@ class MemberAuthController
         if (MemberAuth::check()) {
             $this->redirectTo('portal');
         }
-        $this->renderPortal('portal/login', ['title' => 'Logowanie — Portal Zawodnika']);
+        if (\App\Helpers\Auth::check()) {
+            $this->redirectTo('dashboard');
+        }
+        $this->renderAuth('portal/login', ['title' => 'Logowanie — Klub Strzelecki']);
     }
 
     public function login(): void
@@ -162,7 +165,7 @@ class MemberAuthController
         if (MemberAuth::check()) {
             $this->redirectTo('portal');
         }
-        $this->renderPortal('portal/reset_password', ['title' => 'Reset hasła']);
+        $this->renderAuth('portal/reset_password', ['title' => 'Reset hasła']);
     }
 
     public function resetPassword(): void
@@ -203,6 +206,15 @@ class MemberAuthController
         $data['flashError']   = Session::getFlash('error');
         $data['flashWarning'] = Session::getFlash('warning');
         $this->view->setLayout('portal');
+        $this->view->render($template, $data);
+    }
+
+    private function renderAuth(string $template, array $data = []): void
+    {
+        $data['flashSuccess'] = Session::getFlash('success');
+        $data['flashError']   = Session::getFlash('error');
+        $data['flashWarning'] = Session::getFlash('warning');
+        $this->view->setLayout('auth');
         $this->view->render($template, $data);
     }
 

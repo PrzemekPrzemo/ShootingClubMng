@@ -44,7 +44,7 @@ class Auth
     {
         if (!self::check()) {
             Session::flash('error', 'Musisz być zalogowany, aby uzyskać dostęp.');
-            header('Location: ' . url('auth/login'));
+            header('Location: ' . url('portal/login'));
             exit;
         }
     }
