@@ -554,7 +554,7 @@ class ConfigController extends BaseController
         if (empty($data['full_name'])) $errors[] = 'Imię i nazwisko jest wymagane.';
         if ($isCreate && empty($data['password'])) $errors[] = 'Hasło jest wymagane.';
         if (!empty($data['password']) && strlen($data['password']) < 8) $errors[] = 'Hasło musi mieć co najmniej 8 znaków.';
-        if (!in_array($data['role'], ['admin','zarzad','instruktor'])) $errors[] = 'Nieprawidłowa rola.';
+        if (!in_array($data['role'], ['admin','zarzad','instruktor','sędzia'])) $errors[] = 'Nieprawidłowa rola.';
         return $errors;
     }
 

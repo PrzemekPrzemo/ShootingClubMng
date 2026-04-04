@@ -46,9 +46,10 @@
                             <td class="small"><?= e($u['email']) ?></td>
                             <td>
                                 <span class="badge bg-<?= match($u['role']) {
-                                    'admin'   => 'danger',
-                                    'zarzad'  => 'warning text-dark',
-                                    default   => 'secondary'
+                                    'admin'      => 'danger',
+                                    'zarzad'     => 'warning text-dark',
+                                    'sędzia'     => 'primary',
+                                    default      => 'secondary'
                                 } ?>">
                                     <?= e($roles[$u['role']]['label'] ?? $u['role']) ?>
                                 </span>
@@ -170,6 +171,7 @@
                             'admin'      => 'Pełen dostęp do wszystkiego, w tym konfiguracji',
                             'zarzad'     => 'Zarządzanie członkami, finansami i zawodami',
                             'instruktor' => 'Dostęp do zawodów, zawodników i licencji',
+                            'sędzia'     => 'Dostęp do przeglądania zawodów i wprowadzania wyników',
                             default      => ''
                         } ?>
                     </span>

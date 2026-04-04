@@ -199,6 +199,7 @@ $router->get('/competitions/:id/entries/:eid/events',  [\App\Controllers\Competi
 $router->post('/competitions/:id/entries/:eid/events', [\App\Controllers\CompetitionsController::class, 'saveEntryEvents']);
 $router->get('/competitions/:id/results',            [\App\Controllers\CompetitionsController::class, 'results']);
 $router->post('/competitions/:id/results/save',      [\App\Controllers\CompetitionsController::class, 'saveResults']);
+$router->post('/competitions/:id/unlock',            [\App\Controllers\CompetitionsController::class, 'unlockResults']);
 // Competition events (konkurencje)
 $router->get('/competitions/:id/events',                          [\App\Controllers\CompetitionsController::class, 'events']);
 $router->post('/competitions/:id/events/add',                     [\App\Controllers\CompetitionsController::class, 'addEvent']);

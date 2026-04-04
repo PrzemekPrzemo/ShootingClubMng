@@ -427,6 +427,87 @@ class CompetitionModel extends BaseModel
         } catch (\PDOException) {}
     }
 
+    /**
+     * Returns all entries for a competition grouped by entry, each with
+     * their selected events and any existing per-event results.
+     * Returns: [ ['entry_id'=>, 'member_id'=>, ..., 'events'=>[...]], ... ]
+     */
+    public function getEntriesWithEventResults(int $competitionId): array
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT
+                    ce.id          AS entry_id,
+                    ce.member_id,
+                    ce.start_fee_paid,
+                    m.first_name,
+                    m.last_name,
+                    m.member_number,
+                    mc.name        AS member_class_name,
+                    mc.short_code  AS member_class_code,
+                    ce.class       AS entry_class,
+                    cg.name        AS group_name,
+                    cee.competition_event_id AS event_id,
+                    cee.weapon_type,
+                    ev.name        AS event_name,
+                    ev.scoring_type,
+                    ev.shots_count,
+                    ev.sort_order  AS event_sort,
+                    cer.score,
+                    cer.score_inner,
+                    cer.place,
+                    cer.notes
+                FROM competition_entries ce
+                JOIN members m ON m.id = ce.member_id
+                LEFT JOIN member_classes mc ON mc.id = m.member_class_id
+                LEFT JOIN competition_groups cg ON cg.id = ce.group_id
+                JOIN competition_entry_events cee ON cee.competition_entry_id = ce.id
+                JOIN competition_events ev ON ev.id = cee.competition_event_id
+                LEFT JOIN competition_event_results cer
+                    ON cer.competition_event_id = cee.competition_event_id
+                    AND cer.member_id = ce.member_id
+                WHERE ce.competition_id = ?
+                ORDER BY m.last_name, m.first_name, ev.sort_order
+            ");
+            $stmt->execute([$competitionId]);
+            $rows = $stmt->fetchAll();
+        } catch (\PDOException) {
+            return [];
+        }
+
+        $entries = [];
+        foreach ($rows as $row) {
+            $eid = $row['entry_id'];
+            if (!isset($entries[$eid])) {
+                $entries[$eid] = [
+                    'entry_id'          => $eid,
+                    'member_id'         => $row['member_id'],
+                    'first_name'        => $row['first_name'],
+                    'last_name'         => $row['last_name'],
+                    'member_number'     => $row['member_number'],
+                    'member_class_name' => $row['member_class_name'],
+                    'member_class_code' => $row['member_class_code'],
+                    'entry_class'       => $row['entry_class'],
+                    'group_name'        => $row['group_name'],
+                    'start_fee_paid'    => $row['start_fee_paid'],
+                    'events'            => [],
+                ];
+            }
+            $entries[$eid]['events'][] = [
+                'event_id'     => $row['event_id'],
+                'weapon_type'  => $row['weapon_type'],
+                'event_name'   => $row['event_name'],
+                'scoring_type' => $row['scoring_type'],
+                'shots_count'  => $row['shots_count'],
+                'score'        => $row['score'],
+                'score_inner'  => $row['score_inner'],
+                'place'        => $row['place'],
+                'notes'        => $row['notes'],
+            ];
+        }
+        return array_values($entries);
+    }
+
     public function getUpcoming(int $days = 30): array
     {
         $stmt = $this->db->prepare("

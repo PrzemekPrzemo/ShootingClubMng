@@ -23,6 +23,7 @@ class RolePermissionModel extends BaseModel
         'admin'      => ['label' => 'Administrator', 'color' => 'danger'],
         'zarzad'     => ['label' => 'Zarząd',        'color' => 'warning'],
         'instruktor' => ['label' => 'Instruktor',    'color' => 'info'],
+        'sędzia'     => ['label' => 'Sędzia',        'color' => 'primary'],
     ];
 
     /** Fallback when role_permissions table doesn't exist yet */
@@ -30,6 +31,7 @@ class RolePermissionModel extends BaseModel
         'admin'      => ['dashboard','members','licenses','finances','competitions','judges','club_fees','reports','config'],
         'zarzad'     => ['dashboard','members','licenses','finances','competitions','judges','club_fees','reports','config'],
         'instruktor' => ['dashboard','members','licenses','competitions','reports'],
+        'sędzia'     => ['dashboard','competitions'],
     ];
 
     /** Per-request cache: [role => [module => bool]] */

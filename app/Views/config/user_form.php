@@ -27,8 +27,11 @@
             <div class="mb-3">
                 <label class="form-label">Rola</label>
                 <select name="role" class="form-select">
-                    <?php foreach (['instruktor','zarzad','admin'] as $r): ?>
-                        <option value="<?= $r ?>" <?= ($user['role'] ?? 'instruktor') === $r ? 'selected':'' ?>><?= $r ?></option>
+                    <?php
+                    $roleLabels = ['instruktor' => 'Instruktor', 'sędzia' => 'Sędzia', 'zarzad' => 'Zarząd', 'admin' => 'Administrator'];
+                    foreach ($roleLabels as $r => $rl):
+                    ?>
+                        <option value="<?= $r ?>" <?= ($user['role'] ?? 'instruktor') === $r ? 'selected':'' ?>><?= $rl ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>

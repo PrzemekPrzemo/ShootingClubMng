@@ -203,41 +203,68 @@ class CompetitionsController extends BaseController
 
     public function results(string $id): void
     {
+        $this->requireRole(['admin', 'zarzad', 'instruktor', 'sędzia']);
         $competition = $this->getCompetition((int)$id);
+        $locked      = in_array($competition['status'], ['zamkniete', 'zakonczone']);
+        $canEdit     = !$locked || Auth::role() === 'admin';
+
         $this->render('competitions/results', [
-            'title'       => 'Wyniki — ' . $competition['name'],
-            'competition' => $competition,
-            'entries'     => $this->competitionModel->getEntries((int)$id),
-            'results'     => $this->competitionModel->getResults((int)$id),
-            'groups'      => $this->competitionModel->getGroups((int)$id),
+            'title'             => 'Wyniki — ' . $competition['name'],
+            'competition'       => $competition,
+            'entriesWithEvents' => $this->competitionModel->getEntriesWithEventResults((int)$id),
+            'locked'            => $locked,
+            'canEdit'           => $canEdit,
         ]);
     }
 
     public function saveResults(string $id): void
     {
         Csrf::verify();
+        $this->requireRole(['admin', 'zarzad', 'instruktor', 'sędzia']);
         $competition = $this->getCompetition((int)$id);
 
-        $memberIds = $_POST['member_id'] ?? [];
-        $scores    = $_POST['score'] ?? [];
-        $places    = $_POST['place'] ?? [];
-        $notes     = $_POST['notes'] ?? [];
-        $groupIds  = $_POST['group_id'] ?? [];
+        $locked = in_array($competition['status'], ['zamkniete', 'zakonczone']);
+        if ($locked && Auth::role() !== 'admin') {
+            Session::flash('error', 'Zawody są zamknięte. Tylko administrator może zmieniać wyniki.');
+            $this->redirect("competitions/{$id}/results");
+        }
 
-        foreach ($memberIds as $i => $memberId) {
+        $memberIds  = (array)($_POST['member_ids'] ?? []);
+        $rawResults = (array)($_POST['results'] ?? []);
+
+        foreach ($rawResults as $entryId => $events) {
+            $memberId = (int)($memberIds[$entryId] ?? 0);
             if (!$memberId) continue;
-            $this->competitionModel->upsertResult([
-                'competition_id' => (int)$id,
-                'member_id'      => (int)$memberId,
-                'group_id'       => $groupIds[$i] ?: null,
-                'score'          => $scores[$i] !== '' ? (float)$scores[$i] : null,
-                'place'          => $places[$i] !== '' ? (int)$places[$i] : null,
-                'notes'          => trim($notes[$i] ?? '') ?: null,
-                'entered_by'     => Auth::id(),
-            ]);
+            foreach ((array)$events as $eventId => $fields) {
+                $score      = trim($fields['score'] ?? '');
+                $scoreInner = trim($fields['score_inner'] ?? '');
+                $place      = trim($fields['place'] ?? '');
+                $notes      = trim($fields['notes'] ?? '');
+                if ($score === '' && $place === '' && $notes === '') continue;
+                $this->competitionModel->upsertEventResult([
+                    'competition_event_id' => (int)$eventId,
+                    'member_id'            => $memberId,
+                    'score'                => $score !== '' ? (float)$score : null,
+                    'score_inner'          => $scoreInner !== '' ? (int)$scoreInner : null,
+                    'place'                => $place !== '' ? (int)$place : null,
+                    'notes'                => $notes ?: null,
+                    'entered_by'           => Auth::id(),
+                ]);
+            }
         }
 
         Session::flash('success', 'Wyniki zostały zapisane.');
+        $this->redirect("competitions/{$id}/results");
+    }
+
+    public function unlockResults(string $id): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin']);
+        $db = Database::getInstance();
+        $db->prepare("UPDATE competitions SET status = 'otwarte' WHERE id = ? AND status IN ('zamkniete','zakonczone')")
+           ->execute([(int)$id]);
+        Session::flash('success', 'Zawody odblokowane — wyniki można edytować.');
         $this->redirect("competitions/{$id}/results");
     }
 
