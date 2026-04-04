@@ -15,9 +15,12 @@
             <div class="col-md-2">
                 <select name="license_type" class="form-select form-select-sm">
                     <option value="">Wszystkie typy</option>
-                    <option value="zawodnicza" <?= $filters['license_type']==='zawodnicza' ? 'selected':'' ?>>Zawodnicza</option>
-                    <option value="trenerska"  <?= $filters['license_type']==='trenerska'  ? 'selected':'' ?>>Trenerska</option>
-                    <option value="patent"     <?= $filters['license_type']==='patent'     ? 'selected':'' ?>>Patent</option>
+                    <?php foreach ($licenseTypes ?? [] as $lt): ?>
+                    <option value="<?= e($lt['short_code']) ?>"
+                            <?= $filters['license_type'] === $lt['short_code'] ? 'selected' : '' ?>>
+                        <?= e($lt['name']) ?>
+                    </option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div class="col-md-2">
@@ -63,7 +66,16 @@
                             </a>
                             <br><small class="text-muted"><?= e($lic['member_number']) ?></small>
                         </td>
-                        <td><span class="badge bg-secondary"><?= e($lic['license_type']) ?></span></td>
+                        <td>
+                            <?php
+                            // Show name from licenseTypes if available, fall back to raw value
+                            $ltName = $lic['license_type'];
+                            foreach ($licenseTypes ?? [] as $lt) {
+                                if ($lt['short_code'] === $lic['license_type']) { $ltName = $lt['name']; break; }
+                            }
+                            ?>
+                            <span class="badge bg-secondary"><?= e($ltName) ?></span>
+                        </td>
                         <td><code><?= e($lic['license_number']) ?></code>
                             <?php if ($lic['pzss_qr_code']): ?>
                                 <a href="<?= e($lic['pzss_qr_code']) ?>" target="_blank" title="PZSS">

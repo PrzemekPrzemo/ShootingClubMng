@@ -5,6 +5,7 @@ $navItems = [
     'config/disciplines'        => ['bi-bullseye',     'Dyscypliny'],
     'config/member-classes'     => ['bi-award',        'Klasy zawodników'],
     'config/medical-exam-types' => ['bi-heart-pulse',  'Typy badań'],
+    'config/license-types'      => ['bi-card-checklist','Typy licencji'],
     'config/fee-rates'          => ['bi-cash-coin',    'Cennik składek'],
     'config/users'              => ['bi-people',       'Użytkownicy'],
 ];

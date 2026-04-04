@@ -24,11 +24,24 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Typ licencji <span class="text-danger">*</span></label>
-                    <select name="license_type" class="form-select">
-                        <?php foreach (['zawodnicza','trenerska','patent'] as $t): ?>
-                            <option value="<?= $t ?>" <?= ($license['license_type'] ?? 'zawodnicza') === $t ? 'selected':'' ?>><?= $t ?></option>
+                    <select name="license_type_id" id="licenseTypeSelect" class="form-select" required>
+                        <option value="">— wybierz —</option>
+                        <?php foreach ($licenseTypes ?? [] as $lt): ?>
+                            <?php $sel = isset($license['license_type_id'])
+                                ? $license['license_type_id'] == $lt['id']
+                                : ($license['license_type'] ?? '') === $lt['short_code']; ?>
+                            <option value="<?= $lt['id'] ?>"
+                                    data-months="<?= e($lt['validity_months'] ?? '') ?>"
+                                    <?= $sel ? 'selected' : '' ?>>
+                                <?= e($lt['name']) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
+                    <div class="form-text">
+                        <a href="<?= url('config/license-types') ?>" class="small">
+                            <i class="bi bi-gear"></i> Zarządzaj typami
+                        </a>
+                    </div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Numer licencji <span class="text-danger">*</span></label>
@@ -50,12 +63,12 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Data wydania <span class="text-danger">*</span></label>
-                    <input type="date" name="issue_date" class="form-control"
+                    <input type="date" name="issue_date" id="issueDate" class="form-control"
                            value="<?= e($license['issue_date'] ?? date('Y-m-d')) ?>" required>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Ważna do <span class="text-danger">*</span></label>
-                    <input type="date" name="valid_until" class="form-control"
+                    <input type="date" name="valid_until" id="validUntil" class="form-control"
                            value="<?= e($license['valid_until'] ?? '') ?>" required>
                 </div>
             </div>
@@ -84,6 +97,28 @@
                 <a href="<?= url('licenses') ?>" class="btn btn-outline-secondary">Anuluj</a>
             </div>
         </form>
+<script>
+(function () {
+    var typeSelect = document.getElementById('licenseTypeSelect');
+    var issueDate  = document.getElementById('issueDate');
+    var validUntil = document.getElementById('validUntil');
+
+    function recalc() {
+        var opt = typeSelect.options[typeSelect.selectedIndex];
+        var months = parseInt(opt ? opt.dataset.months : '', 10);
+        if (!months || !issueDate.value) return;
+        var d = new Date(issueDate.value);
+        d.setMonth(d.getMonth() + months);
+        d.setDate(d.getDate() - 1);
+        validUntil.value = d.toISOString().slice(0, 10);
+    }
+
+    typeSelect.addEventListener('change', recalc);
+    issueDate.addEventListener('change', function () {
+        if (typeSelect.value) recalc();
+    });
+})();
+</script>
     </div>
 </div>
 </div>

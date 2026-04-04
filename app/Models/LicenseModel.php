@@ -17,6 +17,7 @@ class LicenseModel extends BaseModel
             array_push($params, $q, $q, $q);
         }
         if (!empty($filters['license_type'])) {
+            // Filter by short_code — works before and after migration_v7
             $where[]  = "l.license_type = ?";
             $params[] = $filters['license_type'];
         }

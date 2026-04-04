@@ -10,6 +10,7 @@ use App\Models\UserModel;
 use App\Models\DisciplineModel;
 use App\Models\MemberClassModel;
 use App\Models\MedicalExamTypeModel;
+use App\Models\LicenseTypeModel;
 use App\Models\RolePermissionModel;
 
 class ConfigController extends BaseController
@@ -448,6 +449,83 @@ class ConfigController extends BaseController
         $this->examTypeModel->toggle((int)$id);
         Session::flash('success', 'Status typu badania zmieniony.');
         $this->redirect('config/medical-exam-types');
+    }
+
+    // ── License types ───────────────────────────────────────────────
+
+    public function licenseTypes(): void
+    {
+        $this->requireRole(['admin', 'zarzad']);
+        $model   = new LicenseTypeModel();
+        $editId  = (int)($_GET['edit'] ?? 0);
+        $editItem = $editId ? $model->findById($editId) : null;
+
+        $this->render('config/license_types', [
+            'title'        => 'Typy licencji',
+            'licenseTypes' => $model->getAll(),
+            'editItem'     => $editItem,
+        ]);
+    }
+
+    public function saveLicenseType(): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad']);
+
+        $model = new LicenseTypeModel();
+        $id    = (int)($_POST['id'] ?? 0);
+        $name  = trim($_POST['name'] ?? '');
+        $code  = strtolower(trim(preg_replace('/\s+/', '_', $_POST['short_code'] ?? '')));
+
+        if (empty($name) || empty($code)) {
+            Session::flash('error', 'Nazwa i kod skrócony są wymagane.');
+            $this->redirect('config/license-types');
+        }
+
+        $data = [
+            'name'            => $name,
+            'short_code'      => $code,
+            'description'     => trim($_POST['description'] ?? '') ?: null,
+            'validity_months' => ($_POST['validity_months'] ?? '') !== '' ? (int)$_POST['validity_months'] : null,
+            'sort_order'      => (int)($_POST['sort_order'] ?? 0),
+            'is_active'       => isset($_POST['is_active']) ? 1 : 0,
+        ];
+
+        if ($id > 0) {
+            $model->saveUpdate($id, $data);
+            Session::flash('success', 'Typ licencji zaktualizowany.');
+        } else {
+            $model->save($data);
+            Session::flash('success', 'Typ licencji dodany.');
+        }
+
+        $this->redirect('config/license-types');
+    }
+
+    public function deleteLicenseType(string $id): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin']);
+        $model = new LicenseTypeModel();
+        $intId = (int)$id;
+
+        if ($model->isUsed($intId)) {
+            $model->toggle($intId);
+            Session::flash('success', 'Typ licencji dezaktywowany (ma powiązane licencje).');
+        } else {
+            $model->delete($intId);
+            Session::flash('success', 'Typ licencji usunięty.');
+        }
+
+        $this->redirect('config/license-types');
+    }
+
+    public function toggleLicenseType(string $id): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad']);
+        (new LicenseTypeModel())->toggle((int)$id);
+        $this->redirect('config/license-types');
     }
 
     // ── Users ────────────────────────────────────────────────────────

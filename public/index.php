@@ -261,6 +261,10 @@ $router->post('/config/member-classes/:id/delete',[\App\Controllers\ConfigContro
 $router->get('/config/medical-exam-types',              [\App\Controllers\ConfigController::class, 'medicalExamTypes']);
 $router->post('/config/medical-exam-types',             [\App\Controllers\ConfigController::class, 'saveMedicalExamType']);
 $router->post('/config/medical-exam-types/:id/delete',  [\App\Controllers\ConfigController::class, 'deleteMedicalExamType']);
+$router->get('/config/license-types',                   [\App\Controllers\ConfigController::class, 'licenseTypes']);
+$router->post('/config/license-types',                  [\App\Controllers\ConfigController::class, 'saveLicenseType']);
+$router->post('/config/license-types/:id/delete',       [\App\Controllers\ConfigController::class, 'deleteLicenseType']);
+$router->post('/config/license-types/:id/toggle',       [\App\Controllers\ConfigController::class, 'toggleLicenseType']);
 // Fee rates (cennik składek)
 $router->get('/config/fee-rates',                       [\App\Controllers\FeeConfigController::class, 'index']);
 $router->post('/config/fee-rates/type',                 [\App\Controllers\FeeConfigController::class, 'saveType']);

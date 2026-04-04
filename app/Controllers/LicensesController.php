@@ -6,12 +6,14 @@ use App\Helpers\Auth;
 use App\Helpers\Csrf;
 use App\Helpers\Session;
 use App\Models\LicenseModel;
+use App\Models\LicenseTypeModel;
 use App\Models\MemberModel;
 use App\Models\DisciplineModel;
 
 class LicensesController extends BaseController
 {
     private LicenseModel $licenseModel;
+    private LicenseTypeModel $licenseTypeModel;
     private MemberModel $memberModel;
     private DisciplineModel $disciplineModel;
 
@@ -19,9 +21,10 @@ class LicensesController extends BaseController
     {
         parent::__construct();
         $this->requireLogin();
-        $this->licenseModel    = new LicenseModel();
-        $this->memberModel     = new MemberModel();
-        $this->disciplineModel = new DisciplineModel();
+        $this->licenseModel     = new LicenseModel();
+        $this->licenseTypeModel = new LicenseTypeModel();
+        $this->memberModel      = new MemberModel();
+        $this->disciplineModel  = new DisciplineModel();
     }
 
     public function index(): void
@@ -36,9 +39,10 @@ class LicensesController extends BaseController
         $result = $this->licenseModel->search($filters, $page);
 
         $this->render('licenses/index', [
-            'title'   => 'Licencje PZSS',
-            'result'  => $result,
-            'filters' => $filters,
+            'title'        => 'Licencje PZSS',
+            'result'       => $result,
+            'filters'      => $filters,
+            'licenseTypes' => $this->licenseTypeModel->getActive(),
         ]);
     }
 
@@ -50,12 +54,13 @@ class LicensesController extends BaseController
         }
 
         $this->render('licenses/form', [
-            'title'       => 'Dodaj licencję',
-            'license'     => null,
-            'mode'        => 'create',
-            'members'     => $this->memberModel->getAllActive(),
-            'disciplines' => $this->disciplineModel->getActive(),
-            'preselected' => $preselectedMember,
+            'title'        => 'Dodaj licencję',
+            'license'      => null,
+            'mode'         => 'create',
+            'members'      => $this->memberModel->getAllActive(),
+            'disciplines'  => $this->disciplineModel->getActive(),
+            'licenseTypes' => $this->licenseTypeModel->getActive(),
+            'preselected'  => $preselectedMember,
         ]);
     }
 
@@ -84,12 +89,13 @@ class LicensesController extends BaseController
         }
 
         $this->render('licenses/form', [
-            'title'       => 'Edytuj licencję',
-            'license'     => $license,
-            'mode'        => 'edit',
-            'members'     => $this->memberModel->getAllActive(),
-            'disciplines' => $this->disciplineModel->getActive(),
-            'preselected' => null,
+            'title'        => 'Edytuj licencję',
+            'license'      => $license,
+            'mode'         => 'edit',
+            'members'      => $this->memberModel->getAllActive(),
+            'disciplines'  => $this->disciplineModel->getActive(),
+            'licenseTypes' => $this->licenseTypeModel->getActive(),
+            'preselected'  => null,
         ]);
     }
 
@@ -122,17 +128,25 @@ class LicensesController extends BaseController
 
     private function collectData(): array
     {
+        $typeId    = ($_POST['license_type_id'] ?? '') !== '' ? (int)$_POST['license_type_id'] : null;
+        // Resolve short_code for backward-compat license_type column
+        $typeCode  = 'zawodnicza';
+        if ($typeId) {
+            $lt = (new LicenseTypeModel())->findById($typeId);
+            $typeCode = $lt['short_code'] ?? 'zawodnicza';
+        }
         return [
-            'member_id'      => (int)($_POST['member_id'] ?? 0),
-            'license_type'   => $_POST['license_type'] ?? 'zawodnicza',
-            'license_number' => trim($_POST['license_number'] ?? ''),
-            'discipline_id'  => $_POST['discipline_id'] ?: null,
-            'issue_date'     => $_POST['issue_date'] ?? '',
-            'valid_until'    => $_POST['valid_until'] ?? '',
-            'pzss_qr_code'   => trim($_POST['pzss_qr_code'] ?? '') ?: null,
-            'status'         => $_POST['status'] ?? 'aktywna',
-            'notes'          => trim($_POST['notes'] ?? '') ?: null,
-            'created_by'     => Auth::id(),
+            'member_id'       => (int)($_POST['member_id'] ?? 0),
+            'license_type'    => $typeCode,
+            'license_type_id' => $typeId,
+            'license_number'  => trim($_POST['license_number'] ?? ''),
+            'discipline_id'   => $_POST['discipline_id'] ?: null,
+            'issue_date'      => $_POST['issue_date'] ?? '',
+            'valid_until'     => $_POST['valid_until'] ?? '',
+            'pzss_qr_code'    => trim($_POST['pzss_qr_code'] ?? '') ?: null,
+            'status'          => $_POST['status'] ?? 'aktywna',
+            'notes'           => trim($_POST['notes'] ?? '') ?: null,
+            'created_by'      => Auth::id(),
         ];
     }
 
