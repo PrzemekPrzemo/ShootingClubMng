@@ -261,7 +261,12 @@ $router->get('/config/categories',      [\App\Controllers\ConfigController::clas
 $router->post('/config/categories',     [\App\Controllers\ConfigController::class, 'saveCategory']);
 $router->post('/config/categories/:id/delete',    [\App\Controllers\ConfigController::class, 'deleteCategory']);
 // Event templates overview
-$router->get('/config/event-templates', [\App\Controllers\ConfigController::class, 'eventTemplates']);
+$router->get('/config/event-templates',          [\App\Controllers\ConfigController::class,       'eventTemplates']);
+$router->get('/config/notifications',            [\App\Controllers\ConfigController::class,       'notifications']);
+$router->post('/config/notifications/settings',  [\App\Controllers\ConfigController::class,       'saveNotificationSettings']);
+$router->post('/config/notifications/populate/:type', [\App\Controllers\NotificationsController::class, 'populate']);
+$router->post('/config/notifications/send',      [\App\Controllers\NotificationsController::class, 'send']);
+$router->post('/config/notifications/clear-sent',[\App\Controllers\NotificationsController::class, 'clearSent']);
 // Disciplines
 $router->get('/config/disciplines',               [\App\Controllers\ConfigController::class, 'disciplines']);
 $router->post('/config/disciplines',              [\App\Controllers\ConfigController::class, 'saveDiscipline']);

@@ -558,6 +558,50 @@ class ConfigController extends BaseController
         return $errors;
     }
 
+    // ── Notifications / Email queue ──────────────────────────────────
+
+    public function notifications(): void
+    {
+        $settings = (new SettingModel())->getAll();
+        $queueModel = new \App\Models\EmailQueueModel();
+
+        $filters = [
+            'status' => $_GET['status'] ?? '',
+            'type'   => $_GET['type']   ?? '',
+        ];
+        $page = max(1, (int)($_GET['page'] ?? 1));
+
+        $this->render('config/notifications', [
+            'title'       => 'Powiadomienia e-mail',
+            'settings'    => $settings,
+            'counts'      => $queueModel->countByStatus(),
+            'queueResult' => $queueModel->getRecent($filters, $page),
+            'filters'     => $filters,
+        ]);
+    }
+
+    public function saveNotificationSettings(): void
+    {
+        Csrf::verify();
+
+        $allowed = [
+            'mail_from_email',
+            'mail_from_name',
+            'notify_competition_days',
+            'notify_license_days',
+            'notify_medical_days',
+        ];
+
+        $data = [];
+        foreach ($allowed as $key) {
+            $data[$key] = trim($_POST[$key] ?? '');
+        }
+
+        $this->settingModel->saveMany($data);
+        Session::flash('success', 'Ustawienia powiadomień zapisane.');
+        $this->redirect('config/notifications');
+    }
+
     // ── Event templates overview ─────────────────────────────────────
 
     public function eventTemplates(): void

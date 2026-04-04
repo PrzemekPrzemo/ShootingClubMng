@@ -44,6 +44,11 @@
             <i class="bi bi-people"></i> Użytkownicy
         </a>
     </div>
+    <div class="col-auto">
+        <a href="<?= url('config/notifications') ?>" class="btn btn-outline-secondary btn-sm <?= str_contains($_SERVER['REQUEST_URI'],'/notifications') ? 'active':'' ?>">
+            <i class="bi bi-bell"></i> Powiadomienia
+        </a>
+    </div>
 </div>
 
 <div class="row">
