@@ -106,7 +106,9 @@
             transition: color .14s, background .14s;
         }
         .sb-collapse-btn:hover { color: #fff; background: rgba(255,255,255,.1); }
-        #sidebar.collapsed .sb-collapse-btn { display: none; }
+        /* collapsed: button stays visible, shifts to top-center as the only footer element */
+        #sidebar.collapsed .sb-footer { justify-content: center; }
+        #sidebar.collapsed .sb-collapse-btn { display: flex; }
 
         /* ── Page area (right of sidebar) ── */
         #page-area {
@@ -335,12 +337,23 @@ function isActive(string $mod, string $uri): bool {
     overlay.addEventListener('click', closeMobile);
 
     // Desktop collapse (icon-only mode)
+    function updateCollapseBtn() {
+        if (!dskToggle) return;
+        var isCollapsed = sidebar.classList.contains('collapsed');
+        dskToggle.querySelector('i').className = isCollapsed
+            ? 'bi bi-chevron-right'
+            : 'bi bi-chevron-left';
+        dskToggle.title = isCollapsed ? 'Rozwiń menu' : 'Zwiń menu';
+    }
+
     var collapsed = localStorage.getItem('sbCollapsed') === '1';
     if (collapsed) sidebar.classList.add('collapsed');
+    updateCollapseBtn();
 
     dskToggle && dskToggle.addEventListener('click', function () {
         sidebar.classList.toggle('collapsed');
         localStorage.setItem('sbCollapsed', sidebar.classList.contains('collapsed') ? '1' : '0');
+        updateCollapseBtn();
     });
 })();
 </script>
