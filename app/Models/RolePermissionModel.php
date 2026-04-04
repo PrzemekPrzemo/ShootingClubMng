@@ -108,6 +108,15 @@ class RolePermissionModel extends BaseModel
                 foreach ($rows as $r) {
                     self::$cache[$r['role']][] = $r['module'];
                 }
+                // Auto-add any modules from DEFAULTS that are missing from DB
+                // (handles newly added modules before admin saves permissions)
+                foreach (self::DEFAULTS as $r => $modules) {
+                    foreach ($modules as $mod) {
+                        if (isset(self::MODULES[$mod]) && !in_array($mod, self::$cache[$r] ?? [], true)) {
+                            self::$cache[$r][] = $mod;
+                        }
+                    }
+                }
             } catch (\PDOException) {
                 self::$cache = self::DEFAULTS;
             }
