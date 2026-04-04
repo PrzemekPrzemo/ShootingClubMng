@@ -121,7 +121,14 @@
 </div>
 
 <!-- ── Podsumowanie + przycisk ──────────────────────────────────── -->
-<div class="card mt-4">
+<?php if (isset($entryFee) && $entryFee > 0): ?>
+<div class="alert alert-info mt-3 mb-0 py-2">
+    <i class="bi bi-cash-coin"></i>
+    Opłata startowa: <strong><?= format_money($entryFee) ?></strong> / zawodnik.
+    Przed drukiem metryczek system zapyta o potwierdzenie opłaty dla każdego niezapłaconego zawodnika.
+</div>
+<?php endif; ?>
+<div class="card mt-3">
     <div class="card-body d-flex align-items-center gap-4">
         <div class="text-muted">
             Zostanie wygenerowanych:
@@ -133,7 +140,7 @@
             </span>
         </div>
         <div class="ms-auto d-flex gap-2">
-            <button type="submit" class="btn btn-danger" id="printBtn" disabled>
+            <button type="button" class="btn btn-danger" id="printBtn" disabled>
                 <i class="bi bi-printer"></i> Otwórz podgląd wydruku
             </button>
         </div>
@@ -143,21 +150,65 @@
     </div>
 </div>
 
+<!-- Payment confirmation modal (shown per unpaid member) -->
+<?php if (isset($entryFee) && $entryFee > 0): ?>
+<div class="modal fade" id="payModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title"><i class="bi bi-cash-coin"></i> Potwierdzenie opłaty startowej</h5>
+            </div>
+            <div class="modal-body fs-5 text-center py-4" id="payModalBody"></div>
+            <div class="modal-footer justify-content-center gap-3">
+                <button type="button" class="btn btn-success btn-lg px-5" id="payYes">
+                    <i class="bi bi-check-circle"></i> Tak, opłacono
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-lg px-4" id="payNo">
+                    <i class="bi bi-x-circle"></i> Nie
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="alert alert-danger mt-3 d-none" id="payBlockAlert">
+    <i class="bi bi-exclamation-triangle"></i>
+    <strong>Dokonaj opłaty i spróbuj ponownie.</strong>
+    Metryczka nie może być wydrukowana bez uiszczonej opłaty startowej.
+</div>
+<?php endif; ?>
+
 </form>
 <?php endif; ?>
 
 <script>
+// Payment status map: member_id → {entryId, paid, name, amount}
+var feeData = <?php
+    $feeMap = [];
+    if (isset($entryFee) && $entryFee > 0) {
+        foreach ($entries as $e) {
+            $disc   = isset($e['discount']) && $e['discount'] > 0 ? (float)$e['discount'] : 0;
+            $amount = max(0, $entryFee - $disc);
+            $feeMap[$e['member_id']] = [
+                'entryId' => $e['id'],
+                'paid'    => !empty($e['start_fee_paid']),
+                'name'    => $e['last_name'] . ' ' . $e['first_name'],
+                'amount'  => $amount,
+                'csrf'    => csrf_token(),
+            ];
+        }
+    }
+    echo json_encode($feeMap);
+?>;
+
 // Pre-selection from URL query params (?e[]=ID&m[]=ID)
 (function () {
-    var preEvents   = <?= json_encode(array_map('intval', (array)($_GET['e'] ?? []))) ?>;
-    var preMembers  = <?= json_encode(array_map('intval', (array)($_GET['m'] ?? []))) ?>;
-
+    var preEvents  = <?= json_encode(array_map('intval', (array)($_GET['e'] ?? []))) ?>;
+    var preMembers = <?= json_encode(array_map('intval', (array)($_GET['m'] ?? []))) ?>;
     if (preEvents.length) {
         preEvents.forEach(function (id) {
             var cb = document.getElementById('e_' + id);
             if (cb) cb.checked = true;
         });
-        // When coming from a specific event, auto-select all members for convenience
         if (preMembers.length === 0) {
             document.querySelectorAll('.member-cb').forEach(function (cb) { cb.checked = true; });
         }
@@ -171,9 +222,7 @@
 })();
 
 function toggleAll(name, checked) {
-    document.querySelectorAll('input[name="' + name + '"]').forEach(cb => {
-        cb.checked = checked;
-    });
+    document.querySelectorAll('input[name="' + name + '"]').forEach(cb => { cb.checked = checked; });
     updateCount();
 }
 
@@ -181,7 +230,6 @@ function updateCount() {
     const members = document.querySelectorAll('.member-cb:checked').length;
     const events  = document.querySelectorAll('.event-cb:checked').length;
     const total   = members * events;
-
     document.getElementById('memberCount').textContent = members;
     document.getElementById('eventCount').textContent  = events;
     document.getElementById('selMembers').textContent  = members;
@@ -190,9 +238,79 @@ function updateCount() {
     document.getElementById('printBtn').disabled       = total === 0;
 }
 
-document.querySelectorAll('.member-cb, .event-cb').forEach(cb => {
-    cb.addEventListener('change', updateCount);
+document.querySelectorAll('.member-cb, .event-cb').forEach(cb => { cb.addEventListener('change', updateCount); });
+updateCount();
+
+// ── Payment confirmation before print ──────────────────────────
+document.getElementById('printBtn').addEventListener('click', function () {
+    var alert = document.getElementById('payBlockAlert');
+    if (alert) alert.classList.add('d-none');
+
+    // Collect unpaid selected members (only if fee is set)
+    var unpaid = [];
+    if (Object.keys(feeData).length > 0) {
+        document.querySelectorAll('.member-cb:checked').forEach(function (cb) {
+            var mid = parseInt(cb.value);
+            if (feeData[mid] && !feeData[mid].paid) {
+                unpaid.push(mid);
+            }
+        });
+    }
+
+    if (unpaid.length === 0) {
+        // All paid (or no fee) — submit print form
+        document.getElementById('scorecardForm').submit();
+        return;
+    }
+
+    // Process unpaid members one by one
+    processNext(unpaid, 0);
 });
 
-updateCount();
+function formatPLN(n) {
+    return parseFloat(n).toFixed(2).replace('.', ',') + ' zł';
+}
+
+function processNext(list, idx) {
+    if (idx >= list.length) {
+        // All confirmed → print
+        document.getElementById('scorecardForm').submit();
+        return;
+    }
+
+    var mid  = list[idx];
+    var info = feeData[mid];
+    var modal = bootstrap.Modal.getOrCreate(document.getElementById('payModal'));
+    document.getElementById('payModalBody').innerHTML =
+        'Czy zawodnik <strong>' + info.name + '</strong><br>uiścił opłatę startową w wysokości<br>' +
+        '<span class="text-danger fw-bold fs-3">' + formatPLN(info.amount) + '</span>?';
+
+    document.getElementById('payYes').onclick = function () {
+        modal.hide();
+        // AJAX confirm payment
+        fetch('<?= url('competitions/entries') ?>/' + info.entryId + '/confirm-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: '_csrf=' + encodeURIComponent(info.csrf)
+        })
+        .then(function (r) { return r.json(); })
+        .then(function () {
+            feeData[mid].paid = true;
+            processNext(list, idx + 1);
+        })
+        .catch(function () {
+            feeData[mid].paid = true;
+            processNext(list, idx + 1);
+        });
+    };
+
+    document.getElementById('payNo').onclick = function () {
+        modal.hide();
+        var alert = document.getElementById('payBlockAlert');
+        if (alert) alert.classList.remove('d-none');
+        // Abort print — do not proceed
+    };
+
+    modal.show();
+}
 </script>

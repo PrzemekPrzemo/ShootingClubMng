@@ -33,15 +33,22 @@
                 </div>
             </div>
             <div class="row g-3 mb-3">
-                <div class="col-md-8">
+                <div class="col-md-6">
                     <label class="form-label">Miejsce</label>
                     <input type="text" name="location" class="form-control"
                            value="<?= e($competition['location'] ?? '') ?>">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Maks. zgłoszeń</label>
                     <input type="number" name="max_entries" class="form-control" min="1"
                            value="<?= e($competition['max_entries'] ?? '') ?>">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Opłata startowa (zł)</label>
+                    <input type="number" name="entry_fee" class="form-control" min="0" step="0.01"
+                           placeholder="np. 30.00"
+                           value="<?= e($competition['entry_fee'] ?? '') ?>">
+                    <div class="form-text">Pozostaw puste jeśli bezpłatne.</div>
                 </div>
             </div>
             <div class="mb-3">

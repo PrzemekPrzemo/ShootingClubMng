@@ -301,10 +301,12 @@ $router->post('/portal/competitions/:id/register',   [\App\Controllers\MemberPor
 $router->post('/portal/entries/:id/cancel',          [\App\Controllers\MemberPortalController::class, 'cancelRegistration']);
 $router->get('/portal/fees',                         [\App\Controllers\MemberPortalController::class, 'fees']);
 
-// Entry approval (staff)
-$router->post('/competitions/entries/:id/approve',   [\App\Controllers\CompetitionsController::class, 'approveEntry']);
-$router->post('/competitions/entries/:id/reject',    [\App\Controllers\CompetitionsController::class, 'rejectEntry']);
-$router->post('/competitions/entries/:id/fee',       [\App\Controllers\CompetitionsController::class, 'toggleStartFee']);
+// Entry approval + fee management (staff)
+$router->post('/competitions/entries/:id/approve',          [\App\Controllers\CompetitionsController::class, 'approveEntry']);
+$router->post('/competitions/entries/:id/reject',           [\App\Controllers\CompetitionsController::class, 'rejectEntry']);
+$router->post('/competitions/entries/:id/fee',              [\App\Controllers\CompetitionsController::class, 'toggleStartFee']);
+$router->post('/competitions/entries/:id/confirm-payment',  [\App\Controllers\CompetitionsController::class, 'confirmPayment']);
+$router->post('/competitions/entries/:id/discount',         [\App\Controllers\CompetitionsController::class, 'setDiscount']);
 
 // Notifications
 $router->post('/dashboard/notifications/read',       [\App\Controllers\DashboardController::class, 'markNotificationsRead']);

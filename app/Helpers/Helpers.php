@@ -48,6 +48,13 @@ if (!function_exists('csrf_field')) {
     }
 }
 
+if (!function_exists('csrf_token')) {
+    function csrf_token(): string
+    {
+        return \App\Helpers\Csrf::token();
+    }
+}
+
 if (!function_exists('format_date')) {
     function format_date(?string $date, string $format = 'd.m.Y'): string
     {

@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Helpers\Auth;
 use App\Helpers\Csrf;
+use App\Helpers\Database;
 use App\Helpers\Session;
 use App\Models\CompetitionModel;
 use App\Models\MemberModel;
@@ -136,6 +137,7 @@ class CompetitionsController extends BaseController
             'entries'     => $this->competitionModel->getEntries((int)$id),
             'groups'      => $this->competitionModel->getGroups((int)$id),
             'members'     => $this->memberModel->getAllActive(),
+            'entryFee'    => isset($competition['entry_fee']) ? (float)$competition['entry_fee'] : null,
         ]);
     }
 
@@ -400,6 +402,7 @@ class CompetitionsController extends BaseController
             'competition' => $competition,
             'entries'     => $entries,
             'events'      => $events,
+            'entryFee'    => isset($competition['entry_fee']) ? (float)$competition['entry_fee'] : null,
         ]);
     }
 
@@ -540,6 +543,99 @@ class CompetitionsController extends BaseController
         $this->redirect('competitions');
     }
 
+    /**
+     * Confirms payment for an entry (called from scorecard payment dialog or entries list).
+     * Sets start_fee_paid = 1 AND creates a record in payments table.
+     * POST /competitions/entries/:eid/confirm-payment
+     */
+    public function confirmPayment(string $eid): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad', 'instruktor']);
+
+        $entryId = (int)$eid;
+        $db      = Database::getInstance();
+
+        // Load entry with competition entry_fee and member info
+        $stmt = $db->prepare("
+            SELECT ce.*, c.entry_fee, c.name AS competition_name,
+                   m.first_name, m.last_name
+            FROM competition_entries ce
+            JOIN competitions c ON c.id = ce.competition_id
+            JOIN members m ON m.id = ce.member_id
+            WHERE ce.id = ?
+        ");
+        $stmt->execute([$entryId]);
+        $entry = $stmt->fetch();
+
+        if (!$entry) {
+            $this->json(['ok' => false, 'error' => 'Nie znaleziono zgłoszenia.'], 404);
+        }
+
+        // Mark as paid
+        $db->prepare("UPDATE competition_entries SET start_fee_paid = 1 WHERE id = ?")
+           ->execute([$entryId]);
+
+        // Create payment record if there is a fee
+        $fee      = isset($entry['entry_fee']) ? (float)$entry['entry_fee'] : 0.0;
+        $discount = isset($entry['discount'])  ? (float)$entry['discount']  : 0.0;
+        $amount   = max(0, $fee - $discount);
+
+        if ($amount > 0) {
+            // Find or auto-create payment type "Opłata startowa"
+            $ptStmt = $db->prepare("SELECT id FROM payment_types WHERE name = 'Opłata startowa' LIMIT 1");
+            $ptStmt->execute();
+            $pt = $ptStmt->fetch();
+
+            if (!$pt) {
+                $db->prepare("INSERT INTO payment_types (name, category, description, is_active, is_per_class, sort_order) VALUES ('Opłata startowa','inne','Opłata za udział w zawodach',1,0,99)")
+                   ->execute();
+                $ptId = (int)$db->lastInsertId();
+            } else {
+                $ptId = (int)$pt['id'];
+            }
+
+            try {
+                $db->prepare("
+                    INSERT INTO payments
+                        (member_id, payment_type_id, amount, payment_date, period_year, reference, notes, registered_by)
+                    VALUES (?, ?, ?, CURDATE(), YEAR(CURDATE()), ?, ?, ?)
+                ")->execute([
+                    $entry['member_id'],
+                    $ptId,
+                    $amount,
+                    'ZAWODY-' . $entry['competition_id'],
+                    'Opłata startowa: ' . $entry['competition_name'],
+                    Auth::id(),
+                ]);
+            } catch (\PDOException) {
+                // non-critical, payment still marked as paid
+            }
+        }
+
+        $this->json(['ok' => true, 'amount' => $amount]);
+    }
+
+    /**
+     * Set individual discount for an entry.
+     * POST /competitions/entries/:eid/discount
+     */
+    public function setDiscount(string $eid): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad', 'instruktor']);
+        $discount = trim($_POST['discount'] ?? '');
+        $val      = $discount !== '' ? max(0, (float)$discount) : null;
+        try {
+            \App\Helpers\Database::getInstance()
+                ->prepare("UPDATE competition_entries SET discount = ? WHERE id = ?")
+                ->execute([$val, (int)$eid]);
+        } catch (\PDOException) {}
+        $referer = $_SERVER['HTTP_REFERER'] ?? null;
+        if ($referer) { header('Location: ' . $referer); exit; }
+        $this->redirect('competitions');
+    }
+
     // ── Private helpers ──────────────────────────────────────────────
 
     private function getCompetition(int $id): array
@@ -554,6 +650,7 @@ class CompetitionsController extends BaseController
 
     private function collectData(): array
     {
+        $fee = trim($_POST['entry_fee'] ?? '');
         return [
             'name'             => trim($_POST['name'] ?? ''),
             'discipline_id'    => $_POST['discipline_id'] ?: null,
@@ -562,6 +659,7 @@ class CompetitionsController extends BaseController
             'description'      => trim($_POST['description'] ?? '') ?: null,
             'status'           => $_POST['status'] ?? 'planowane',
             'max_entries'      => $_POST['max_entries'] ?: null,
+            'entry_fee'        => $fee !== '' ? (float)$fee : null,
             'created_by'       => Auth::id(),
         ];
     }

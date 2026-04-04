@@ -77,21 +77,44 @@ class CompetitionModel extends BaseModel
     // Entries
     public function getEntries(int $competitionId): array
     {
-        $stmt = $this->db->prepare("
-            SELECT ce.*, m.first_name, m.last_name, m.member_number,
-                   cg.name AS group_name, cg.start_time AS group_start_time,
-                   mac.name AS age_category_name,
-                   mc.name AS member_class_name, mc.short_code AS member_class_code
-            FROM competition_entries ce
-            JOIN members m ON m.id = ce.member_id
-            LEFT JOIN competition_groups cg ON cg.id = ce.group_id
-            LEFT JOIN member_age_categories mac ON mac.id = m.age_category_id
-            LEFT JOIN member_classes mc ON mc.id = m.member_class_id
-            WHERE ce.competition_id = ?
-            ORDER BY cg.start_time, m.last_name, m.first_name
-        ");
-        $stmt->execute([$competitionId]);
-        return $stmt->fetchAll();
+        try {
+            $stmt = $this->db->prepare("
+                SELECT ce.*,
+                       m.first_name, m.last_name, m.member_number,
+                       cg.name AS group_name, cg.start_time AS group_start_time,
+                       mac.name AS age_category_name,
+                       mc.name AS member_class_name, mc.short_code AS member_class_code
+                FROM competition_entries ce
+                JOIN members m ON m.id = ce.member_id
+                LEFT JOIN competition_groups cg ON cg.id = ce.group_id
+                LEFT JOIN member_age_categories mac ON mac.id = m.age_category_id
+                LEFT JOIN member_classes mc ON mc.id = m.member_class_id
+                WHERE ce.competition_id = ?
+                ORDER BY cg.start_time, m.last_name, m.first_name
+            ");
+            $stmt->execute([$competitionId]);
+            return $stmt->fetchAll();
+        } catch (\PDOException) {
+            // Fallback without new columns if migration not run
+            $stmt = $this->db->prepare("
+                SELECT ce.id, ce.competition_id, ce.member_id, ce.group_id, ce.class,
+                       ce.status, ce.registered_by, ce.registered_at,
+                       NULL AS start_fee_paid, NULL AS discount,
+                       m.first_name, m.last_name, m.member_number,
+                       cg.name AS group_name, cg.start_time AS group_start_time,
+                       mac.name AS age_category_name,
+                       mc.name AS member_class_name, mc.short_code AS member_class_code
+                FROM competition_entries ce
+                JOIN members m ON m.id = ce.member_id
+                LEFT JOIN competition_groups cg ON cg.id = ce.group_id
+                LEFT JOIN member_age_categories mac ON mac.id = m.age_category_id
+                LEFT JOIN member_classes mc ON mc.id = m.member_class_id
+                WHERE ce.competition_id = ?
+                ORDER BY cg.start_time, m.last_name, m.first_name
+            ");
+            $stmt->execute([$competitionId]);
+            return $stmt->fetchAll();
+        }
     }
 
     public function addEntry(array $data): int
