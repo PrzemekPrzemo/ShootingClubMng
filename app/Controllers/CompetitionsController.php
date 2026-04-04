@@ -164,14 +164,18 @@ class CompetitionsController extends BaseController
             $this->competitionModel->addEntry([
                 'competition_id' => (int)$id,
                 'member_id'      => $memberId,
-                'group_id'       => $_POST['group_id'] ?: null,
-                'class'          => $_POST['class'] ?: null,
+                'group_id'       => ($_POST['group_id'] ?? '') ?: null,
+                'class'          => ($_POST['class'] ?? '') ?: null,
                 'status'         => 'zgloszony',
                 'registered_by'  => Auth::id(),
             ]);
             Session::flash('success', 'Zawodnik został zgłoszony.');
-        } catch (\Throwable) {
-            Session::flash('error', 'Ten zawodnik jest już zgłoszony.');
+        } catch (\PDOException $e) {
+            if (str_contains($e->getMessage(), 'Duplicate') || $e->getCode() == 23000) {
+                Session::flash('error', 'Ten zawodnik jest już zgłoszony.');
+            } else {
+                throw $e;
+            }
         }
 
         $this->redirect("competitions/{$id}/entries");
