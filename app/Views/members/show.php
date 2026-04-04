@@ -132,17 +132,34 @@
             </div>
         </div>
 
-        <!-- Badania (tylko wyczynowi) -->
-        <?php if ($member['member_type'] === 'wyczynowy'): ?>
+        <!-- Badania lekarskie -->
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between">
-                <strong>Badania sportowe</strong>
+                <strong>Badania lekarskie</strong>
+                <?php if (in_array($authUser['role'], ['admin','zarzad'])): ?>
                 <a href="<?= url('members/' . $member['id'] . '/exams/create') ?>" class="btn btn-sm btn-outline-info py-0">
                     <i class="bi bi-plus"></i>
                 </a>
+                <?php endif; ?>
             </div>
             <div class="card-body">
-                <?php if ($medical): ?>
+                <?php if (!empty($examMatrix)): ?>
+                    <?php foreach ($examMatrix as $row): ?>
+                    <?php
+                    $statusCls = ['ok'=>'success','warn'=>'warning','expired'=>'danger','missing'=>'secondary'][$row['status']] ?? 'secondary';
+                    ?>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="text-muted"><?= e($row['type_name']) ?></small>
+                        <span class="badge bg-<?= $statusCls ?>">
+                            <?php if ($row['status'] === 'missing'): ?>Brak
+                            <?php elseif ($row['status'] === 'expired'): ?>Wygasłe
+                            <?php elseif ($row['status'] === 'warn'): ?>za <?= $row['days_left'] ?> dni
+                            <?php else: ?>OK<?php endif; ?>
+                        </span>
+                    </div>
+                    <?php endforeach; ?>
+                    <a href="<?= url('members/' . $member['id'] . '/exams') ?>" class="small">Historia badań</a>
+                <?php elseif ($medical): ?>
                     <?php $days = days_until($medical['valid_until']); ?>
                     <p class="mb-1">Badanie: <?= format_date($medical['exam_date']) ?></p>
                     <p class="mb-0">
@@ -153,11 +170,11 @@
                     </p>
                     <a href="<?= url('members/' . $member['id'] . '/exams') ?>" class="small">Historia badań</a>
                 <?php else: ?>
-                    <p class="text-muted mb-0">Brak badań sportowych.</p>
+                    <p class="text-muted mb-0 small">Brak badań lekarskich.</p>
+                    <a href="<?= url('members/' . $member['id'] . '/exams') ?>" class="small">Zarządzaj badaniami</a>
                 <?php endif; ?>
             </div>
         </div>
-        <?php endif; ?>
 
         <!-- Danger zone -->
         <?php if (in_array($authUser['role'], ['admin','zarzad'])): ?>

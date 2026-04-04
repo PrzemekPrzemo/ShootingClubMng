@@ -42,6 +42,14 @@
                        href="<?= url('competitions') ?>"><i class="bi bi-trophy"></i> Zawody</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/judges') ? 'active' : '' ?>"
+                       href="<?= url('judges') ?>"><i class="bi bi-person-badge"></i> Sędziowie</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/club-fees') ? 'active' : '' ?>"
+                       href="<?= url('club-fees') ?>"><i class="bi bi-bank"></i> Opłaty PZSS</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/reports') ? 'active' : '' ?>"
                        href="<?= url('reports') ?>"><i class="bi bi-file-earmark-bar-graph"></i> Raporty</a>
                 </li>

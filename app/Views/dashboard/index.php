@@ -80,22 +80,23 @@
     </div>
     <?php endif; ?>
 
-    <!-- Alert: Badania sportowe -->
+    <!-- Alert: Badania lekarskie -->
     <?php if ($expiringMedicals): ?>
     <div class="col-lg-6">
-        <div class="card border-<?= count($expiringMedicals) > 0 ? 'danger' : 'success' ?>">
-            <div class="card-header bg-<?= count($expiringMedicals) > 0 ? 'danger' : 'success' ?> text-white">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
                 <i class="bi bi-heart-pulse"></i>
-                <strong>Badania sportowe — wyczynowi</strong>
+                <strong>Badania lekarskie — wygasające</strong>
                 <span class="badge bg-light text-dark ms-2"><?= count($expiringMedicals) ?></span>
             </div>
             <div class="card-body p-0">
                 <table class="table table-sm mb-0">
-                    <thead><tr><th>Zawodnik</th><th>Ważne do</th><th>Termin</th></tr></thead>
+                    <thead><tr><th>Zawodnik</th><th>Typ</th><th>Ważne do</th><th>Termin</th></tr></thead>
                     <tbody>
                     <?php foreach (array_slice($expiringMedicals, 0, 8) as $med): ?>
                         <tr>
                             <td><a href="<?= url('members/' . $med['member_id'] . '/exams') ?>"><?= e($med['last_name']) ?> <?= e($med['first_name']) ?></a></td>
+                            <td class="small text-muted"><?= e($med['exam_type_name'] ?? '—') ?></td>
                             <td><small><?= format_date($med['valid_until']) ?></small></td>
                             <td>
                                 <span class="badge bg-<?= alert_class($med['days_left'], $alertMedDays) ?>">
@@ -106,6 +107,68 @@
                     <?php endforeach; ?>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Alert: Licencje sędziowskie -->
+    <?php if (!empty($expiringJudgeLic)): ?>
+    <div class="col-lg-6">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <i class="bi bi-person-badge"></i>
+                <strong>Licencje sędziowskie — wygasające</strong>
+                <span class="badge bg-dark ms-2"><?= count($expiringJudgeLic) ?></span>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Sędzia</th><th>Klasa</th><th>Ważna do</th><th>Termin</th></tr></thead>
+                    <tbody>
+                    <?php foreach (array_slice($expiringJudgeLic, 0, 6) as $jl): ?>
+                        <tr>
+                            <td><a href="<?= url('judges') ?>"><?= e($jl['last_name']) ?> <?= e($jl['first_name']) ?></a></td>
+                            <td><span class="badge bg-dark"><?= e($jl['judge_class']) ?></span></td>
+                            <td><small><?= format_date($jl['valid_until']) ?></small></td>
+                            <td>
+                                <span class="badge bg-<?= alert_class($jl['days_left'], 60) ?>">
+                                    <?= $jl['days_left'] >= 0 ? 'za ' . $jl['days_left'] . ' dni' : 'WYGASŁA' ?>
+                                </span>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Alert: Opłaty PZSS/PomZSS -->
+    <?php if ($clubFeesPending > 0): ?>
+    <div class="col-lg-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <i class="bi bi-bank"></i>
+                <strong>Opłaty PZSS/PomZSS <?= $currentYear ?></strong>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <span>Należne:</span>
+                    <strong><?= format_money($clubFeesTotalDue) ?></strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Zapłacono:</span>
+                    <strong class="text-success"><?= format_money($clubFeesTotalPaid) ?></strong>
+                </div>
+                <hr class="my-2">
+                <div class="d-flex justify-content-between">
+                    <span>Pozostało:</span>
+                    <strong class="text-danger"><?= format_money($clubFeesPending) ?></strong>
+                </div>
+                <a href="<?= url('club-fees/' . $currentYear) ?>" class="btn btn-sm btn-outline-light mt-2">
+                    Zarządzaj opłatami
+                </a>
             </div>
         </div>
     </div>
@@ -154,6 +217,12 @@
                 </a>
                 <a href="<?= url('competitions/create') ?>" class="btn btn-outline-warning">
                     <i class="bi bi-trophy"></i> Utwórz zawody
+                </a>
+                <a href="<?= url('judges/create') ?>" class="btn btn-outline-dark">
+                    <i class="bi bi-person-badge"></i> Dodaj sędziego
+                </a>
+                <a href="<?= url('club-fees') ?>" class="btn btn-outline-danger">
+                    <i class="bi bi-bank"></i> Opłaty PZSS
                 </a>
                 <a href="<?= url('reports') ?>" class="btn btn-outline-secondary">
                     <i class="bi bi-file-earmark-bar-graph"></i> Raporty

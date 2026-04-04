@@ -213,6 +213,28 @@ $router->get('/reports/finances',       [\App\Controllers\ReportsController::cla
 $router->get('/reports/licenses',       [\App\Controllers\ReportsController::class, 'licenses']);
 $router->get('/reports/competitions',   [\App\Controllers\ReportsController::class, 'competitions']);
 
+// Judges
+$router->get('/judges',                  [\App\Controllers\JudgesController::class, 'index']);
+$router->get('/judges/create',           [\App\Controllers\JudgesController::class, 'create']);
+$router->post('/judges/create',          [\App\Controllers\JudgesController::class, 'store']);
+$router->get('/judges/:id/edit',         [\App\Controllers\JudgesController::class, 'edit']);
+$router->post('/judges/:id/edit',        [\App\Controllers\JudgesController::class, 'update']);
+$router->post('/judges/:id/delete',      [\App\Controllers\JudgesController::class, 'destroy']);
+$router->post('/judges/:id/fee-paid',    [\App\Controllers\JudgesController::class, 'markFeePaid']);
+
+// Competition Judges
+$router->post('/competitions/:id/judges/add',           [\App\Controllers\CompetitionsController::class, 'addJudge']);
+$router->post('/competitions/:id/judges/:jid/remove',   [\App\Controllers\CompetitionsController::class, 'removeJudge']);
+
+// Club Fees (PZSS/PomZSS)
+$router->get('/club-fees',               [\App\Controllers\ClubFeesController::class, 'index']);
+$router->get('/club-fees/:year',         [\App\Controllers\ClubFeesController::class, 'index']);
+$router->post('/club-fees/calculate',    [\App\Controllers\ClubFeesController::class, 'calculate']);
+$router->post('/club-fees/:id/paid',     [\App\Controllers\ClubFeesController::class, 'markPaid']);
+
+// Medical exam file download
+$router->get('/members/:member_id/exams/:id/file', [\App\Controllers\MedicalExamsController::class, 'downloadFile']);
+
 // Configuration
 $router->get('/config',                 [\App\Controllers\ConfigController::class, 'index']);
 $router->post('/config',                [\App\Controllers\ConfigController::class, 'save']);
@@ -228,6 +250,10 @@ $router->post('/config/disciplines/:id/toggle',   [\App\Controllers\ConfigContro
 $router->get('/config/member-classes',            [\App\Controllers\ConfigController::class, 'memberClasses']);
 $router->post('/config/member-classes',           [\App\Controllers\ConfigController::class, 'saveMemberClass']);
 $router->post('/config/member-classes/:id/delete',[\App\Controllers\ConfigController::class, 'deleteMemberClass']);
+// Medical Exam Types
+$router->get('/config/medical-exam-types',              [\App\Controllers\ConfigController::class, 'medicalExamTypes']);
+$router->post('/config/medical-exam-types',             [\App\Controllers\ConfigController::class, 'saveMedicalExamType']);
+$router->post('/config/medical-exam-types/:id/delete',  [\App\Controllers\ConfigController::class, 'deleteMedicalExamType']);
 $router->get('/config/users',           [\App\Controllers\ConfigController::class, 'users']);
 $router->get('/config/users/create',    [\App\Controllers\ConfigController::class, 'createUser']);
 $router->post('/config/users/create',   [\App\Controllers\ConfigController::class, 'storeUser']);

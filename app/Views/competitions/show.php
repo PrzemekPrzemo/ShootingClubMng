@@ -84,6 +84,88 @@ $sc = match($competition['status']) {
         </div>
         <?php endif; ?>
 
+        <!-- Sędziowie -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong><i class="bi bi-person-badge"></i> Sędziowie</strong>
+            </div>
+            <?php
+            $roleLabels = [
+                'glowny'        => 'Sędzia główny',
+                'liniowy'       => 'Sędzia liniowy',
+                'obliczeniowy'  => 'Obliczeniowy',
+                'bezpieczenstwa'=> 'Bezpieczeństwo',
+                'protokolant'   => 'Protokolant',
+            ];
+            ?>
+            <?php if (!empty($judges)): ?>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                    <?php foreach ($judges as $j): ?>
+                        <tr>
+                            <td class="small text-muted"><?= e($roleLabels[$j['role']] ?? $j['role']) ?></td>
+                            <td><?= e($j['last_name']) ?> <?= e($j['first_name']) ?></td>
+                            <td class="small">
+                                <?php if ($j['judge_class']): ?>
+                                    <span class="badge bg-dark">kl. <?= e($j['judge_class']) ?></span>
+                                <?php endif; ?>
+                            </td>
+                            <?php if (in_array($authUser['role'], ['admin','zarzad','instruktor'])): ?>
+                            <td class="text-end">
+                                <form method="post"
+                                      action="<?= url('competitions/' . $competition['id'] . '/judges/' . $j['id'] . '/remove') ?>"
+                                      class="d-inline" onsubmit="return confirm('Usunąć sędziego?')">
+                                    <?= csrf_field() ?>
+                                    <button class="btn btn-xs btn-outline-danger py-0 px-1">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </form>
+                            </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php else: ?>
+            <div class="card-body">
+                <p class="text-muted mb-2 small">Brak przypisanych sędziów.</p>
+            </div>
+            <?php endif; ?>
+            <?php if (in_array($authUser['role'], ['admin','zarzad','instruktor']) && !empty($activeJudges)): ?>
+            <div class="card-footer">
+                <form method="post" action="<?= url('competitions/' . $competition['id'] . '/judges/add') ?>"
+                      class="row g-2">
+                    <?= csrf_field() ?>
+                    <div class="col">
+                        <select name="member_id" class="form-select form-select-sm" required>
+                            <option value="">Wybierz sędziego...</option>
+                            <?php foreach ($activeJudges as $aj): ?>
+                            <option value="<?= $aj['id'] ?>">
+                                <?= e($aj['last_name']) ?> <?= e($aj['first_name']) ?>
+                                [kl. <?= e($aj['judge_class']) ?>]
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <select name="role" class="form-select form-select-sm">
+                            <?php foreach ($roleLabels as $val => $lbl): ?>
+                            <option value="<?= $val ?>"><?= $lbl ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <?php endif; ?>
+        </div>
+
         <!-- Top wyniki -->
         <div class="card">
             <div class="card-header"><strong>Wyniki ogólne</strong></div>

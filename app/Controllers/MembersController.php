@@ -9,6 +9,7 @@ use App\Models\MemberModel;
 use App\Models\AgeCategoryModel;
 use App\Models\DisciplineModel;
 use App\Models\MemberClassModel;
+use App\Models\MedicalExamModel;
 use App\Models\UserModel;
 
 class MembersController extends BaseController
@@ -17,6 +18,7 @@ class MembersController extends BaseController
     private AgeCategoryModel $categoryModel;
     private DisciplineModel $disciplineModel;
     private MemberClassModel $memberClassModel;
+    private MedicalExamModel $examModel;
     private UserModel $userModel;
 
     public function __construct()
@@ -27,6 +29,7 @@ class MembersController extends BaseController
         $this->categoryModel    = new AgeCategoryModel();
         $this->disciplineModel  = new DisciplineModel();
         $this->memberClassModel = new MemberClassModel();
+        $this->examModel        = new MedicalExamModel();
         $this->userModel        = new UserModel();
     }
 
@@ -97,6 +100,7 @@ class MembersController extends BaseController
             'member'      => $member,
             'disciplines' => $this->memberModel->getDisciplines((int)$id),
             'medical'     => $this->memberModel->getLatestMedical((int)$id),
+            'examMatrix'  => $this->examModel->getExamMatrix((int)$id),
             'license'     => $this->memberModel->getLatestLicense((int)$id),
             'payment'     => $this->memberModel->getPaymentStatus((int)$id, (int)date('Y')),
         ]);

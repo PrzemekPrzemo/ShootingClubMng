@@ -9,6 +9,7 @@ use App\Models\AgeCategoryModel;
 use App\Models\UserModel;
 use App\Models\DisciplineModel;
 use App\Models\MemberClassModel;
+use App\Models\MedicalExamTypeModel;
 
 class ConfigController extends BaseController
 {
@@ -17,6 +18,7 @@ class ConfigController extends BaseController
     private UserModel $userModel;
     private DisciplineModel $disciplineModel;
     private MemberClassModel $memberClassModel;
+    private MedicalExamTypeModel $examTypeModel;
 
     public function __construct()
     {
@@ -27,6 +29,7 @@ class ConfigController extends BaseController
         $this->userModel        = new UserModel();
         $this->disciplineModel  = new DisciplineModel();
         $this->memberClassModel = new MemberClassModel();
+        $this->examTypeModel    = new MedicalExamTypeModel();
     }
 
     public function index(): void
@@ -292,6 +295,58 @@ class ConfigController extends BaseController
         $this->memberClassModel->delete((int)$id);
         Session::flash('success', 'Klasa usunięta.');
         $this->redirect('config/member-classes');
+    }
+
+    // ── Medical Exam Types ───────────────────────────────────────────
+
+    public function medicalExamTypes(): void
+    {
+        $editId   = (int)($_GET['edit'] ?? 0);
+        $editItem = $editId ? $this->examTypeModel->findById($editId) : null;
+
+        $this->render('config/medical_exam_types', [
+            'title'     => 'Typy badań lekarskich',
+            'examTypes' => $this->examTypeModel->getAll(),
+            'editItem'  => $editItem,
+        ]);
+    }
+
+    public function saveMedicalExamType(): void
+    {
+        Csrf::verify();
+
+        $id   = (int)($_POST['id'] ?? 0);
+        $data = [
+            'name'            => trim($_POST['name'] ?? ''),
+            'required_for'    => in_array($_POST['required_for'] ?? '', ['patent','license','both']) ? $_POST['required_for'] : 'both',
+            'validity_months' => max(1, (int)($_POST['validity_months'] ?? 12)),
+            'sort_order'      => (int)($_POST['sort_order'] ?? 0),
+            'is_active'       => isset($_POST['is_active']) ? 1 : 0,
+        ];
+
+        if (empty($data['name'])) {
+            Session::flash('error', 'Nazwa typu badania jest wymagana.');
+            $this->redirect('config/medical-exam-types');
+        }
+
+        if ($id > 0) {
+            $this->examTypeModel->saveUpdate($id, $data);
+            Session::flash('success', 'Typ badania zaktualizowany.');
+        } else {
+            $this->examTypeModel->save($data);
+            Session::flash('success', 'Typ badania dodany.');
+        }
+
+        $this->redirect('config/medical-exam-types');
+    }
+
+    public function deleteMedicalExamType(string $id): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin']);
+        $this->examTypeModel->toggle((int)$id);
+        Session::flash('success', 'Status typu badania zmieniony.');
+        $this->redirect('config/medical-exam-types');
     }
 
     // ── Users ────────────────────────────────────────────────────────

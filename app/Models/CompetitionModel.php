@@ -249,6 +249,42 @@ class CompetitionModel extends BaseModel
         ]);
     }
 
+    // ── Competition Judges ───────────────────────────────────────────
+
+    public function getCompetitionJudges(int $competitionId): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT cj.*, m.first_name, m.last_name, m.member_number,
+                   jl.judge_class, jl.valid_until AS license_valid_until,
+                   d.name AS discipline_name
+            FROM competition_judges cj
+            JOIN members m ON m.id = cj.member_id
+            LEFT JOIN judge_licenses jl ON jl.member_id = cj.member_id
+                AND jl.valid_until = (
+                    SELECT MAX(valid_until) FROM judge_licenses
+                    WHERE member_id = cj.member_id
+                )
+            LEFT JOIN disciplines d ON d.id = jl.discipline_id
+            WHERE cj.competition_id = ?
+            ORDER BY FIELD(cj.role,'glowny','liniowy','obliczeniowy','bezpieczenstwa','protokolant')
+        ");
+        $stmt->execute([$competitionId]);
+        return $stmt->fetchAll();
+    }
+
+    public function addJudge(array $data): int
+    {
+        $cols  = implode('`, `', array_keys($data));
+        $holds = implode(', ', array_fill(0, count($data), '?'));
+        $this->db->prepare("INSERT INTO `competition_judges` (`{$cols}`) VALUES ({$holds})")->execute(array_values($data));
+        return (int)$this->db->lastInsertId();
+    }
+
+    public function removeJudge(int $id): void
+    {
+        $this->db->prepare("DELETE FROM competition_judges WHERE id = ?")->execute([$id]);
+    }
+
     // ── Ranking ──────────────────────────────────────────────────────
 
     public function getRankingForMember(int $memberId): array

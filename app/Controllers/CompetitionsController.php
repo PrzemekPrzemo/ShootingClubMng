@@ -8,12 +8,14 @@ use App\Helpers\Session;
 use App\Models\CompetitionModel;
 use App\Models\MemberModel;
 use App\Models\DisciplineModel;
+use App\Models\JudgeLicenseModel;
 
 class CompetitionsController extends BaseController
 {
     private CompetitionModel $competitionModel;
     private MemberModel $memberModel;
     private DisciplineModel $disciplineModel;
+    private JudgeLicenseModel $judgeModel;
 
     public function __construct()
     {
@@ -22,6 +24,7 @@ class CompetitionsController extends BaseController
         $this->competitionModel = new CompetitionModel();
         $this->memberModel      = new MemberModel();
         $this->disciplineModel  = new DisciplineModel();
+        $this->judgeModel       = new JudgeLicenseModel();
     }
 
     public function index(): void
@@ -73,12 +76,14 @@ class CompetitionsController extends BaseController
     {
         $competition = $this->getCompetition((int)$id);
         $this->render('competitions/show', [
-            'title'       => $competition['name'],
-            'competition' => $competition,
-            'entries'     => $this->competitionModel->getEntries((int)$id),
-            'groups'      => $this->competitionModel->getGroups((int)$id),
-            'results'     => $this->competitionModel->getResults((int)$id),
-            'events'      => $this->competitionModel->getEvents((int)$id),
+            'title'        => $competition['name'],
+            'competition'  => $competition,
+            'entries'      => $this->competitionModel->getEntries((int)$id),
+            'groups'       => $this->competitionModel->getGroups((int)$id),
+            'results'      => $this->competitionModel->getResults((int)$id),
+            'events'       => $this->competitionModel->getEvents((int)$id),
+            'judges'       => $this->competitionModel->getCompetitionJudges((int)$id),
+            'activeJudges' => $this->judgeModel->getActiveJudges(),
         ]);
     }
 
@@ -340,6 +345,45 @@ class CompetitionsController extends BaseController
             'entries'     => $entries,
         ]);
         exit;
+    }
+
+    // ── Competition Judges ───────────────────────────────────────────
+
+    public function addJudge(string $id): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad', 'instruktor']);
+        $this->getCompetition((int)$id);
+
+        $memberId = (int)($_POST['member_id'] ?? 0);
+        $role     = $_POST['role'] ?? 'liniowy';
+        if (!$memberId) {
+            Session::flash('error', 'Wybierz sędziego.');
+            $this->redirect("competitions/{$id}");
+        }
+
+        try {
+            $this->competitionModel->addJudge([
+                'competition_id' => (int)$id,
+                'member_id'      => $memberId,
+                'role'           => in_array($role, ['glowny','liniowy','obliczeniowy','bezpieczenstwa','protokolant']) ? $role : 'liniowy',
+                'notes'          => trim($_POST['notes'] ?? '') ?: null,
+            ]);
+            Session::flash('success', 'Sędzia został przypisany.');
+        } catch (\Throwable) {
+            Session::flash('error', 'Ten sędzia jest już przypisany w tej roli.');
+        }
+
+        $this->redirect("competitions/{$id}");
+    }
+
+    public function removeJudge(string $id, string $jid): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad', 'instruktor']);
+        $this->competitionModel->removeJudge((int)$jid);
+        Session::flash('success', 'Sędzia usunięty z zawodów.');
+        $this->redirect("competitions/{$id}");
     }
 
     // ── Private helpers ──────────────────────────────────────────────
