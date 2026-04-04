@@ -1,3 +1,4 @@
+<?php $role = $authUser['role'] ?? ''; $isFinanceRole = in_array($role, ['admin','zarzad']); ?>
 <h2 class="h4 mb-4"><i class="bi bi-speedometer2"></i> Dashboard</h2>
 
 <!-- Stats row -->
@@ -13,6 +14,7 @@
             </div>
         </div>
     </div>
+    <?php if ($isFinanceRole): ?>
     <div class="col-sm-6 col-lg-3">
         <div class="card border-<?= $debtorsCount > 0 ? 'danger' : 'success' ?> h-100">
             <div class="card-body">
@@ -31,6 +33,7 @@
             </div>
         </div>
     </div>
+    <?php endif; ?>
     <div class="col-sm-6 col-lg-3">
         <div class="card border-warning h-100">
             <div class="card-body">
@@ -145,7 +148,7 @@
     <?php endif; ?>
 
     <!-- Alert: Opłaty PZSS/PomZSS -->
-    <?php if ($clubFeesPending > 0): ?>
+    <?php if ($isFinanceRole && $clubFeesPending > 0): ?>
     <div class="col-lg-6">
         <div class="card border-danger">
             <div class="card-header bg-danger text-white">
@@ -240,9 +243,11 @@
                 <a href="<?= url('members/create') ?>" class="btn btn-outline-danger">
                     <i class="bi bi-person-plus"></i> Dodaj zawodnika
                 </a>
+                <?php if ($isFinanceRole): ?>
                 <a href="<?= url('finances/create') ?>" class="btn btn-outline-success">
                     <i class="bi bi-cash-coin"></i> Zarejestruj wpłatę
                 </a>
+                <?php endif; ?>
                 <a href="<?= url('licenses/create') ?>" class="btn btn-outline-primary">
                     <i class="bi bi-card-checklist"></i> Dodaj licencję
                 </a>
@@ -252,9 +257,11 @@
                 <a href="<?= url('judges/create') ?>" class="btn btn-outline-dark">
                     <i class="bi bi-person-badge"></i> Dodaj sędziego
                 </a>
+                <?php if ($isFinanceRole): ?>
                 <a href="<?= url('club-fees') ?>" class="btn btn-outline-danger">
                     <i class="bi bi-bank"></i> Opłaty PZSS
                 </a>
+                <?php endif; ?>
                 <a href="<?= url('reports') ?>" class="btn btn-outline-secondary">
                     <i class="bi bi-file-earmark-bar-graph"></i> Raporty
                 </a>

@@ -57,9 +57,19 @@ class AuthController extends BaseController
         Auth::login($user);
         $this->logActivity($user['id'], 'login', 'users', $user['id'], 'Zalogowanie do systemu');
 
-        $intended = Session::get('intended_url', 'dashboard');
+        $intended = Session::get('intended_url');
         Session::remove('intended_url');
-        $this->redirect($intended);
+
+        if ($intended) {
+            $this->redirect($intended);
+        }
+
+        // Role-based default landing page
+        $this->redirect(match($user['role']) {
+            'sędzia'     => 'competitions',
+            'instruktor' => 'competitions',
+            default      => 'dashboard',
+        });
     }
 
     public function logout(): void
