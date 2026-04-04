@@ -13,6 +13,19 @@ class PaymentTypeModel extends BaseModel
         'inne'    => 'Inne',
     ];
 
+    /** Default values for columns added in migration_v4 */
+    private static array $defaults = [
+        'category'    => 'inne',
+        'description' => null,
+        'is_per_class'=> 0,
+        'sort_order'  => 0,
+    ];
+
+    private function normalize(array $rows): array
+    {
+        return array_map(fn($r) => self::$defaults + $r, $rows);
+    }
+
     public function getAll(): array
     {
         try {
@@ -24,7 +37,7 @@ class PaymentTypeModel extends BaseModel
             // migration_v4 not yet run — fallback to name only
             $stmt = $this->db->query("SELECT * FROM payment_types ORDER BY name");
         }
-        return $stmt->fetchAll();
+        return $this->normalize($stmt->fetchAll());
     }
 
     public function getActive(): array
@@ -37,7 +50,7 @@ class PaymentTypeModel extends BaseModel
         } catch (\PDOException) {
             $stmt = $this->db->query("SELECT * FROM payment_types WHERE is_active = 1 ORDER BY name");
         }
-        return $stmt->fetchAll();
+        return $this->normalize($stmt->fetchAll());
     }
 
     public function save(array $data): int
