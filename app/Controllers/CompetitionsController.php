@@ -395,9 +395,7 @@ class CompetitionsController extends BaseController
         $entries = $this->competitionModel->getEntries((int)$id);
         $events  = $this->competitionModel->getEvents((int)$id);
 
-        $view = new \App\Helpers\View();
-        $view->setLayout('main');
-        $view->render('competitions/scorecard_selector', [
+        $this->render('competitions/scorecard_selector', [
             'title'       => 'Generuj metryczki — ' . $competition['name'],
             'competition' => $competition,
             'entries'     => $entries,
