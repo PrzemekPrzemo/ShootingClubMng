@@ -17,6 +17,14 @@ $sc = match($competition['status']) {
         <a href="<?= url('competitions/' . $competition['id'] . '/results') ?>" class="btn btn-sm btn-outline-success">
             <i class="bi bi-list-ol"></i> Wyniki ogólne
         </a>
+        <a href="<?= url('competitions/' . $competition['id'] . '/rankings') ?>" class="btn btn-sm btn-outline-warning">
+            <i class="bi bi-trophy"></i> Rankingi
+        </a>
+        <a href="<?= url('competitions/' . $competition['id'] . '/protocol') ?>"
+           target="_blank"
+           class="btn btn-sm btn-outline-dark">
+            <i class="bi bi-printer"></i> Protokół
+        </a>
         <a href="<?= url('competitions/' . $competition['id'] . '/scorecards') ?>" class="btn btn-sm btn-outline-dark">
             <i class="bi bi-file-person"></i> Metryczki A5
         </a>

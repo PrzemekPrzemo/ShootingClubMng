@@ -508,6 +508,72 @@ class CompetitionModel extends BaseModel
         return array_values($entries);
     }
 
+    /**
+     * Calculates rankings for all events in a competition.
+     * Returns: [event_id => ['event' => [...], 'results' => [...with calc_place...]]]
+     * Scores sorted DESC; ex-aequo competitors share the same place.
+     */
+    public function calcRankings(int $competitionId): array
+    {
+        $events = $this->getEvents($competitionId);
+        $output = [];
+
+        foreach ($events as $ev) {
+            try {
+                $stmt = $this->db->prepare("
+                    SELECT cer.*,
+                           m.first_name, m.last_name, m.member_number,
+                           mc.short_code AS member_class_code,
+                           ce.class      AS entry_class,
+                           cg.name       AS group_name,
+                           cee.weapon_type
+                    FROM competition_event_results cer
+                    JOIN members m               ON m.id = cer.member_id
+                    LEFT JOIN member_classes mc  ON mc.id = m.member_class_id
+                    LEFT JOIN competition_events ev2 ON ev2.id = cer.competition_event_id
+                    LEFT JOIN competition_entries ce
+                           ON ce.competition_id = ev2.competition_id
+                          AND ce.member_id = cer.member_id
+                    LEFT JOIN competition_groups cg ON cg.id = ce.group_id
+                    LEFT JOIN competition_entry_events cee
+                           ON cee.competition_entry_id = ce.id
+                          AND cee.competition_event_id = cer.competition_event_id
+                    WHERE cer.competition_event_id = ?
+                      AND cer.score IS NOT NULL
+                    ORDER BY cer.score DESC, cer.score_inner DESC, m.last_name, m.first_name
+                ");
+                $stmt->execute([$ev['id']]);
+                $rows = $stmt->fetchAll();
+            } catch (\PDOException) {
+                $rows = [];
+            }
+
+            // Assign calc_place with ex-aequo support
+            $prevScore = null;
+            $prevInner = null;
+            foreach ($rows as $i => &$row) {
+                if ($i > 0
+                    && (string)$row['score']       === (string)$prevScore
+                    && (string)$row['score_inner'] === (string)$prevInner
+                ) {
+                    $row['calc_place'] = $rows[$i - 1]['calc_place'];
+                } else {
+                    $row['calc_place'] = $i + 1;
+                }
+                $prevScore = $row['score'];
+                $prevInner = $row['score_inner'];
+            }
+            unset($row);
+
+            $output[$ev['id']] = [
+                'event'   => $ev,
+                'results' => $rows,
+            ];
+        }
+
+        return $output;
+    }
+
     public function getUpcoming(int $days = 30): array
     {
         $stmt = $this->db->prepare("

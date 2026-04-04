@@ -727,6 +727,41 @@ class CompetitionsController extends BaseController
         $this->redirect('competitions');
     }
 
+    // ── Rankings + Protocol ──────────────────────────────────────────
+
+    public function rankings(string $id): void
+    {
+        $this->requireRole(['admin', 'zarzad', 'instruktor', 'sędzia']);
+        $competition = $this->getCompetition((int)$id);
+        $rankings    = $this->competitionModel->calcRankings((int)$id);
+
+        $this->render('competitions/rankings', [
+            'title'       => 'Rankingi — ' . $competition['name'],
+            'competition' => $competition,
+            'rankings'    => $rankings,
+        ]);
+    }
+
+    public function protocol(string $id): void
+    {
+        $this->requireRole(['admin', 'zarzad', 'instruktor', 'sędzia']);
+        $competition = $this->getCompetition((int)$id);
+        $rankings    = $this->competitionModel->calcRankings((int)$id);
+        $judges      = $this->competitionModel->getCompetitionJudges((int)$id);
+        $clubName    = (new SettingModel())->get('club_name', '');
+
+        $view = new \App\Helpers\View();
+        $view->setLayout('print');
+        $view->render('competitions/protocol', [
+            'title'       => 'Protokół — ' . $competition['name'],
+            'competition' => $competition,
+            'rankings'    => $rankings,
+            'judges'      => $judges,
+            'clubName'    => $clubName,
+        ]);
+        exit;
+    }
+
     // ── Private helpers ──────────────────────────────────────────────
 
     private function getCompetition(int $id): array
