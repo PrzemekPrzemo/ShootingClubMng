@@ -111,6 +111,11 @@ $currentPath = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
                     <?php
                     $catIcons = ['skladka'=>'💳','pzss'=>'🏛️','pomzss'=>'⚓','inne'=>'📄'];
                     foreach ($paymentTypes as $pt):
+                        // Defaults for rows loaded before migration_v4
+                        $pt['category']     ??= 'inne';
+                        $pt['is_per_class'] ??= 0;
+                        $pt['sort_order']   ??= 0;
+                        $pt['description']  ??= null;
                     ?>
                         <tr class="<?= $pt['is_active'] ? '' : 'table-secondary text-muted' ?>">
                             <td>

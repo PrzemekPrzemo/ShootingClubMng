@@ -15,19 +15,28 @@ class PaymentTypeModel extends BaseModel
 
     public function getAll(): array
     {
-        $stmt = $this->db->query("
-            SELECT * FROM payment_types
-            ORDER BY sort_order, category, name
-        ");
+        try {
+            $stmt = $this->db->query("
+                SELECT * FROM payment_types
+                ORDER BY sort_order, category, name
+            ");
+        } catch (\PDOException) {
+            // migration_v4 not yet run — fallback to name only
+            $stmt = $this->db->query("SELECT * FROM payment_types ORDER BY name");
+        }
         return $stmt->fetchAll();
     }
 
     public function getActive(): array
     {
-        $stmt = $this->db->query("
-            SELECT * FROM payment_types WHERE is_active = 1
-            ORDER BY sort_order, category, name
-        ");
+        try {
+            $stmt = $this->db->query("
+                SELECT * FROM payment_types WHERE is_active = 1
+                ORDER BY sort_order, category, name
+            ");
+        } catch (\PDOException) {
+            $stmt = $this->db->query("SELECT * FROM payment_types WHERE is_active = 1 ORDER BY name");
+        }
         return $stmt->fetchAll();
     }
 
@@ -58,18 +67,23 @@ class PaymentTypeModel extends BaseModel
 
     /**
      * Returns rate matrix for a given year.
-     * Structure: [payment_type_id][member_class_id|'default'] => amount
+     * Structure: [payment_type_id][class_key] => amount  (class_key=0 means default)
      */
     public function getRateMatrix(int $year): array
     {
-        $stmt = $this->db->prepare("
-            SELECT payment_type_id,
-                   COALESCE(member_class_id, 0) AS class_key,
-                   amount
-            FROM fee_rates
-            WHERE year = ?
-        ");
-        $stmt->execute([$year]);
+        try {
+            $stmt = $this->db->prepare("
+                SELECT payment_type_id,
+                       COALESCE(member_class_id, 0) AS class_key,
+                       amount
+                FROM fee_rates
+                WHERE year = ?
+            ");
+            $stmt->execute([$year]);
+        } catch (\PDOException) {
+            // fee_rates table missing (migration_v4 not yet run)
+            return [];
+        }
 
         $matrix = [];
         foreach ($stmt->fetchAll() as $row) {
@@ -84,23 +98,27 @@ class PaymentTypeModel extends BaseModel
      */
     public function getEffectiveRate(int $paymentTypeId, ?int $memberClassId, int $year): float
     {
-        // Try class-specific rate for this year
-        if ($memberClassId) {
+        try {
+            // Try class-specific rate for this year
+            if ($memberClassId) {
+                $stmt = $this->db->prepare(
+                    "SELECT amount FROM fee_rates WHERE payment_type_id = ? AND member_class_id = ? AND year = ?"
+                );
+                $stmt->execute([$paymentTypeId, $memberClassId, $year]);
+                $row = $stmt->fetch();
+                if ($row) return (float)$row['amount'];
+            }
+
+            // Try default rate for this year (member_class_id IS NULL)
             $stmt = $this->db->prepare(
-                "SELECT amount FROM fee_rates WHERE payment_type_id = ? AND member_class_id = ? AND year = ?"
+                "SELECT amount FROM fee_rates WHERE payment_type_id = ? AND member_class_id IS NULL AND year = ?"
             );
-            $stmt->execute([$paymentTypeId, $memberClassId, $year]);
+            $stmt->execute([$paymentTypeId, $year]);
             $row = $stmt->fetch();
             if ($row) return (float)$row['amount'];
+        } catch (\PDOException) {
+            // fee_rates table missing — fall through to payment_types.amount
         }
-
-        // Try default rate for this year (member_class_id IS NULL)
-        $stmt = $this->db->prepare(
-            "SELECT amount FROM fee_rates WHERE payment_type_id = ? AND member_class_id IS NULL AND year = ?"
-        );
-        $stmt->execute([$paymentTypeId, $year]);
-        $row = $stmt->fetch();
-        if ($row) return (float)$row['amount'];
 
         // Fall back to payment_types.amount
         $stmt = $this->db->prepare("SELECT amount FROM payment_types WHERE id = ?");
