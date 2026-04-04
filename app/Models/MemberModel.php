@@ -168,6 +168,6 @@ class MemberModel extends BaseModel
 
     public function getAllActive(): array
     {
-        return $this->db->query("SELECT id, CONCAT(last_name, ' ', first_name) AS full_name, member_number FROM members WHERE status = 'aktywny' ORDER BY last_name, first_name")->fetchAll();
+        return $this->db->query("SELECT id, CONCAT(last_name, ' ', first_name) AS full_name, member_number, member_class_id FROM members WHERE status = 'aktywny' ORDER BY last_name, first_name")->fetchAll();
     }
 }

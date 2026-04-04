@@ -255,6 +255,13 @@ $router->post('/config/member-classes/:id/delete',[\App\Controllers\ConfigContro
 $router->get('/config/medical-exam-types',              [\App\Controllers\ConfigController::class, 'medicalExamTypes']);
 $router->post('/config/medical-exam-types',             [\App\Controllers\ConfigController::class, 'saveMedicalExamType']);
 $router->post('/config/medical-exam-types/:id/delete',  [\App\Controllers\ConfigController::class, 'deleteMedicalExamType']);
+// Fee rates (cennik składek)
+$router->get('/config/fee-rates',                       [\App\Controllers\FeeConfigController::class, 'index']);
+$router->post('/config/fee-rates/type',                 [\App\Controllers\FeeConfigController::class, 'saveType']);
+$router->post('/config/fee-rates/type/:id/delete',      [\App\Controllers\FeeConfigController::class, 'deleteType']);
+$router->post('/config/fee-rates/save',                 [\App\Controllers\FeeConfigController::class, 'saveRates']);
+// AJAX: suggested fee amount
+$router->get('/api/fee-rate',                           [\App\Controllers\FeeConfigController::class, 'getRate']);
 $router->get('/config/users',           [\App\Controllers\ConfigController::class, 'users']);
 $router->get('/config/users/create',    [\App\Controllers\ConfigController::class, 'createUser']);
 $router->post('/config/users/create',   [\App\Controllers\ConfigController::class, 'storeUser']);

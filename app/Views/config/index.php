@@ -29,6 +29,11 @@
         </a>
     </div>
     <div class="col-auto">
+        <a href="<?= url('config/fee-rates') ?>" class="btn btn-outline-secondary btn-sm <?= str_contains($_SERVER['REQUEST_URI'],'/fee-rates') ? 'active':'' ?>">
+            <i class="bi bi-cash-coin"></i> Cennik składek
+        </a>
+    </div>
+    <div class="col-auto">
         <a href="<?= url('config/users') ?>" class="btn btn-outline-secondary btn-sm <?= str_contains($_SERVER['REQUEST_URI'],'/users') ? 'active':'' ?>">
             <i class="bi bi-people"></i> Użytkownicy
         </a>
