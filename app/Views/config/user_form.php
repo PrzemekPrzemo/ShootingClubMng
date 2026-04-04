@@ -26,6 +26,13 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Rola</label>
+                <?php if (($user['role'] ?? '') === 'admin'): ?>
+                    <input type="hidden" name="role" value="admin">
+                    <div class="form-control bg-light text-muted" style="cursor:not-allowed">
+                        <i class="bi bi-shield-lock me-1 text-danger"></i> Administrator
+                        <span class="float-end small">(rola chroniona)</span>
+                    </div>
+                <?php else: ?>
                 <select name="role" class="form-select">
                     <?php
                     $roleLabels = ['instruktor' => 'Instruktor', 'sędzia' => 'Sędzia', 'zarzad' => 'Zarząd', 'admin' => 'Administrator'];
@@ -34,6 +41,7 @@
                         <option value="<?= $r ?>" <?= ($user['role'] ?? 'instruktor') === $r ? 'selected':'' ?>><?= $rl ?></option>
                     <?php endforeach; ?>
                 </select>
+                <?php endif; ?>
             </div>
             <div class="mb-3">
                 <label class="form-label">Hasło <?= $mode === 'edit' ? '(zostaw puste = bez zmiany)' : '<span class="text-danger">*</span>' ?></label>

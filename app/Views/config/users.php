@@ -61,10 +61,14 @@
                                 <?= $u['last_login'] ? format_date(substr($u['last_login'],0,10)) : '—' ?>
                             </td>
                             <td class="text-end">
+                                <?php if ($u['role'] !== 'admin' || $authUser['role'] === 'admin'): ?>
                                 <a href="<?= url('config/users/' . $u['id'] . '/edit') ?>"
                                    class="btn btn-sm btn-outline-secondary py-0 px-2">
                                     <i class="bi bi-pencil"></i>
                                 </a>
+                                <?php else: ?>
+                                <span class="text-muted small"><i class="bi bi-shield-lock"></i></span>
+                                <?php endif; ?>
                                 <?php if ($u['is_active'] && $u['role'] !== 'admin'): ?>
                                 <form method="post" action="<?= url('config/users/' . $u['id'] . '/delete') ?>"
                                       class="d-inline"
