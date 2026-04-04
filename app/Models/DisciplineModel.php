@@ -35,13 +35,17 @@ class DisciplineModel extends BaseModel
 
     public function getEventTemplates(int $disciplineId): array
     {
-        $stmt = $this->db->prepare(
-            "SELECT * FROM discipline_event_templates
-             WHERE discipline_id = ?
-             ORDER BY sort_order, name"
-        );
-        $stmt->execute([$disciplineId]);
-        return $stmt->fetchAll();
+        try {
+            $stmt = $this->db->prepare(
+                "SELECT * FROM discipline_event_templates
+                 WHERE discipline_id = ?
+                 ORDER BY sort_order, name"
+            );
+            $stmt->execute([$disciplineId]);
+            return $stmt->fetchAll();
+        } catch (\PDOException) {
+            return [];
+        }
     }
 
     /**
@@ -83,34 +87,50 @@ class DisciplineModel extends BaseModel
 
     public function saveTemplate(array $data): int
     {
-        $cols  = implode('`, `', array_keys($data));
-        $holds = implode(', ', array_fill(0, count($data), '?'));
-        $this->db->prepare("INSERT INTO `discipline_event_templates` (`{$cols}`) VALUES ({$holds})")->execute(array_values($data));
-        return (int)$this->db->lastInsertId();
+        try {
+            $cols  = implode('`, `', array_keys($data));
+            $holds = implode(', ', array_fill(0, count($data), '?'));
+            $this->db->prepare("INSERT INTO `discipline_event_templates` (`{$cols}`) VALUES ({$holds})")->execute(array_values($data));
+            return (int)$this->db->lastInsertId();
+        } catch (\PDOException) {
+            return 0;
+        }
     }
 
     public function updateTemplate(int $id, array $data): bool
     {
-        $set = implode(', ', array_map(fn($k) => "`{$k}` = ?", array_keys($data)));
-        $stmt = $this->db->prepare("UPDATE `discipline_event_templates` SET {$set} WHERE id = ?");
-        return $stmt->execute([...array_values($data), $id]);
+        try {
+            $set  = implode(', ', array_map(fn($k) => "`{$k}` = ?", array_keys($data)));
+            $stmt = $this->db->prepare("UPDATE `discipline_event_templates` SET {$set} WHERE id = ?");
+            return $stmt->execute([...array_values($data), $id]);
+        } catch (\PDOException) {
+            return false;
+        }
     }
 
     public function deleteTemplate(int $id): void
     {
-        $this->db->prepare("DELETE FROM discipline_event_templates WHERE id = ?")->execute([$id]);
+        try {
+            $this->db->prepare("DELETE FROM discipline_event_templates WHERE id = ?")->execute([$id]);
+        } catch (\PDOException) {}
     }
 
     public function toggleTemplate(int $id): void
     {
-        $this->db->prepare("UPDATE discipline_event_templates SET is_active = 1 - is_active WHERE id = ?")->execute([$id]);
+        try {
+            $this->db->prepare("UPDATE discipline_event_templates SET is_active = 1 - is_active WHERE id = ?")->execute([$id]);
+        } catch (\PDOException) {}
     }
 
     public function findTemplate(int $id): ?array
     {
-        $stmt = $this->db->prepare("SELECT * FROM discipline_event_templates WHERE id = ?");
-        $stmt->execute([$id]);
-        return $stmt->fetch() ?: null;
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM discipline_event_templates WHERE id = ?");
+            $stmt->execute([$id]);
+            return $stmt->fetch() ?: null;
+        } catch (\PDOException) {
+            return null;
+        }
     }
 
     public function isUsed(int $id): bool
