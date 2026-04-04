@@ -48,10 +48,9 @@
                                    title="Lista startowa (A4)">
                                     <i class="bi bi-printer"></i> Lista
                                 </a>
-                                <a href="<?= url('competitions/' . $competition['id'] . '/events/' . $ev['id'] . '/scorecard') ?>"
-                                   target="_blank"
+                                <a href="<?= url('competitions/' . $competition['id'] . '/scorecards') ?>"
                                    class="btn btn-xs btn-outline-primary py-0 px-2"
-                                   title="Metryczki per zawodnik (A5)">
+                                   title="Generuj metryczki A5 (wybór zawodników i konkurencji)">
                                     <i class="bi bi-file-person"></i> Metryczki A5
                                 </a>
                                 <form method="post"

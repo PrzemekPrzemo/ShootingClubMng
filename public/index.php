@@ -206,6 +206,8 @@ $router->get('/competitions/:id/events/:eid/results',             [\App\Controll
 $router->post('/competitions/:id/events/:eid/results/save',       [\App\Controllers\CompetitionsController::class, 'saveEventResults']);
 $router->get('/competitions/:id/events/:eid/startcard',           [\App\Controllers\CompetitionsController::class, 'startCard']);
 $router->get('/competitions/:id/events/:eid/scorecard',           [\App\Controllers\CompetitionsController::class, 'memberScorecard']);
+$router->get('/competitions/:id/scorecards',                      [\App\Controllers\CompetitionsController::class, 'scorecardSelector']);
+$router->get('/competitions/:id/scorecards/print',                [\App\Controllers\CompetitionsController::class, 'scorecardPrint']);
 
 // Reports
 $router->get('/reports',                [\App\Controllers\ReportsController::class, 'index']);

@@ -207,6 +207,10 @@ $currentPath = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
 
                         foreach ($paymentTypes as $pt):
                             if (!$pt['is_active']) continue;
+                            // Defaults for columns added in migration_v4
+                            $pt['category']     ??= 'inne';
+                            $pt['is_per_class'] ??= 0;
+                            $pt['description']  ??= null;
 
                             // Category separator row
                             if ($pt['category'] !== $lastCat):

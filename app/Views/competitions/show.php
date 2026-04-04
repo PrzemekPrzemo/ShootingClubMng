@@ -72,10 +72,9 @@ $sc = match($competition['status']) {
                             <td class="text-end" style="white-space:nowrap">
                                 <a href="<?= url('competitions/' . $competition['id'] . '/events/' . $ev['id'] . '/results') ?>"
                                    class="btn btn-xs btn-outline-primary py-0 px-1">Wyniki</a>
-                                <a href="<?= url('competitions/' . $competition['id'] . '/events/' . $ev['id'] . '/scorecard') ?>"
-                                   target="_blank"
+                                <a href="<?= url('competitions/' . $competition['id'] . '/scorecards') ?>"
                                    class="btn btn-xs btn-outline-info py-0 px-1"
-                                   title="Metryczki A5 per zawodnik"><i class="bi bi-file-person"></i></a>
+                                   title="Generuj metryczki A5 (wybór zawodników i konkurencji)"><i class="bi bi-file-person"></i></a>
                                 <a href="<?= url('competitions/' . $competition['id'] . '/events/' . $ev['id'] . '/startcard') ?>"
                                    target="_blank"
                                    class="btn btn-xs btn-outline-secondary py-0 px-1"

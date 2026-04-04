@@ -19,8 +19,8 @@
            target="_blank" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-printer"></i> Lista startowa (A4)
         </a>
-        <a href="<?= url('competitions/' . $competition['id'] . '/events/' . $event['id'] . '/scorecard') ?>"
-           target="_blank" class="btn btn-sm btn-outline-primary">
+        <a href="<?= url('competitions/' . $competition['id'] . '/scorecards') ?>"
+           class="btn btn-sm btn-outline-primary">
             <i class="bi bi-file-person"></i> Metryczki A5
         </a>
     </div>

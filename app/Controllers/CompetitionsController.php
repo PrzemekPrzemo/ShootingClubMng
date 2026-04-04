@@ -378,6 +378,88 @@ class CompetitionsController extends BaseController
         exit;
     }
 
+    // ── Scorecard Selector + Print (A5 landscape) ───────────────────
+
+    /**
+     * Selector: choose members and events to print scorecards for.
+     * GET /competitions/:id/scorecards
+     */
+    public function scorecardSelector(string $id): void
+    {
+        $this->requireRole(['admin', 'zarzad', 'instruktor']);
+        $competition = $this->getCompetition((int)$id);
+
+        $entries = $this->competitionModel->getEntries((int)$id);
+        $events  = $this->competitionModel->getEvents((int)$id);
+
+        $view = new \App\Helpers\View();
+        $view->setLayout('main');
+        $view->render('competitions/scorecard_selector', [
+            'title'       => 'Generuj metryczki — ' . $competition['name'],
+            'competition' => $competition,
+            'entries'     => $entries,
+            'events'      => $events,
+        ]);
+    }
+
+    /**
+     * Print: render A5 landscape scorecard for each selected member × event.
+     * GET /competitions/:id/scorecards/print?m[]=&e[]=
+     */
+    public function scorecardPrint(string $id): void
+    {
+        $competition = $this->getCompetition((int)$id);
+
+        $memberIds = array_map('intval', (array)($_GET['m'] ?? []));
+        $eventIds  = array_map('intval', (array)($_GET['e'] ?? []));
+
+        if (empty($memberIds) || empty($eventIds)) {
+            Session::flash('error', 'Wybierz zawodników i konkurencje.');
+            $this->redirect("competitions/{$id}/scorecards");
+        }
+
+        // Load all entries for selected members (to get class, group, etc.)
+        $allEntries = $this->competitionModel->getEntries((int)$id);
+        $entriesMap = [];
+        foreach ($allEntries as $entry) {
+            $entriesMap[(int)$entry['member_id']] = $entry;
+        }
+
+        // Filter to requested members preserving order from entries
+        $selectedEntries = array_filter($allEntries, fn($e) => in_array((int)$e['member_id'], $memberIds));
+
+        // Load selected events
+        $allEvents    = $this->competitionModel->getEvents((int)$id);
+        $selectedEvts = array_filter($allEvents, fn($ev) => in_array((int)$ev['id'], $eventIds));
+
+        // Build results maps per event
+        $resultsMaps = [];
+        foreach ($selectedEvts as $ev) {
+            $resultsMaps[(int)$ev['id']] = $this->competitionModel->getEventResultsMap((int)$ev['id']);
+        }
+
+        // Build cards: member × event (member outer, event inner)
+        $cards = [];
+        foreach ($selectedEntries as $entry) {
+            foreach ($selectedEvts as $ev) {
+                $cards[] = [
+                    'member' => $entry,
+                    'event'  => $ev,
+                    'result' => $resultsMaps[(int)$ev['id']][(int)$entry['member_id']] ?? null,
+                ];
+            }
+        }
+
+        $view = new \App\Helpers\View();
+        $view->setLayout('print_scorecard');
+        $view->render('competitions/scorecard_print', [
+            'title'       => 'Metryczki — ' . $competition['name'],
+            'competition' => $competition,
+            'cards'       => $cards,
+        ]);
+        exit;
+    }
+
     // ── Competition Judges ───────────────────────────────────────────
 
     public function addJudge(string $id): void
