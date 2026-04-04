@@ -8,9 +8,10 @@
 
 <div class="row g-3">
     <!-- Lista konkurencji -->
-    <div class="col-md-8">
+    <div class="col-lg-8">
         <div class="card">
             <div class="card-body p-0">
+            <div class="table-responsive">
                 <table class="table table-hover table-sm mb-0">
                     <thead class="table-dark">
                         <tr>
@@ -89,11 +90,12 @@
                     </tbody>
                 </table>
             </div>
+            </div>
         </div>
     </div>
 
     <!-- Formularz dodawania + szablony -->
-    <div class="col-md-4">
+    <div class="col-lg-4">
 
         <!-- Szablony (jeśli są zdefiniowane) -->
         <?php if (!empty($templateGroups)): ?>
