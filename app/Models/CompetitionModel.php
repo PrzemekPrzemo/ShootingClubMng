@@ -205,7 +205,7 @@ class CompetitionModel extends BaseModel
     {
         try {
             $stmt = $this->db->prepare("
-                SELECT ce.weapon_type,
+                SELECT cee.weapon_type,
                        COALESCE(ce.discount, 0) AS discount,
                        ev.fee_own_weapon,
                        ev.fee_club_weapon
@@ -390,25 +390,39 @@ class CompetitionModel extends BaseModel
         } catch (\PDOException) {}
     }
 
+    /**
+     * Returns [event_id => weapon_type] map for an entry.
+     */
     public function getEntryEventIds(int $entryId): array
     {
         try {
-            $stmt = $this->db->prepare("SELECT competition_event_id FROM competition_entry_events WHERE competition_entry_id = ?");
+            $stmt = $this->db->prepare(
+                "SELECT competition_event_id, weapon_type FROM competition_entry_events WHERE competition_entry_id = ?"
+            );
             $stmt->execute([$entryId]);
-            return array_column($stmt->fetchAll(), 'competition_event_id');
+            $result = [];
+            foreach ($stmt->fetchAll() as $row) {
+                $result[(int)$row['competition_event_id']] = $row['weapon_type'];
+            }
+            return $result;
         } catch (\PDOException) {
             return [];
         }
     }
 
-    public function setEntryEvents(int $entryId, array $eventIds): void
+    /**
+     * Saves per-event weapon types. $eventWeapons = [event_id => 'własna'|'klubowa'].
+     */
+    public function setEntryEvents(int $entryId, array $eventWeapons): void
     {
         try {
             $this->db->prepare("DELETE FROM competition_entry_events WHERE competition_entry_id = ?")
                      ->execute([$entryId]);
-            foreach ($eventIds as $evId) {
-                $this->db->prepare("INSERT IGNORE INTO competition_entry_events (competition_entry_id, competition_event_id) VALUES (?, ?)")
-                         ->execute([$entryId, (int)$evId]);
+            foreach ($eventWeapons as $evId => $wt) {
+                $wt = in_array($wt, ['własna', 'klubowa']) ? $wt : 'własna';
+                $this->db->prepare(
+                    "INSERT IGNORE INTO competition_entry_events (competition_entry_id, competition_event_id, weapon_type) VALUES (?, ?, ?)"
+                )->execute([$entryId, (int)$evId, $wt]);
             }
         } catch (\PDOException) {}
     }

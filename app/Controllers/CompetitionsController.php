@@ -542,14 +542,14 @@ class CompetitionsController extends BaseController
             $this->redirect("competitions/{$id}/entries");
         }
 
-        $selectedEventIds = $this->competitionModel->getEntryEventIds((int)$eid);
+        $selectedEventWeapons = $this->competitionModel->getEntryEventIds((int)$eid);
 
         $this->render('competitions/entry_events', [
-            'title'            => 'Konkurencje zawodnika',
-            'competition'      => $competition,
-            'entry'            => $entry,
-            'events'           => $events,
-            'selectedEventIds' => $selectedEventIds,
+            'title'               => 'Konkurencje zawodnika',
+            'competition'         => $competition,
+            'entry'               => $entry,
+            'events'              => $events,
+            'selectedEventWeapons' => $selectedEventWeapons,
         ]);
     }
 
@@ -560,19 +560,16 @@ class CompetitionsController extends BaseController
 
         $entryId    = (int)$eid;
         $eventIds   = array_map('intval', (array)($_POST['event_ids'] ?? []));
-        $weaponType = in_array($_POST['weapon_type'] ?? '', ['własna', 'klubowa'])
-                        ? $_POST['weapon_type'] : 'własna';
+        $rawWeapons = (array)($_POST['event_weapon'] ?? []);
 
-        $db = Database::getInstance();
+        // Build [event_id => weapon_type] map for selected events only
+        $eventWeapons = [];
+        foreach ($eventIds as $evId) {
+            $wt = $rawWeapons[$evId] ?? 'własna';
+            $eventWeapons[$evId] = in_array($wt, ['własna', 'klubowa']) ? $wt : 'własna';
+        }
 
-        // Save weapon type
-        try {
-            $db->prepare("UPDATE competition_entries SET weapon_type = ? WHERE id = ?")
-               ->execute([$weaponType, $entryId]);
-        } catch (\PDOException) {}
-
-        // Save selected events
-        $this->competitionModel->setEntryEvents($entryId, $eventIds);
+        $this->competitionModel->setEntryEvents($entryId, $eventWeapons);
 
         Session::flash('success', 'Wybór konkurencji zapisany.');
         $this->redirect("competitions/{$id}/entries");

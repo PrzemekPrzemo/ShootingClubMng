@@ -1,5 +1,5 @@
 <?php
-$weaponType = $entry['weapon_type'] ?? 'własna';
+$selectedEventWeapons = $selectedEventWeapons ?? [];
 ?>
 <div class="d-flex align-items-center mb-3 gap-2">
     <a href="<?= url('competitions/' . $competition['id'] . '/entries') ?>" class="btn btn-sm btn-outline-secondary">
@@ -11,33 +11,10 @@ $weaponType = $entry['weapon_type'] ?? 'własna';
 </div>
 
 <div class="row justify-content-center">
-<div class="col-lg-7">
+<div class="col-lg-8">
 
 <form method="post" action="<?= url('competitions/' . $competition['id'] . '/entries/' . $entry['id'] . '/events') ?>">
     <?= csrf_field() ?>
-
-    <!-- Weapon type selector -->
-    <div class="card mb-3">
-        <div class="card-header"><strong><i class="bi bi-bullseye"></i> Typ broni</strong></div>
-        <div class="card-body">
-            <div class="d-flex gap-4">
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input weapon-radio" type="radio" name="weapon_type"
-                           id="wt_own" value="własna" <?= $weaponType === 'własna' ? 'checked' : '' ?>>
-                    <label class="form-check-label" for="wt_own">
-                        <i class="bi bi-person"></i> Broń własna
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input weapon-radio" type="radio" name="weapon_type"
-                           id="wt_club" value="klubowa" <?= $weaponType === 'klubowa' ? 'checked' : '' ?>>
-                    <label class="form-check-label" for="wt_club">
-                        <i class="bi bi-building"></i> Broń klubowa
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Event selection -->
     <div class="card mb-3">
@@ -54,38 +31,50 @@ $weaponType = $entry['weapon_type'] ?? 'własna';
                     <tr>
                         <th style="width:36px"></th>
                         <th>Konkurencja</th>
-                        <th class="text-center">Strzały</th>
-                        <th class="text-end price-own <?= $weaponType === 'własna' ? '' : 'd-none' ?>">Broń własna</th>
-                        <th class="text-end price-club <?= $weaponType === 'klubowa' ? '' : 'd-none' ?>">Broń klubowa</th>
+                        <th class="text-center" style="width:60px">Strzały</th>
+                        <th style="width:200px">Typ broni</th>
+                        <th class="text-end" style="width:90px">Cena</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php foreach ($events as $ev): ?>
                     <?php
-                    $checked  = in_array($ev['id'], $selectedEventIds);
+                    $selected = array_key_exists($ev['id'], $selectedEventWeapons);
+                    $wt       = $selectedEventWeapons[$ev['id']] ?? 'własna';
                     $feeOwn   = isset($ev['fee_own_weapon'])  ? (float)$ev['fee_own_weapon']  : null;
                     $feeClub  = isset($ev['fee_club_weapon']) ? (float)$ev['fee_club_weapon'] : null;
                     ?>
-                    <tr class="<?= $checked ? 'table-primary' : '' ?> event-row"
+                    <tr class="<?= $selected ? 'table-primary' : '' ?> event-row"
                         data-fee-own="<?= $feeOwn ?? 0 ?>"
                         data-fee-club="<?= $feeClub ?? 0 ?>">
                         <td class="text-center align-middle">
                             <input type="checkbox" name="event_ids[]" value="<?= $ev['id'] ?>"
-                                   class="form-check-input event-cb" <?= $checked ? 'checked' : '' ?>>
+                                   class="form-check-input event-cb" <?= $selected ? 'checked' : '' ?>>
                         </td>
-                        <td class="align-middle">
-                            <label class="form-check-label w-100" style="cursor:pointer">
-                                <strong><?= e($ev['name']) ?></strong>
-                            </label>
-                        </td>
+                        <td class="align-middle fw-semibold"><?= e($ev['name']) ?></td>
                         <td class="text-center align-middle text-muted small">
                             <?= $ev['shots_count'] ?? '—' ?>
                         </td>
-                        <td class="text-end align-middle price-own <?= $weaponType === 'własna' ? '' : 'd-none' ?>">
-                            <?= $feeOwn !== null ? '<span class="badge bg-info text-dark">' . format_money($feeOwn) . '</span>' : '<span class="text-muted">—</span>' ?>
+                        <td class="align-middle">
+                            <div class="btn-group btn-group-sm event-weapon-toggle <?= $selected ? '' : 'd-none' ?>">
+                                <input type="radio" class="btn-check event-weapon"
+                                       name="event_weapon[<?= $ev['id'] ?>]"
+                                       id="wt_own_<?= $ev['id'] ?>"
+                                       value="własna" <?= $wt === 'własna' ? 'checked' : '' ?>>
+                                <label class="btn btn-outline-primary" for="wt_own_<?= $ev['id'] ?>">
+                                    <i class="bi bi-person"></i> Własna
+                                </label>
+                                <input type="radio" class="btn-check event-weapon"
+                                       name="event_weapon[<?= $ev['id'] ?>]"
+                                       id="wt_club_<?= $ev['id'] ?>"
+                                       value="klubowa" <?= $wt === 'klubowa' ? 'checked' : '' ?>>
+                                <label class="btn btn-outline-secondary" for="wt_club_<?= $ev['id'] ?>">
+                                    <i class="bi bi-building"></i> Klub.
+                                </label>
+                            </div>
                         </td>
-                        <td class="text-end align-middle price-club <?= $weaponType === 'klubowa' ? '' : 'd-none' ?>">
-                            <?= $feeClub !== null ? '<span class="badge bg-secondary">' . format_money($feeClub) . '</span>' : '<span class="text-muted">—</span>' ?>
+                        <td class="text-end align-middle">
+                            <span class="event-fee-display text-muted">—</span>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -126,8 +115,51 @@ $weaponType = $entry['weapon_type'] ?? 'własna';
 <script>
 var discount = <?= isset($entry['discount']) ? (float)$entry['discount'] : 0 ?>;
 
-function getWeapon() {
-    return document.querySelector('.weapon-radio:checked')?.value || 'własna';
+function getRowWeapon(row) {
+    return row.querySelector('.event-weapon[value="klubowa"]:checked') ? 'klubowa' : 'własna';
+}
+
+function updateRowFee(row) {
+    var cb      = row.querySelector('.event-cb');
+    var feeSpan = row.querySelector('.event-fee-display');
+    if (!cb || !feeSpan) return;
+    if (!cb.checked) {
+        feeSpan.textContent = '—';
+        feeSpan.className = 'event-fee-display text-muted';
+        return;
+    }
+    var wt  = getRowWeapon(row);
+    var fee = wt === 'klubowa'
+        ? parseFloat(row.dataset.feeClub || 0)
+        : parseFloat(row.dataset.feeOwn  || 0);
+    if (fee > 0) {
+        feeSpan.textContent = fee.toFixed(2).replace('.', ',') + ' zł';
+        feeSpan.className = 'event-fee-display badge bg-info text-dark';
+    } else {
+        feeSpan.textContent = '—';
+        feeSpan.className = 'event-fee-display text-muted';
+    }
+}
+
+function updateFee() {
+    var total = 0;
+    document.querySelectorAll('.event-row').forEach(function(row) {
+        var cb     = row.querySelector('.event-cb');
+        var toggle = row.querySelector('.event-weapon-toggle');
+        var on     = cb && cb.checked;
+        row.classList.toggle('table-primary', on);
+        if (toggle) toggle.classList.toggle('d-none', !on);
+        updateRowFee(row);
+        if (on) {
+            var wt = getRowWeapon(row);
+            total += wt === 'klubowa'
+                ? parseFloat(row.dataset.feeClub || 0)
+                : parseFloat(row.dataset.feeOwn  || 0);
+        }
+    });
+    total = Math.max(0, total - discount);
+    document.getElementById('feeTotal').textContent = total.toFixed(2).replace('.', ',') + ' zł';
+    document.getElementById('feeTotal').className = 'fs-4 fw-bold ' + (total > 0 ? 'text-danger' : 'text-success');
 }
 
 function toggleAll(on) {
@@ -135,45 +167,17 @@ function toggleAll(on) {
     updateFee();
 }
 
-function updateFee() {
-    var weapon = getWeapon();
-    var total  = 0;
-    document.querySelectorAll('.event-row').forEach(function(row) {
-        var cb = row.querySelector('.event-cb');
-        if (cb && cb.checked) {
-            total += weapon === 'klubowa'
-                ? parseFloat(row.dataset.feeClub || 0)
-                : parseFloat(row.dataset.feeOwn  || 0);
-        }
-        row.classList.toggle('table-primary', cb && cb.checked);
-    });
-    total = Math.max(0, total - discount);
-    document.getElementById('feeTotal').textContent = total.toFixed(2).replace('.', ',') + ' zł';
-    document.getElementById('feeTotal').className = 'fs-4 fw-bold ' + (total > 0 ? 'text-danger' : 'text-success');
-}
-
-function updateWeaponColumns() {
-    var weapon = getWeapon();
-    document.querySelectorAll('.price-own').forEach(function(el) {
-        el.classList.toggle('d-none', weapon !== 'własna');
-    });
-    document.querySelectorAll('.price-club').forEach(function(el) {
-        el.classList.toggle('d-none', weapon !== 'klubowa');
-    });
-    updateFee();
-}
-
-document.querySelectorAll('.weapon-radio').forEach(function(r) {
-    r.addEventListener('change', updateWeaponColumns);
-});
 document.querySelectorAll('.event-cb').forEach(function(cb) {
     cb.addEventListener('change', updateFee);
 });
+document.querySelectorAll('.event-weapon').forEach(function(r) {
+    r.addEventListener('change', updateFee);
+});
 
-// Make whole row clickable
+// Make whole row clickable except weapon toggle area
 document.querySelectorAll('.event-row').forEach(function(row) {
     row.addEventListener('click', function(e) {
-        if (e.target.tagName === 'INPUT') return;
+        if (e.target.closest('.event-weapon-toggle') || e.target.tagName === 'INPUT') return;
         var cb = row.querySelector('.event-cb');
         if (cb) { cb.checked = !cb.checked; updateFee(); }
     });

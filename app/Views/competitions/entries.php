@@ -38,7 +38,6 @@ $hasFees   = array_sum($entryFees) > 0 || !empty($entryFees);
                         <tr>
                             <th>#</th>
                             <th>Zawodnik</th>
-                            <th>Broń</th>
                             <th>Klasa</th>
                             <th>Status</th>
                             <th title="Obliczone z wybranych konkurencji">Do zapłaty</th>
@@ -55,18 +54,12 @@ $hasFees   = array_sum($entryFees) > 0 || !empty($entryFees);
                         $amountDue = $entryFees[$e['id']] ?? 0;
                         $paid      = !empty($e['start_fee_paid']);
                         $discount  = isset($e['discount']) && $e['discount'] > 0 ? (float)$e['discount'] : 0.0;
-                        $weapon    = $e['weapon_type'] ?? 'własna';
                         ?>
                         <tr>
                             <td class="text-muted"><?= $i+1 ?></td>
                             <td>
                                 <a href="<?= url('members/' . $e['member_id']) ?>"><?= e($e['last_name']) ?> <?= e($e['first_name']) ?></a><br>
                                 <small class="text-muted"><?= e($e['member_number']) ?></small>
-                            </td>
-                            <td>
-                                <span class="badge bg-<?= $weapon === 'klubowa' ? 'secondary' : 'light border text-dark' ?>">
-                                    <?= $weapon === 'klubowa' ? 'Klub.' : 'Własna' ?>
-                                </span>
                             </td>
                             <td><?= e($e['class'] ?? '—') ?></td>
                             <td><span class="badge bg-<?= $sc ?>"><?= e($e['status']) ?></span></td>
@@ -147,7 +140,7 @@ $hasFees   = array_sum($entryFees) > 0 || !empty($entryFees);
                         </tr>
                     <?php endforeach; ?>
                     <?php if (empty($entries)): ?>
-                        <tr><td colspan="10" class="text-center text-muted py-3">Brak zgłoszeń.</td></tr>
+                        <tr><td colspan="9" class="text-center text-muted py-3">Brak zgłoszeń.</td></tr>
                     <?php endif; ?>
                     </tbody>
                 </table>
