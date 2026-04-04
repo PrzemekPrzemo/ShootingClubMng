@@ -65,7 +65,7 @@
                                    class="btn btn-sm btn-outline-secondary py-0 px-2">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <?php if ($u['is_active']): ?>
+                                <?php if ($u['is_active'] && $u['role'] !== 'admin'): ?>
                                 <form method="post" action="<?= url('config/users/' . $u['id'] . '/delete') ?>"
                                       class="d-inline"
                                       onsubmit="return confirm('Dezaktywować użytkownika <?= e($u['username']) ?>?')">

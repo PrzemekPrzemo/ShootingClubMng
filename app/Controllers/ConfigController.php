@@ -185,11 +185,22 @@ class ConfigController extends BaseController
         Csrf::verify();
         $this->requireRole(['admin']);
 
+        $target = $this->userModel->findById((int)$id);
+        if (!$target) {
+            Session::flash('error', 'Użytkownik nie istnieje.');
+            $this->redirect('config/users');
+        }
+
         $data   = $this->collectUserData();
         $errors = $this->validateUser($data, false);
         if ($errors) {
             Session::flash('error', implode('<br>', $errors));
             $this->redirect("config/users/{$id}/edit");
+        }
+
+        // Protect admin accounts: cannot change role away from admin
+        if (($target['role'] ?? '') === 'admin') {
+            $data['role'] = 'admin';
         }
 
         $this->userModel->updateUser((int)$id, $data);
@@ -201,6 +212,13 @@ class ConfigController extends BaseController
     {
         Csrf::verify();
         $this->requireRole(['admin']);
+
+        $target = $this->userModel->findById((int)$id);
+        if (!$target || ($target['role'] ?? '') === 'admin') {
+            Session::flash('error', 'Nie można dezaktywować konta administratora.');
+            $this->redirect('config/users');
+        }
+
         $this->userModel->update((int)$id, ['is_active' => 0]);
         Session::flash('success', 'Użytkownik dezaktywowany.');
         $this->redirect('config/users');
