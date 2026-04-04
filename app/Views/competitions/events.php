@@ -44,8 +44,15 @@
                                 </a>
                                 <a href="<?= url('competitions/' . $competition['id'] . '/events/' . $ev['id'] . '/startcard') ?>"
                                    target="_blank"
-                                   class="btn btn-xs btn-outline-secondary py-0 px-2">
-                                    <i class="bi bi-printer"></i> Metryczka
+                                   class="btn btn-xs btn-outline-secondary py-0 px-2"
+                                   title="Lista startowa (A4)">
+                                    <i class="bi bi-printer"></i> Lista
+                                </a>
+                                <a href="<?= url('competitions/' . $competition['id'] . '/events/' . $ev['id'] . '/scorecard') ?>"
+                                   target="_blank"
+                                   class="btn btn-xs btn-outline-primary py-0 px-2"
+                                   title="Metryczki per zawodnik (A5)">
+                                    <i class="bi bi-file-person"></i> Metryczki A5
                                 </a>
                                 <form method="post"
                                       action="<?= url('competitions/' . $competition['id'] . '/events/' . $ev['id'] . '/delete') ?>"

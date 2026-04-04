@@ -205,6 +205,7 @@ $router->post('/competitions/:id/events/:eid/delete',             [\App\Controll
 $router->get('/competitions/:id/events/:eid/results',             [\App\Controllers\CompetitionsController::class, 'eventResults']);
 $router->post('/competitions/:id/events/:eid/results/save',       [\App\Controllers\CompetitionsController::class, 'saveEventResults']);
 $router->get('/competitions/:id/events/:eid/startcard',           [\App\Controllers\CompetitionsController::class, 'startCard']);
+$router->get('/competitions/:id/events/:eid/scorecard',           [\App\Controllers\CompetitionsController::class, 'memberScorecard']);
 
 // Reports
 $router->get('/reports',                [\App\Controllers\ReportsController::class, 'index']);

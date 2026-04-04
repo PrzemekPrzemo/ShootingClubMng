@@ -347,6 +347,33 @@ class CompetitionsController extends BaseController
         exit;
     }
 
+    /**
+     * Per-competitor A5 scorecards — one card per entrant, with shot-by-shot score grid.
+     */
+    public function memberScorecard(string $id, string $eid): void
+    {
+        $competition = $this->getCompetition((int)$id);
+        $event       = $this->competitionModel->getEvent((int)$eid);
+        if (!$event || $event['competition_id'] != (int)$id) {
+            Session::flash('error', 'Konkurencja nie istnieje.');
+            $this->redirect("competitions/{$id}/events");
+        }
+
+        $entries    = $this->competitionModel->getEntries((int)$id);
+        $resultsMap = $this->competitionModel->getEventResultsMap((int)$eid);
+
+        $view = new \App\Helpers\View();
+        $view->setLayout('print_a5');
+        $view->render('competitions/member_scorecard', [
+            'title'       => 'Metryczki — ' . $event['name'],
+            'competition' => $competition,
+            'event'       => $event,
+            'entries'     => $entries,
+            'resultsMap'  => $resultsMap,
+        ]);
+        exit;
+    }
+
     // ── Competition Judges ───────────────────────────────────────────
 
     public function addJudge(string $id): void

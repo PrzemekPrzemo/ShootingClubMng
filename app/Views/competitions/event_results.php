@@ -14,10 +14,14 @@
     <?php endif; ?>
     <?php $stMap = ['decimal'=>'Dziesiętna','integer'=>'Całkowita','hit_miss'=>'Trafiony/Chybiony']; ?>
     <span class="badge bg-light text-dark border"><?= $stMap[$event['scoring_type']] ?? '' ?></span>
-    <div class="ms-auto">
+    <div class="ms-auto d-flex gap-2">
         <a href="<?= url('competitions/' . $competition['id'] . '/events/' . $event['id'] . '/startcard') ?>"
            target="_blank" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-printer"></i> Metryczka startowa
+            <i class="bi bi-printer"></i> Lista startowa (A4)
+        </a>
+        <a href="<?= url('competitions/' . $competition['id'] . '/events/' . $event['id'] . '/scorecard') ?>"
+           target="_blank" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-file-person"></i> Metryczki A5
         </a>
     </div>
 </div>
