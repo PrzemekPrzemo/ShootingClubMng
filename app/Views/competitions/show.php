@@ -7,7 +7,7 @@ $sc = match($competition['status']) {
     <a href="<?= url('competitions') ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
     <h2 class="h4 mb-0"><?= e($competition['name']) ?></h2>
     <span class="badge bg-<?= $sc ?>"><?= e($competition['status']) ?></span>
-    <div class="ms-auto d-flex gap-2">
+    <div class="ms-auto d-flex gap-2 flex-wrap">
         <a href="<?= url('competitions/' . $competition['id'] . '/entries') ?>" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-person-plus"></i> Zgłoszenia (<?= count($entries) ?>)
         </a>
@@ -16,6 +16,9 @@ $sc = match($competition['status']) {
         </a>
         <a href="<?= url('competitions/' . $competition['id'] . '/results') ?>" class="btn btn-sm btn-outline-success">
             <i class="bi bi-list-ol"></i> Wyniki ogólne
+        </a>
+        <a href="<?= url('competitions/' . $competition['id'] . '/scorecards') ?>" class="btn btn-sm btn-outline-dark">
+            <i class="bi bi-file-person"></i> Metryczki A5
         </a>
         <a href="<?= url('competitions/' . $competition['id'] . '/edit') ?>" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-pencil"></i> Edytuj
@@ -72,13 +75,13 @@ $sc = match($competition['status']) {
                             <td class="text-end" style="white-space:nowrap">
                                 <a href="<?= url('competitions/' . $competition['id'] . '/events/' . $ev['id'] . '/results') ?>"
                                    class="btn btn-xs btn-outline-primary py-0 px-1">Wyniki</a>
-                                <a href="<?= url('competitions/' . $competition['id'] . '/scorecards') ?>"
-                                   class="btn btn-xs btn-outline-info py-0 px-1"
-                                   title="Generuj metryczki A5 (wybór zawodników i konkurencji)"><i class="bi bi-file-person"></i></a>
                                 <a href="<?= url('competitions/' . $competition['id'] . '/events/' . $ev['id'] . '/startcard') ?>"
                                    target="_blank"
                                    class="btn btn-xs btn-outline-secondary py-0 px-1"
                                    title="Lista startowa A4"><i class="bi bi-printer"></i></a>
+                                <a href="<?= url('competitions/' . $competition['id'] . '/scorecards?e[]=' . $ev['id']) ?>"
+                                   class="btn btn-xs btn-outline-dark py-0 px-1"
+                                   title="Generuj metryczki A5 dla tej konkurencji"><i class="bi bi-file-person"></i></a>
                             </td>
                         </tr>
                     <?php endforeach; ?>

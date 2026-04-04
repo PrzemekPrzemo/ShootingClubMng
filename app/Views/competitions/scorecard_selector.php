@@ -147,6 +147,29 @@
 <?php endif; ?>
 
 <script>
+// Pre-selection from URL query params (?e[]=ID&m[]=ID)
+(function () {
+    var preEvents   = <?= json_encode(array_map('intval', (array)($_GET['e'] ?? []))) ?>;
+    var preMembers  = <?= json_encode(array_map('intval', (array)($_GET['m'] ?? []))) ?>;
+
+    if (preEvents.length) {
+        preEvents.forEach(function (id) {
+            var cb = document.getElementById('e_' + id);
+            if (cb) cb.checked = true;
+        });
+        // When coming from a specific event, auto-select all members for convenience
+        if (preMembers.length === 0) {
+            document.querySelectorAll('.member-cb').forEach(function (cb) { cb.checked = true; });
+        }
+    }
+    if (preMembers.length) {
+        preMembers.forEach(function (id) {
+            var cb = document.getElementById('m_' + id);
+            if (cb) cb.checked = true;
+        });
+    }
+})();
+
 function toggleAll(name, checked) {
     document.querySelectorAll('input[name="' + name + '"]').forEach(cb => {
         cb.checked = checked;
