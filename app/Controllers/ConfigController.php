@@ -10,6 +10,7 @@ use App\Models\UserModel;
 use App\Models\DisciplineModel;
 use App\Models\MemberClassModel;
 use App\Models\MedicalExamTypeModel;
+use App\Models\RolePermissionModel;
 
 class ConfigController extends BaseController
 {
@@ -108,10 +109,36 @@ class ConfigController extends BaseController
     // Users management
     public function users(): void
     {
+        $permModel = new RolePermissionModel();
         $this->render('config/users', [
-            'title' => 'Użytkownicy systemu',
-            'users' => $this->userModel->getAllUsers(),
+            'title'      => 'Użytkownicy systemu',
+            'users'      => $this->userModel->getAllUsers(),
+            'permMatrix' => $permModel->getMatrix(),
+            'modules'    => RolePermissionModel::MODULES,
+            'roles'      => RolePermissionModel::ROLES,
         ]);
+    }
+
+    public function saveRolePermissions(): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin']);
+
+        // Build matrix: [role => [module, ...]] from checkbox POST
+        $posted = $_POST['perm'] ?? [];   // perm[role][module] = '1'
+        $matrix = [];
+        foreach (RolePermissionModel::ROLES as $role => $_) {
+            $matrix[$role] = [];
+            foreach (RolePermissionModel::MODULES as $mod => $_) {
+                if (!empty($posted[$role][$mod])) {
+                    $matrix[$role][] = $mod;
+                }
+            }
+        }
+
+        (new RolePermissionModel())->saveMatrix($matrix);
+        Session::flash('success', 'Uprawnienia ról zostały zapisane.');
+        $this->redirect('config/users#permissions');
     }
 
     public function createUser(): void

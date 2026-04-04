@@ -10,106 +10,149 @@
 </head>
 <body>
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-danger">
-    <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="<?= url('dashboard') ?>">
-            <i class="bi bi-bullseye"></i> Klub Strzelecki
+<?php
+use App\Models\RolePermissionModel;
+$role       = $authUser['role'] ?? '';
+$uri        = $_SERVER['REQUEST_URI'] ?? '';
+$navModules = $navModules ?? RolePermissionModel::modulesForRole($role);
+
+$allModules = RolePermissionModel::MODULES;
+
+// Build nav items — only modules this role can access
+$navItems = [];
+foreach ($allModules as $mod => $cfg) {
+    if (in_array($mod, $navModules, true)) {
+        $navItems[$mod] = $cfg;
+    }
+}
+?>
+
+<!-- ── Sidebar ──────────────────────────────────────────────────────── -->
+<nav id="sidebar">
+    <div class="sidebar-brand">
+        <a href="<?= url('dashboard') ?>" class="sidebar-brand-link">
+            <i class="bi bi-bullseye"></i>
+            <span class="sidebar-brand-text">Klub Strzelecki</span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navMain">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/dashboard') ? 'active' : '' ?>"
-                       href="<?= url('dashboard') ?>"><i class="bi bi-speedometer2"></i> Dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/members') ? 'active' : '' ?>"
-                       href="<?= url('members') ?>"><i class="bi bi-people"></i> Zawodnicy</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/licenses') ? 'active' : '' ?>"
-                       href="<?= url('licenses') ?>"><i class="bi bi-card-checklist"></i> Licencje</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/finances') ? 'active' : '' ?>"
-                       href="<?= url('finances') ?>"><i class="bi bi-cash-stack"></i> Finanse</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/competitions') ? 'active' : '' ?>"
-                       href="<?= url('competitions') ?>"><i class="bi bi-trophy"></i> Zawody</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/judges') ? 'active' : '' ?>"
-                       href="<?= url('judges') ?>"><i class="bi bi-person-badge"></i> Sędziowie</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/club-fees') ? 'active' : '' ?>"
-                       href="<?= url('club-fees') ?>"><i class="bi bi-bank"></i> Opłaty PZSS</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/reports') ? 'active' : '' ?>"
-                       href="<?= url('reports') ?>"><i class="bi bi-file-earmark-bar-graph"></i> Raporty</a>
-                </li>
-                <?php if (in_array($authUser['role'] ?? '', ['admin','zarzad'])): ?>
-                <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/config') ? 'active' : '' ?>"
-                       href="<?= url('config') ?>"><i class="bi bi-gear"></i> Konfiguracja</a>
-                </li>
-                <?php endif; ?>
-            </ul>
-            <ul class="navbar-nav">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle"></i>
-                        <?= e($authUser['full_name'] ?? $authUser['username'] ?? '') ?>
-                        <span class="badge bg-light text-dark ms-1 small"><?= e($authUser['role'] ?? '') ?></span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item text-danger" href="<?= url('auth/logout') ?>">
-                            <i class="bi bi-box-arrow-right"></i> Wyloguj
-                        </a></li>
-                    </ul>
-                </li>
-            </ul>
+    </div>
+
+    <ul class="sidebar-nav">
+        <?php foreach ($navItems as $mod => $cfg): ?>
+        <?php
+            $active = match($mod) {
+                'dashboard'    => str_contains($uri, '/dashboard'),
+                'members'      => str_contains($uri, '/members') && !str_contains($uri, '/medical'),
+                'licenses'     => str_contains($uri, '/licenses'),
+                'finances'     => str_contains($uri, '/finances'),
+                'competitions' => str_contains($uri, '/competitions'),
+                'judges'       => str_contains($uri, '/judges'),
+                'club_fees'    => str_contains($uri, '/club-fees'),
+                'reports'      => str_contains($uri, '/reports'),
+                'config'       => str_contains($uri, '/config'),
+                default        => false,
+            };
+        ?>
+        <li class="sidebar-nav-item">
+            <a href="<?= url($cfg['url']) ?>"
+               class="sidebar-nav-link <?= $active ? 'active' : '' ?>">
+                <i class="bi bi-<?= $cfg['icon'] ?>"></i>
+                <span><?= $cfg['label'] ?></span>
+            </a>
+        </li>
+        <?php endforeach; ?>
+    </ul>
+
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <i class="bi bi-person-circle"></i>
+            <div class="sidebar-user-info">
+                <div class="sidebar-user-name"><?= e($authUser['full_name'] ?? $authUser['username'] ?? '') ?></div>
+                <div class="sidebar-user-role">
+                    <span class="badge bg-<?= match($role) { 'admin'=>'danger','zarzad'=>'warning text-dark', default=>'secondary' } ?>">
+                        <?= e($role) ?>
+                    </span>
+                </div>
+            </div>
         </div>
+        <a href="<?= url('auth/logout') ?>" class="sidebar-logout" title="Wyloguj">
+            <i class="bi bi-box-arrow-right"></i>
+        </a>
     </div>
 </nav>
 
-<!-- Flash messages -->
-<div class="container-fluid pt-3">
-    <?php if (!empty($flashSuccess)): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle"></i> <?= e($flashSuccess) ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-    <?php if (!empty($flashError)): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle"></i> <?= e($flashError) ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-    <?php if (!empty($flashWarning)): ?>
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-circle"></i> <?= e($flashWarning) ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
+<!-- ── Top bar (mobile toggle + page title) ─────────────────────────── -->
+<div id="topbar">
+    <button id="sidebarToggle" class="topbar-toggle" aria-label="Menu">
+        <i class="bi bi-list"></i>
+    </button>
+    <span class="topbar-title"><?= e($title ?? '') ?></span>
+    <a href="<?= url('auth/logout') ?>" class="topbar-logout d-lg-none" title="Wyloguj">
+        <i class="bi bi-box-arrow-right"></i>
+    </a>
 </div>
 
-<!-- Main content -->
-<main class="container-fluid py-3">
-    <?= $content ?>
-</main>
+<!-- Overlay for mobile -->
+<div id="sidebarOverlay"></div>
 
-<footer class="text-center text-muted small py-3 border-top mt-4">
-    &copy; <?= date('Y') ?> Klub Strzelecki &mdash; System zarządzania v1.0
-</footer>
+<!-- ── Main content ─────────────────────────────────────────────────── -->
+<div id="mainContent">
+
+    <!-- Flash messages -->
+    <div class="flash-wrap">
+        <?php if (!empty($flashSuccess)): ?>
+            <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+                <i class="bi bi-check-circle"></i> <?= e($flashSuccess) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+        <?php if (!empty($flashError)): ?>
+            <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                <i class="bi bi-exclamation-triangle"></i> <?= e($flashError) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+        <?php if (!empty($flashWarning)): ?>
+            <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+                <i class="bi bi-exclamation-circle"></i> <?= e($flashWarning) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <main class="main-inner">
+        <?= $content ?>
+    </main>
+
+    <footer class="main-footer">
+        &copy; <?= date('Y') ?> Klub Strzelecki &mdash; System zarządzania v1.0
+    </footer>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?= url('js/app.js') ?>"></script>
+<script>
+(function () {
+    const sidebar  = document.getElementById('sidebar');
+    const overlay  = document.getElementById('sidebarOverlay');
+    const toggle   = document.getElementById('sidebarToggle');
+    const COLLAPSED = 'sidebar-collapsed';
+
+    function open()  { sidebar.classList.add('open');  overlay.classList.add('open'); }
+    function close() { sidebar.classList.remove('open'); overlay.classList.remove('open'); }
+
+    toggle.addEventListener('click', () => sidebar.classList.contains('open') ? close() : open());
+    overlay.addEventListener('click', close);
+
+    // Restore collapsed state on desktop
+    if (localStorage.getItem('sidebarCollapsed') === '1') {
+        document.body.classList.add(COLLAPSED);
+    }
+    // Double-click brand to collapse on desktop
+    document.querySelector('.sidebar-brand-link')?.addEventListener('dblclick', () => {
+        document.body.classList.toggle(COLLAPSED);
+        localStorage.setItem('sidebarCollapsed', document.body.classList.contains(COLLAPSED) ? '1' : '0');
+    });
+})();
+</script>
 </body>
 </html>

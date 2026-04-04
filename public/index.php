@@ -273,7 +273,8 @@ $router->get('/config/users/create',    [\App\Controllers\ConfigController::clas
 $router->post('/config/users/create',   [\App\Controllers\ConfigController::class, 'storeUser']);
 $router->get('/config/users/:id/edit',  [\App\Controllers\ConfigController::class, 'editUser']);
 $router->post('/config/users/:id/edit', [\App\Controllers\ConfigController::class, 'updateUser']);
-$router->post('/config/users/:id/delete', [\App\Controllers\ConfigController::class, 'deleteUser']);
+$router->post('/config/users/:id/delete',      [\App\Controllers\ConfigController::class, 'deleteUser']);
+$router->post('/config/users/permissions',     [\App\Controllers\ConfigController::class, 'saveRolePermissions']);
 
 // Dispatch
 $router->dispatch();

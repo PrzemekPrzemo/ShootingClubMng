@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Helpers\View;
 use App\Helpers\Session;
 use App\Helpers\Auth;
+use App\Models\RolePermissionModel;
 
 abstract class BaseController
 {
@@ -18,11 +19,13 @@ abstract class BaseController
 
     protected function render(string $template, array $data = []): void
     {
-        // Always pass auth user and flash messages to views
         $data['authUser']     = Auth::user();
         $data['flashSuccess'] = Session::getFlash('success');
         $data['flashError']   = Session::getFlash('error');
         $data['flashWarning'] = Session::getFlash('warning');
+        // Pass nav modules so the sidebar can hide inaccessible sections
+        $role = Auth::role() ?? '';
+        $data['navModules']   = RolePermissionModel::modulesForRole($role);
         $this->view->render($template, $data);
     }
 
