@@ -28,6 +28,8 @@
                             <th class="text-center">Strzałów</th>
                             <th>Punktacja</th>
                             <th class="text-center">Maks.</th>
+                            <th class="text-end">Broń własna</th>
+                            <th class="text-end">Broń klubowa</th>
                             <th>Opis</th>
                             <th>Status</th>
                             <th></th>
@@ -53,6 +55,20 @@
                             </td>
                             <td class="text-center small text-muted">
                                 <?= $t['max_score'] !== null ? number_format((float)$t['max_score'], 0, '.', '') : '—' ?>
+                            </td>
+                            <td class="text-end">
+                                <?php if (isset($t['fee_own_weapon']) && $t['fee_own_weapon'] !== null): ?>
+                                    <span class="badge bg-info text-dark"><?= format_money($t['fee_own_weapon']) ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-end">
+                                <?php if (isset($t['fee_club_weapon']) && $t['fee_club_weapon'] !== null): ?>
+                                    <span class="badge bg-secondary"><?= format_money($t['fee_club_weapon']) ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                <?php endif; ?>
                             </td>
                             <td class="small text-muted"><?= e($t['description'] ?? '') ?></td>
                             <td>
@@ -90,7 +106,7 @@
                     <?php endforeach; ?>
                     <?php if (empty($templates)): ?>
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
+                            <td colspan="10" class="text-center text-muted py-4">
                                 Brak szablonów. Dodaj pierwszy po prawej.
                             </td>
                         </tr>
@@ -151,6 +167,21 @@
                             </option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col">
+                            <label class="form-label">Cena — broń własna (zł)</label>
+                            <input type="number" name="fee_own_weapon" class="form-control form-control-sm"
+                                   min="0" step="0.01" placeholder="np. 30.00"
+                                   value="<?= e(isset($editItem['fee_own_weapon']) && $editItem['fee_own_weapon'] !== null ? number_format((float)$editItem['fee_own_weapon'], 2, '.', '') : '') ?>">
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Cena — broń klubowa (zł)</label>
+                            <input type="number" name="fee_club_weapon" class="form-control form-control-sm"
+                                   min="0" step="0.01" placeholder="np. 40.00"
+                                   value="<?= e(isset($editItem['fee_club_weapon']) && $editItem['fee_club_weapon'] !== null ? number_format((float)$editItem['fee_club_weapon'], 2, '.', '') : '') ?>">
+                        </div>
                     </div>
 
                     <div class="mb-2">

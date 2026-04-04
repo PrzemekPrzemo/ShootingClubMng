@@ -308,17 +308,21 @@ class ConfigController extends BaseController
             $this->redirect("config/disciplines/{$id}/templates");
         }
 
+        $feeOwn  = trim($_POST['fee_own_weapon']  ?? '');
+        $feeClub = trim($_POST['fee_club_weapon'] ?? '');
         $data = [
-            'discipline_id' => (int)$id,
-            'name'          => $name,
-            'shots_count'   => ($_POST['shots_count'] ?? '') !== '' ? (int)$_POST['shots_count'] : null,
-            'scoring_type'  => in_array($_POST['scoring_type'] ?? '', ['decimal','integer','hit_miss'])
-                               ? $_POST['scoring_type'] : 'decimal',
-            'max_score'     => ($_POST['max_score'] ?? '') !== ''
-                               ? (float)str_replace(',', '.', $_POST['max_score']) : null,
-            'description'   => trim($_POST['description'] ?? '') ?: null,
-            'sort_order'    => (int)($_POST['sort_order'] ?? 0),
-            'is_active'     => isset($_POST['is_active']) ? 1 : 0,
+            'discipline_id'  => (int)$id,
+            'name'           => $name,
+            'shots_count'    => ($_POST['shots_count'] ?? '') !== '' ? (int)$_POST['shots_count'] : null,
+            'scoring_type'   => in_array($_POST['scoring_type'] ?? '', ['decimal','integer','hit_miss'])
+                                ? $_POST['scoring_type'] : 'decimal',
+            'max_score'      => ($_POST['max_score'] ?? '') !== ''
+                                ? (float)str_replace(',', '.', $_POST['max_score']) : null,
+            'fee_own_weapon'  => $feeOwn  !== '' ? (float)str_replace(',', '.', $feeOwn)  : null,
+            'fee_club_weapon' => $feeClub !== '' ? (float)str_replace(',', '.', $feeClub) : null,
+            'description'    => trim($_POST['description'] ?? '') ?: null,
+            'sort_order'     => (int)($_POST['sort_order'] ?? 0),
+            'is_active'      => isset($_POST['is_active']) ? 1 : 0,
         ];
 
         if ($tid > 0) {

@@ -117,6 +117,8 @@
                                         data-name="<?= e($tpl['name']) ?>"
                                         data-shots="<?= e($tpl['shots_count'] ?? '') ?>"
                                         data-scoring="<?= e($tpl['scoring_type']) ?>"
+                                        data-fee-own="<?= isset($tpl['fee_own_weapon'])  && $tpl['fee_own_weapon']  !== null ? number_format((float)$tpl['fee_own_weapon'],  2, '.', '') : '' ?>"
+                                        data-fee-club="<?= isset($tpl['fee_club_weapon']) && $tpl['fee_club_weapon'] !== null ? number_format((float)$tpl['fee_club_weapon'], 2, '.', '') : '' ?>"
                                         title="<?= e($tpl['description'] ?? $tpl['name']) ?>">
                                     <?= e($tpl['name']) ?>
                                     <?php if ($tpl['shots_count']): ?>
@@ -197,8 +199,8 @@ document.querySelectorAll('.tpl-btn').forEach(btn => {
         document.getElementById('evtShots').value   = btn.dataset.shots;
         const sel = document.getElementById('evtScoring');
         for (let o of sel.options) o.selected = (o.value === btn.dataset.scoring);
-        document.getElementById('evtFeeOwn').value  = '';
-        document.getElementById('evtFeeClub').value = '';
+        document.getElementById('evtFeeOwn').value  = btn.dataset.feeOwn  || '';
+        document.getElementById('evtFeeClub').value = btn.dataset.feeClub || '';
         document.getElementById('evtName').focus();
         document.getElementById('addEventForm').scrollIntoView({behavior:'smooth', block:'nearest'});
         // Highlight the form briefly
