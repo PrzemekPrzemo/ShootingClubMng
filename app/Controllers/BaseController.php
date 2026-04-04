@@ -41,6 +41,24 @@ abstract class BaseController
         exit;
     }
 
+    /**
+     * Redirects back to HTTP_REFERER only when it belongs to this application.
+     * Falls back to $fallback if referer is absent or points to an external host.
+     */
+    protected function safeRedirectBack(string $fallback): never
+    {
+        $referer = $_SERVER['HTTP_REFERER'] ?? '';
+        if ($referer !== '') {
+            $refererHost = parse_url($referer, PHP_URL_HOST);
+            $ownHost     = $_SERVER['HTTP_HOST'] ?? '';
+            if ($refererHost !== false && $refererHost === $ownHost) {
+                header('Location: ' . $referer);
+                exit;
+            }
+        }
+        $this->redirect($fallback);
+    }
+
     protected function json(mixed $data, int $status = 200): never
     {
         http_response_code($status);

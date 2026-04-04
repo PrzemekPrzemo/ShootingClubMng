@@ -148,9 +148,7 @@ class EquipmentController extends BaseController
         $returnedDate = trim($_POST['returned_date'] ?? date('Y-m-d'));
         $this->weaponModel->returnWeapon((int)$aid, $returnedDate);
         Session::flash('success', 'Zwrot broni odnotowany.');
-        $referer = $_SERVER['HTTP_REFERER'] ?? null;
-        if ($referer) { header('Location: ' . $referer); exit; }
-        $this->redirect('equipment');
+        $this->safeRedirectBack('equipment');
     }
 
     // ── Ammo ─────────────────────────────────────────────────────────

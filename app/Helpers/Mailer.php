@@ -28,6 +28,19 @@ class Mailer
             return false;
         }
 
+        // Reject invalid or header-injection-prone addresses
+        if (!filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+        if (!filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+        // Strip any newlines from fields that go into headers
+        $toEmail   = preg_replace('/[\r\n]/', '', $toEmail);
+        $toName    = preg_replace('/[\r\n]/', '', $toName);
+        $fromEmail = preg_replace('/[\r\n]/', '', $fromEmail);
+        $fromName  = preg_replace('/[\r\n]/', '', $fromName);
+
         $toEncoded      = self::encodeHeader($toName) . ' <' . $toEmail . '>';
         $subjectEncoded = '=?UTF-8?B?' . base64_encode($subject) . '?=';
 

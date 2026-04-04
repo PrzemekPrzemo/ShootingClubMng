@@ -354,16 +354,19 @@ class CompetitionsController extends BaseController
 
         foreach ($memberIds as $i => $memberId) {
             if (!$memberId) continue;
+            $score = $scores[$i] ?? '';
+            $place = $places[$i] ?? '';
+            $note  = trim($notes[$i] ?? '');
             // Skip rows with no data at all
-            if ($scores[$i] === '' && $places[$i] === '' && trim($notes[$i] ?? '') === '') continue;
+            if ($score === '' && $place === '' && $note === '') continue;
 
             $this->competitionModel->upsertEventResult([
                 'competition_event_id' => (int)$eid,
                 'member_id'            => (int)$memberId,
-                'score'                => $scores[$i],
+                'score'                => $score,
                 'score_inner'          => $scoreInners[$i] ?? '',
-                'place'                => $places[$i],
-                'notes'                => trim($notes[$i] ?? '') ?: null,
+                'place'                => $place,
+                'notes'                => $note ?: null,
                 'entered_by'           => Auth::id(),
             ]);
         }
@@ -610,9 +613,7 @@ class CompetitionsController extends BaseController
         $this->requireRole(['admin', 'zarzad', 'instruktor']);
         $this->competitionModel->changeEntryStatus((int)$id, 'potwierdzony');
         Session::flash('success', 'Zgłoszenie potwierdzone.');
-        $referer = $_SERVER['HTTP_REFERER'] ?? null;
-        if ($referer) { header('Location: ' . $referer); exit; }
-        $this->redirect('competitions');
+        $this->safeRedirectBack('competitions');
     }
 
     public function rejectEntry(string $id): void
@@ -621,9 +622,7 @@ class CompetitionsController extends BaseController
         $this->requireRole(['admin', 'zarzad', 'instruktor']);
         $this->competitionModel->changeEntryStatus((int)$id, 'wycofany');
         Session::flash('success', 'Zgłoszenie odrzucone.');
-        $referer = $_SERVER['HTTP_REFERER'] ?? null;
-        if ($referer) { header('Location: ' . $referer); exit; }
-        $this->redirect('competitions');
+        $this->safeRedirectBack('competitions');
     }
 
     public function toggleStartFee(string $id): void
@@ -631,9 +630,7 @@ class CompetitionsController extends BaseController
         Csrf::verify();
         $this->requireRole(['admin', 'zarzad', 'instruktor']);
         $this->competitionModel->toggleStartFee((int)$id);
-        $referer = $_SERVER['HTTP_REFERER'] ?? null;
-        if ($referer) { header('Location: ' . $referer); exit; }
-        $this->redirect('competitions');
+        $this->safeRedirectBack('competitions');
     }
 
     /**
@@ -722,9 +719,7 @@ class CompetitionsController extends BaseController
                 ->prepare("UPDATE competition_entries SET discount = ? WHERE id = ?")
                 ->execute([$val, (int)$eid]);
         } catch (\PDOException) {}
-        $referer = $_SERVER['HTTP_REFERER'] ?? null;
-        if ($referer) { header('Location: ' . $referer); exit; }
-        $this->redirect('competitions');
+        $this->safeRedirectBack('competitions');
     }
 
     // ── Rankings + Protocol ──────────────────────────────────────────
