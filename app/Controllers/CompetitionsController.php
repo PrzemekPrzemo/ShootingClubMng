@@ -508,6 +508,40 @@ class CompetitionsController extends BaseController
         $this->redirect("competitions/{$id}");
     }
 
+    // ── Portal entry approval ────────────────────────────────────────
+
+    public function approveEntry(string $id): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad', 'instruktor']);
+        $this->competitionModel->changeEntryStatus((int)$id, 'potwierdzony');
+        Session::flash('success', 'Zgłoszenie potwierdzone.');
+        $referer = $_SERVER['HTTP_REFERER'] ?? null;
+        if ($referer) { header('Location: ' . $referer); exit; }
+        $this->redirect('competitions');
+    }
+
+    public function rejectEntry(string $id): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad', 'instruktor']);
+        $this->competitionModel->changeEntryStatus((int)$id, 'wycofany');
+        Session::flash('success', 'Zgłoszenie odrzucone.');
+        $referer = $_SERVER['HTTP_REFERER'] ?? null;
+        if ($referer) { header('Location: ' . $referer); exit; }
+        $this->redirect('competitions');
+    }
+
+    public function toggleStartFee(string $id): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad', 'instruktor']);
+        $this->competitionModel->toggleStartFee((int)$id);
+        $referer = $_SERVER['HTTP_REFERER'] ?? null;
+        if ($referer) { header('Location: ' . $referer); exit; }
+        $this->redirect('competitions');
+    }
+
     // ── Private helpers ──────────────────────────────────────────────
 
     private function getCompetition(int $id): array

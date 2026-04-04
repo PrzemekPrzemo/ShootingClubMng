@@ -201,6 +201,37 @@
     </div>
     <?php endif; ?>
 
+    <!-- Notifications for admin/zarząd -->
+    <?php if (!empty($notifications)): ?>
+    <div class="col-12">
+        <div class="card border-info">
+            <div class="card-header d-flex justify-content-between align-items-center bg-info text-white">
+                <strong><i class="bi bi-bell"></i> Powiadomienia <?php if ($notifCount ?? 0): ?><span class="badge bg-white text-info"><?= $notifCount ?></span><?php endif; ?></strong>
+                <form method="post" action="<?= url('dashboard/notifications/read') ?>">
+                    <?= csrf_field() ?>
+                    <button class="btn btn-sm btn-light">Oznacz wszystkie jako przeczytane</button>
+                </form>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                    <?php foreach ($notifications as $n): ?>
+                        <tr>
+                            <td style="width:24px"><i class="bi bi-<?= match($n['type']) { 'exam_upload'=>'heart-pulse','competition_entry'=>'trophy',default=>'bell' } ?> text-info"></i></td>
+                            <td>
+                                <div class="fw-bold small"><?= e($n['title']) ?></div>
+                                <div class="text-muted small"><?= e($n['message']) ?></div>
+                            </td>
+                            <td class="text-muted small" style="white-space:nowrap"><?= format_date(substr($n['created_at'], 0, 10)) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- Quick links -->
     <div class="col-lg-<?= ($expiringLicenses || $expiringMedicals) ? '6' : '12' ?>">
         <div class="card h-100">

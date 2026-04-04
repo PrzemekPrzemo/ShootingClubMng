@@ -301,6 +301,45 @@ class CompetitionModel extends BaseModel
         return $stmt->fetchAll();
     }
 
+    // ── Entry status management (portal approval) ────────────────────
+
+    public function changeEntryStatus(int $entryId, string $status): void
+    {
+        $this->db->prepare("UPDATE competition_entries SET status = ? WHERE id = ?")
+                 ->execute([$status, $entryId]);
+    }
+
+    public function toggleStartFee(int $entryId): void
+    {
+        try {
+            $this->db->prepare("UPDATE competition_entries SET start_fee_paid = 1 - start_fee_paid WHERE id = ?")
+                     ->execute([$entryId]);
+        } catch (\PDOException) {}
+    }
+
+    public function getEntryEventIds(int $entryId): array
+    {
+        try {
+            $stmt = $this->db->prepare("SELECT competition_event_id FROM competition_entry_events WHERE competition_entry_id = ?");
+            $stmt->execute([$entryId]);
+            return array_column($stmt->fetchAll(), 'competition_event_id');
+        } catch (\PDOException) {
+            return [];
+        }
+    }
+
+    public function setEntryEvents(int $entryId, array $eventIds): void
+    {
+        try {
+            $this->db->prepare("DELETE FROM competition_entry_events WHERE competition_entry_id = ?")
+                     ->execute([$entryId]);
+            foreach ($eventIds as $evId) {
+                $this->db->prepare("INSERT IGNORE INTO competition_entry_events (competition_entry_id, competition_event_id) VALUES (?, ?)")
+                         ->execute([$entryId, (int)$evId]);
+            }
+        } catch (\PDOException) {}
+    }
+
     public function getUpcoming(int $days = 30): array
     {
         $stmt = $this->db->prepare("

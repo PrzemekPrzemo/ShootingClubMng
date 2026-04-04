@@ -276,6 +276,21 @@ function isActive(string $mod, string $uri): bool {
         </button>
         <span class="topbar-title"><?= e($title ?? '') ?></span>
         <div class="topbar-user">
+            <?php
+            // Notification badge (admin/zarząd only, try/catch for pre-migration safety)
+            if (in_array($authUser['role'] ?? '', ['admin', 'zarzad'])) {
+                try {
+                    $__notifCount = (new \App\Models\NotificationModel())->countUnreadForRoles([$authUser['role']]);
+                } catch (\Throwable) { $__notifCount = 0; }
+                if ($__notifCount > 0):
+            ?>
+            <a href="<?= url('dashboard') ?>" title="<?= $__notifCount ?> nieprzeczytanych powiadomień" class="position-relative text-decoration-none me-1">
+                <i class="bi bi-bell text-warning" style="font-size:1.15rem"></i>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:.6rem">
+                    <?= $__notifCount ?>
+                </span>
+            </a>
+            <?php endif; } ?>
             <span class="d-none d-md-inline"><?= e($authUser['full_name'] ?? '') ?></span>
             <a href="<?= url('auth/logout') ?>" title="Wyloguj"><i class="bi bi-box-arrow-right"></i></a>
         </div>

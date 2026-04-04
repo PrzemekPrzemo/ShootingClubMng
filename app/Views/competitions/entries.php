@@ -16,13 +16,14 @@
                             <th>Klasa</th>
                             <th>Grupa</th>
                             <th>Status</th>
+                            <th>Opłata</th>
                             <th>Zgłoszono</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
                     <?php foreach ($entries as $i => $e): ?>
-                        <?php $sc = match($e['status']) { 'potwierdzony'=>'success','wycofany'=>'secondary','zdyskwalifikowany'=>'danger',default=>'primary' }; ?>
+                        <?php $sc = match($e['status']) { 'potwierdzony'=>'success','wycofany'=>'secondary','zdyskwalifikowany'=>'danger',default=>'warning' }; ?>
                         <tr>
                             <td class="text-muted"><?= $i+1 ?></td>
                             <td><a href="<?= url('members/' . $e['member_id']) ?>"><?= e($e['last_name']) ?> <?= e($e['first_name']) ?></a><br>
@@ -30,10 +31,32 @@
                             <td><?= e($e['class'] ?? '—') ?></td>
                             <td class="small"><?= e($e['group_name'] ?? '—') ?></td>
                             <td><span class="badge bg-<?= $sc ?>"><?= e($e['status']) ?></span></td>
-                            <td class="small"><?= format_date(substr($e['registered_at'], 0, 10)) ?></td>
                             <td>
+                                <?php if (isset($e['start_fee_paid'])): ?>
+                                    <form method="post" action="<?= url('competitions/entries/' . $e['id'] . '/fee') ?>" class="d-inline">
+                                        <?= csrf_field() ?>
+                                        <button class="btn btn-sm py-0 btn-<?= $e['start_fee_paid'] ? 'success' : 'outline-secondary' ?>" title="Przełącz opłatę">
+                                            <i class="bi bi-cash<?= $e['start_fee_paid'] ? '' : '-coin' ?>"></i>
+                                        </button>
+                                    </form>
+                                <?php else: ?>
+                                    —
+                                <?php endif; ?>
+                            </td>
+                            <td class="small"><?= format_date(substr($e['registered_at'] ?? '', 0, 10)) ?></td>
+                            <td class="text-end" style="white-space:nowrap">
+                                <?php if ($e['status'] === 'zgloszony'): ?>
+                                    <form method="post" action="<?= url('competitions/entries/' . $e['id'] . '/approve') ?>" class="d-inline">
+                                        <?= csrf_field() ?>
+                                        <button class="btn btn-sm btn-outline-success py-0" title="Zatwierdź"><i class="bi bi-check-lg"></i></button>
+                                    </form>
+                                    <form method="post" action="<?= url('competitions/entries/' . $e['id'] . '/reject') ?>" class="d-inline">
+                                        <?= csrf_field() ?>
+                                        <button class="btn btn-sm btn-outline-warning py-0" title="Odrzuć"><i class="bi bi-x-lg"></i></button>
+                                    </form>
+                                <?php endif; ?>
                                 <form method="post" action="<?= url('competitions/' . $competition['id'] . '/entries/' . $e['id'] . '/remove') ?>"
-                                      onsubmit="return confirm('Usunąć zgłoszenie?')">
+                                      class="d-inline" onsubmit="return confirm('Usunąć zgłoszenie?')">
                                     <?= csrf_field() ?>
                                     <button class="btn btn-sm btn-outline-danger py-0"><i class="bi bi-trash"></i></button>
                                 </form>
@@ -41,7 +64,7 @@
                         </tr>
                     <?php endforeach; ?>
                     <?php if (empty($entries)): ?>
-                        <tr><td colspan="7" class="text-center text-muted py-3">Brak zgłoszeń.</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted py-3">Brak zgłoszeń.</td></tr>
                     <?php endif; ?>
                     </tbody>
                 </table>

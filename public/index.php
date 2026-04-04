@@ -280,5 +280,35 @@ $router->post('/config/users/:id/edit', [\App\Controllers\ConfigController::clas
 $router->post('/config/users/:id/delete',      [\App\Controllers\ConfigController::class, 'deleteUser']);
 $router->post('/config/users/permissions',     [\App\Controllers\ConfigController::class, 'saveRolePermissions']);
 
+// ── Member Portal ────────────────────────────────────────────────────────────
+// Auth (no member login required)
+$router->get('/portal/login',           [\App\Controllers\MemberAuthController::class, 'showLogin']);
+$router->post('/portal/login',          [\App\Controllers\MemberAuthController::class, 'login']);
+$router->get('/portal/logout',          [\App\Controllers\MemberAuthController::class, 'logout']);
+$router->get('/portal/change-password', [\App\Controllers\MemberAuthController::class, 'showChangePassword']);
+$router->post('/portal/change-password',[\App\Controllers\MemberAuthController::class, 'changePassword']);
+$router->get('/portal/reset-password',  [\App\Controllers\MemberAuthController::class, 'showResetPassword']);
+$router->post('/portal/reset-password', [\App\Controllers\MemberAuthController::class, 'resetPassword']);
+
+// Portal pages (member login required — enforced in MemberPortalController constructor)
+$router->get('/portal',                              [\App\Controllers\MemberPortalController::class, 'dashboard']);
+$router->get('/portal/profile',                      [\App\Controllers\MemberPortalController::class, 'profile']);
+$router->get('/portal/exams',                        [\App\Controllers\MemberPortalController::class, 'exams']);
+$router->post('/portal/exams/upload',                [\App\Controllers\MemberPortalController::class, 'uploadExam']);
+$router->get('/portal/results',                      [\App\Controllers\MemberPortalController::class, 'results']);
+$router->get('/portal/competitions',                 [\App\Controllers\MemberPortalController::class, 'competitions']);
+$router->get('/portal/competitions/:id/register',    [\App\Controllers\MemberPortalController::class, 'showRegister']);
+$router->post('/portal/competitions/:id/register',   [\App\Controllers\MemberPortalController::class, 'storeRegister']);
+$router->post('/portal/entries/:id/cancel',          [\App\Controllers\MemberPortalController::class, 'cancelRegistration']);
+$router->get('/portal/fees',                         [\App\Controllers\MemberPortalController::class, 'fees']);
+
+// Entry approval (staff)
+$router->post('/competitions/entries/:id/approve',   [\App\Controllers\CompetitionsController::class, 'approveEntry']);
+$router->post('/competitions/entries/:id/reject',    [\App\Controllers\CompetitionsController::class, 'rejectEntry']);
+$router->post('/competitions/entries/:id/fee',       [\App\Controllers\CompetitionsController::class, 'toggleStartFee']);
+
+// Notifications
+$router->post('/dashboard/notifications/read',       [\App\Controllers\DashboardController::class, 'markNotificationsRead']);
+
 // Dispatch
 $router->dispatch();

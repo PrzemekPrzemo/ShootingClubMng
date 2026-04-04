@@ -62,6 +62,14 @@ class Auth
     {
         Session::start();
         session_regenerate_id(true);
+
+        // Clear any member portal session keys to prevent cross-session confusion
+        Session::remove('member_id');
+        Session::remove('member_full_name');
+        Session::remove('member_email');
+        Session::remove('member_status');
+        Session::remove('must_change_password');
+
         Session::set('user_id',   $user['id']);
         Session::set('username',  $user['username']);
         Session::set('full_name', $user['full_name']);

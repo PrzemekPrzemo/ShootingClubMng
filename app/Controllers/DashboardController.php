@@ -11,6 +11,7 @@ use App\Models\ClubFeeModel;
 use App\Models\PaymentModel;
 use App\Models\CompetitionModel;
 use App\Models\SettingModel;
+use App\Models\NotificationModel;
 
 class DashboardController extends BaseController
 {
@@ -18,6 +19,16 @@ class DashboardController extends BaseController
     {
         parent::__construct();
         $this->requireLogin();
+    }
+
+    public function markNotificationsRead(): void
+    {
+        $role = Auth::role() ?? '';
+        if (in_array($role, ['admin', 'zarzad'])) {
+            (new NotificationModel())->markAllRead([$role]);
+        }
+        header('Location: ' . url('dashboard'));
+        exit;
     }
 
     public function index(): void
@@ -30,6 +41,7 @@ class DashboardController extends BaseController
         $paymentModel     = new PaymentModel();
         $competitionModel = new CompetitionModel();
         $settingModel     = new SettingModel();
+        $notifModel       = new NotificationModel();
 
         $alertLicDays = (int)$settingModel->get('alert_license_days', 60);
         $alertMedDays = (int)$settingModel->get('alert_medical_days', 30);
@@ -38,6 +50,12 @@ class DashboardController extends BaseController
         // Club fees summary
         $clubFeesTotalDue  = $feeModel->getTotalDue($year);
         $clubFeesTotalPaid = $feeModel->getTotalPaid($year);
+
+        // Notifications for admin/zarząd
+        $role          = Auth::role() ?? '';
+        $notifRoles    = in_array($role, ['admin', 'zarzad']) ? [$role] : [];
+        $notifications = $notifRoles ? $notifModel->getUnreadForRoles($notifRoles, 15) : [];
+        $notifCount    = $notifRoles ? $notifModel->countUnreadForRoles($notifRoles) : 0;
 
         $this->render('dashboard/index', [
             'title'                => 'Dashboard',
@@ -54,6 +72,8 @@ class DashboardController extends BaseController
             'currentYear'          => $year,
             'alertLicDays'         => $alertLicDays,
             'alertMedDays'         => $alertMedDays,
+            'notifications'        => $notifications,
+            'notifCount'           => $notifCount,
         ]);
     }
 }
