@@ -22,11 +22,16 @@
 
     <!-- Legend -->
     <div class="ms-auto d-flex gap-2 align-items-center flex-wrap small text-muted">
+        <span class="fw-semibold">Zawody:</span>
         <span><span class="badge bg-primary">●</span> Planowane</span>
-        <span><span class="badge bg-success">●</span> Otwarte/Zakończone</span>
+        <span><span class="badge bg-success">●</span> Otwarte/Zak.</span>
         <span><span class="badge bg-warning text-dark">●</span> Zamknięte</span>
-        <span><span class="badge bg-secondary">●</span> Wydarzenie</span>
-        <span><span class="badge bg-info">●</span> Zawody zewn.</span>
+        <?php if (!empty($categoryMap)): ?>
+        <span class="fw-semibold ms-2">Zdarzenia:</span>
+        <?php foreach ($categoryMap as $cat): ?>
+        <span><span class="badge bg-<?= e($cat['color']) ?>"><i class="bi bi-<?= e($cat['icon']) ?>"></i></span> <?= e($cat['name']) ?></span>
+        <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -80,15 +85,19 @@
                         $isCustom = ($ev['_source'] === 'custom');
 
                         if ($isCustom):
-                            $color = e($ev['color'] ?? 'secondary');
-                            $typeLabels = \App\Controllers\CalendarController::typeLabels();
-                            $typeLabel  = $typeLabels[$ev['type'] ?? ''] ?? $ev['type'] ?? '';
+                            // Resolve color+icon from category, fallback to event's own color
+                            $catId    = isset($ev['category_id']) ? (int)$ev['category_id'] : 0;
+                            $cat      = $catId && isset($categoryMap[$catId]) ? $categoryMap[$catId] : null;
+                            $color    = $cat ? e($cat['color']) : e($ev['color'] ?? 'secondary');
+                            $icon     = $cat ? e($cat['icon'])  : 'calendar-event';
+                            $catLabel = $cat ? e($cat['name'])  : '';
                     ?>
                     <div class="cal-event bg-<?= $color ?> bg-opacity-15 border border-<?= $color ?> rounded mb-1 px-1"
                          style="font-size:.72rem;line-height:1.3">
                         <div class="d-flex justify-content-between align-items-start gap-1">
                             <span class="fw-semibold text-<?= $color === 'warning' ? 'dark' : $color ?>">
-                                <?= e(mb_strimwidth($ev['title'], 0, 28, '…')) ?>
+                                <i class="bi bi-<?= $icon ?>" style="font-size:.65rem"></i>
+                                <?= e(mb_strimwidth($ev['title'], 0, 26, '…')) ?>
                             </span>
                             <?php if ($canManage): ?>
                             <span class="d-flex gap-1 flex-shrink-0">

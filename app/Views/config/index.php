@@ -59,6 +59,16 @@
             <i class="bi bi-journal-text"></i> Dziennik audytu
         </a>
     </div>
+    <div class="col-auto">
+        <a href="<?= url('config/calendar-categories') ?>" class="btn btn-outline-secondary btn-sm <?= str_contains($_SERVER['REQUEST_URI'],'/calendar-categories') ? 'active':'' ?>">
+            <i class="bi bi-tags"></i> Kategorie kalendarza
+        </a>
+    </div>
+    <div class="col-auto ms-auto">
+        <a href="<?= url('security') ?>" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-shield-exclamation"></i> Skan bezpieczeństwa
+        </a>
+    </div>
 </div>
 
 <div class="row">

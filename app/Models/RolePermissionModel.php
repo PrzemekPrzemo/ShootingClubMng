@@ -21,6 +21,7 @@ class RolePermissionModel extends BaseModel
         'calendar'      => ['label' => 'Kalendarz',       'icon' => 'calendar3',               'url' => 'calendar'],
         'reports'       => ['label' => 'Raporty',         'icon' => 'file-earmark-bar-graph',  'url' => 'reports'],
         'config'        => ['label' => 'Konfiguracja',    'icon' => 'gear',                    'url' => 'config'],
+        'security'      => ['label' => 'Bezpieczeństwo',  'icon' => 'shield-exclamation',      'url' => 'security'],
     ];
 
     public const ROLES = [
@@ -32,7 +33,7 @@ class RolePermissionModel extends BaseModel
 
     /** Fallback when role_permissions table doesn't exist yet */
     public const DEFAULTS = [
-        'admin'      => ['dashboard','members','licenses','finances','competitions','judges','club_fees','equipment','trainings','announcements','calendar','reports','config'],
+        'admin'      => ['dashboard','members','licenses','finances','competitions','judges','club_fees','equipment','trainings','announcements','calendar','reports','config','security'],
         'zarzad'     => ['dashboard','members','licenses','finances','competitions','judges','club_fees','equipment','trainings','announcements','calendar','reports','config'],
         'instruktor' => ['dashboard','members','licenses','competitions','equipment','trainings','calendar','reports'],
         'sędzia'     => ['dashboard','competitions','calendar'],

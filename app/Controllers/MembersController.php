@@ -188,8 +188,9 @@ class MembersController extends BaseController
             'address_postal'  => trim($_POST['address_postal'] ?? '') ?: null,
             'join_date'       => $_POST['join_date'] ?: date('Y-m-d'),
             'status'          => $_POST['status'] ?? 'aktywny',
-            'notes'           => trim($_POST['notes'] ?? '') ?: null,
-            'created_by'      => Auth::id(),
+            'notes'                  => trim($_POST['notes'] ?? '') ?: null,
+            'firearm_permit_number'  => trim($_POST['firearm_permit_number'] ?? '') ?: null,
+            'created_by'             => Auth::id(),
         ];
     }
 

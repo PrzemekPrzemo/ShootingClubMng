@@ -381,6 +381,24 @@ class MemberPortalController
         $this->view->render($template, $data);
     }
 
+    // ── Personal weapons (read-only for portal member) ───────────────────────
+
+    public function myWeapons(): void
+    {
+        $memberId = MemberAuth::id();
+        $member   = (new \App\Models\MemberModel())->findById($memberId);
+
+        $weaponModel = new \App\Models\MemberWeaponModel();
+        $weapons     = $weaponModel->getForMember($memberId);
+
+        $this->render('portal/weapons', [
+            'title'   => 'Moja broń',
+            'weapons' => $weapons,
+            'member'  => $member,
+            'types'   => \App\Models\MemberWeaponModel::$TYPES,
+        ]);
+    }
+
     private function redirectTo(string $path): never
     {
         header('Location: ' . url($path));

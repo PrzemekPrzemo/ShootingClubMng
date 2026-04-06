@@ -220,6 +220,7 @@ function isActive(string $mod, string $uri): bool {
         'calendar'      => str_contains($uri, '/calendar'),
         'reports'       => str_contains($uri, '/reports'),
         'config'        => str_contains($uri, '/config'),
+        'security'      => str_contains($uri, '/security'),
         default         => false,
     };
 }

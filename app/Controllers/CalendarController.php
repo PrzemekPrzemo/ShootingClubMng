@@ -6,18 +6,21 @@ use App\Helpers\Auth;
 use App\Helpers\Csrf;
 use App\Helpers\Feature;
 use App\Helpers\Session;
+use App\Models\CalendarEventCategoryModel;
 use App\Models\CalendarEventModel;
 use App\Models\CompetitionModel;
 
 class CalendarController extends BaseController
 {
     private CalendarEventModel $eventModel;
+    private CalendarEventCategoryModel $catModel;
 
     public function __construct()
     {
         parent::__construct();
         $this->requireLogin();
         $this->eventModel = new CalendarEventModel();
+        $this->catModel   = new CalendarEventCategoryModel();
     }
 
     // ── Main calendar view ────────────────────────────────────────────
@@ -92,6 +95,13 @@ class CalendarController extends BaseController
         $role = Auth::role() ?? '';
         $canManage = in_array($role, ['admin', 'zarzad']);
 
+        // Build category lookup [id => category row]
+        $categoriesRaw = $this->catModel->getActive();
+        $categoryMap   = [];
+        foreach ($categoriesRaw as $cat) {
+            $categoryMap[(int)$cat['id']] = $cat;
+        }
+
         $this->render('calendar/index', [
             'title'       => 'Kalendarz — ' . $polishMonths[$month] . ' ' . $year,
             'year'        => $year,
@@ -105,6 +115,7 @@ class CalendarController extends BaseController
             'nextYear'    => $nextYear,
             'nextMonth'   => $nextMonth,
             'canManage'   => $canManage,
+            'categoryMap' => $categoryMap,
         ]);
     }
 
@@ -120,7 +131,7 @@ class CalendarController extends BaseController
             'title'      => 'Dodaj wydarzenie',
             'mode'       => 'create',
             'event'      => ['event_date' => $prefillDate],
-            'typeLabels' => self::typeLabels(),
+            'categories' => $this->catModel->getActive(),
             'colorOpts'  => self::colorOptions(),
         ]);
     }
@@ -159,7 +170,7 @@ class CalendarController extends BaseController
             'title'      => 'Edytuj wydarzenie',
             'mode'       => 'edit',
             'event'      => $event,
-            'typeLabels' => self::typeLabels(),
+            'categories' => $this->catModel->getActive(),
             'colorOpts'  => self::colorOptions(),
         ]);
     }
@@ -207,17 +218,20 @@ class CalendarController extends BaseController
 
     private function collectEventData(): array
     {
-        $end = trim($_POST['event_date_end'] ?? '');
+        $end        = trim($_POST['event_date_end'] ?? '');
+        $categoryId = isset($_POST['category_id']) && $_POST['category_id'] !== ''
+            ? (int)$_POST['category_id'] : null;
+
         return [
-            'title'         => trim($_POST['title'] ?? ''),
-            'event_date'    => $_POST['event_date'] ?? '',
-            'event_date_end'=> $end !== '' ? $end : null,
-            'type'          => $_POST['type'] ?? 'inne',
-            'location'      => trim($_POST['location'] ?? '') ?: null,
-            'description'   => trim($_POST['description'] ?? '') ?: null,
-            'url'           => trim($_POST['url'] ?? '') ?: null,
-            'color'         => $_POST['color'] ?? 'secondary',
-            'is_public'     => isset($_POST['is_public']) ? 1 : 0,
+            'title'          => trim($_POST['title'] ?? ''),
+            'event_date'     => $_POST['event_date'] ?? '',
+            'event_date_end' => $end !== '' ? $end : null,
+            'category_id'    => $categoryId,
+            'location'       => trim($_POST['location'] ?? '') ?: null,
+            'description'    => trim($_POST['description'] ?? '') ?: null,
+            'url'            => trim($_POST['url'] ?? '') ?: null,
+            'color'          => $_POST['color'] ?? 'secondary',
+            'is_public'      => isset($_POST['is_public']) ? 1 : 0,
         ];
     }
 

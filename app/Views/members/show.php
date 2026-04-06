@@ -12,6 +12,9 @@
         <a href="<?= url('members/' . $member['id'] . '/card') ?>" class="btn btn-sm btn-outline-secondary" target="_blank" title="Drukuj kartę zawodnika">
             <i class="bi bi-person-vcard"></i> Karta
         </a>
+        <a href="<?= url('members/' . $member['id'] . '/weapons') ?>" class="btn btn-sm btn-outline-secondary" title="Rejestr broni osobistej">
+            <i class="bi bi-shield-lock"></i> Broń
+        </a>
         <a href="<?= url('members/' . $member['id'] . '/edit') ?>" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-pencil"></i> Edytuj
         </a>

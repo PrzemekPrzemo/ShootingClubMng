@@ -164,10 +164,18 @@
                 </div>
             </div>
 
-            <!-- Notes -->
+            <!-- Firearm permit + notes -->
             <div class="card mb-3">
-                <div class="card-header"><strong>Uwagi</strong></div>
+                <div class="card-header"><strong>Pozwolenie na broń / uwagi</strong></div>
                 <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Numer pozwolenia na broń</label>
+                        <input type="text" name="firearm_permit_number" class="form-control"
+                               value="<?= e(old('firearm_permit_number', $member['firearm_permit_number'] ?? '')) ?>"
+                               placeholder="Nr decyzji administracyjnej">
+                        <div class="form-text">Główne pozwolenie wydane dla tego zawodnika.</div>
+                    </div>
+                    <label class="form-label">Uwagi</label>
                     <textarea name="notes" class="form-control" rows="3"><?= e(old('notes', $member['notes'] ?? '')) ?></textarea>
                 </div>
             </div>

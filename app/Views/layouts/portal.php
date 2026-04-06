@@ -61,6 +61,11 @@
                         <i class="bi bi-cash"></i> Opłaty
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/portal/weapons') ? 'active' : '' ?>" href="<?= url('portal/weapons') ?>">
+                        <i class="bi bi-shield-lock"></i> Moja broń
+                    </a>
+                </li>
             </ul>
             <div class="d-flex align-items-center gap-3">
                 <span class="text-secondary small"><?= e($memberUser['full_name'] ?? '') ?></span>

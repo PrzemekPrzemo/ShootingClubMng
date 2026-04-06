@@ -19,11 +19,15 @@
 
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                    <label class="form-label">Typ wydarzenia <span class="text-danger">*</span></label>
-                    <select name="type" class="form-select" id="eventType">
-                        <?php foreach ($typeLabels as $val => $lbl): ?>
-                        <option value="<?= $val ?>" <?= ($event['type'] ?? 'inne') === $val ? 'selected' : '' ?>>
-                            <?= e($lbl) ?>
+                    <label class="form-label">Kategoria</label>
+                    <select name="category_id" class="form-select" id="categorySelect">
+                        <option value="">— brak kategorii —</option>
+                        <?php foreach ($categories as $cat): ?>
+                        <option value="<?= (int)$cat['id'] ?>"
+                                data-color="<?= e($cat['color']) ?>"
+                                data-icon="<?= e($cat['icon']) ?>"
+                                <?= (int)($event['category_id'] ?? 0) === (int)$cat['id'] ? 'selected' : '' ?>>
+                            <?= e($cat['name']) ?>
                         </option>
                         <?php endforeach; ?>
                     </select>

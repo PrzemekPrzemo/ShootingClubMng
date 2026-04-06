@@ -324,6 +324,7 @@ $router->get('/portal/competitions/:id/register',    [\App\Controllers\MemberPor
 $router->post('/portal/competitions/:id/register',   [\App\Controllers\MemberPortalController::class, 'storeRegister']);
 $router->post('/portal/entries/:id/cancel',          [\App\Controllers\MemberPortalController::class, 'cancelRegistration']);
 $router->get('/portal/fees',                         [\App\Controllers\MemberPortalController::class, 'fees']);
+$router->get('/portal/weapons',                      [\App\Controllers\MemberPortalController::class, 'myWeapons']);
 
 // Entry approval + fee management (staff)
 $router->post('/competitions/entries/:id/approve',          [\App\Controllers\CompetitionsController::class, 'approveEntry']);
@@ -371,8 +372,24 @@ $router->get('/config/features',                     [\App\Controllers\ConfigCon
 $router->post('/config/features',                    [\App\Controllers\ConfigController::class, 'saveFeatureFlags']);
 $router->get('/config/audit-log',                    [\App\Controllers\ConfigController::class, 'auditLog']);
 
+// Calendar event categories
+$router->get('/config/calendar-categories',              [\App\Controllers\ConfigController::class, 'calendarCategories']);
+$router->post('/config/calendar-categories/save',        [\App\Controllers\ConfigController::class, 'saveCalendarCategory']);
+$router->post('/config/calendar-categories/:id/delete',  [\App\Controllers\ConfigController::class, 'deleteCalendarCategory']);
+
 // Member card
 $router->get('/members/:id/card',                    [\App\Controllers\MembersController::class, 'memberCard']);
+
+// Member personal weapons
+$router->get('/members/:id/weapons',                        [\App\Controllers\MemberWeaponsController::class, 'index']);
+$router->get('/members/:id/weapons/create',                 [\App\Controllers\MemberWeaponsController::class, 'create']);
+$router->post('/members/:id/weapons',                       [\App\Controllers\MemberWeaponsController::class, 'store']);
+$router->get('/members/:id/weapons/:weaponId/edit',         [\App\Controllers\MemberWeaponsController::class, 'edit']);
+$router->post('/members/:id/weapons/:weaponId',             [\App\Controllers\MemberWeaponsController::class, 'update']);
+$router->post('/members/:id/weapons/:weaponId/delete',      [\App\Controllers\MemberWeaponsController::class, 'destroy']);
+
+// Security dashboard
+$router->get('/security',                            [\App\Controllers\SecurityController::class, 'index']);
 
 // Reports (new)
 $router->get('/reports/pzss',                        [\App\Controllers\ReportsController::class, 'pzss']);

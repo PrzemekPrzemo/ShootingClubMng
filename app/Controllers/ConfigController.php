@@ -689,6 +689,66 @@ class ConfigController extends BaseController
         ]);
     }
 
+    // ── Calendar event categories ─────────────────────────────────────
+
+    public function calendarCategories(): void
+    {
+        $this->requireRole(['admin', 'zarzad']);
+
+        $catModel   = new \App\Models\CalendarEventCategoryModel();
+        $categories = $catModel->getAll();
+
+        $this->render('config/calendar_categories', [
+            'title'      => 'Kategorie wydarzeń kalendarzowych',
+            'categories' => $categories,
+            'colorOpts'  => \App\Controllers\CalendarController::colorOptions(),
+        ]);
+    }
+
+    public function saveCalendarCategory(): void
+    {
+        $this->requireRole(['admin', 'zarzad']);
+        Csrf::verify();
+
+        $catModel = new \App\Models\CalendarEventCategoryModel();
+        $id       = (int)($_POST['id'] ?? 0);
+
+        $data = [
+            'name'       => trim($_POST['name'] ?? ''),
+            'color'      => $_POST['color'] ?? 'secondary',
+            'icon'       => trim($_POST['icon'] ?? 'calendar-event'),
+            'is_active'  => isset($_POST['is_active']) ? 1 : 0,
+            'sort_order' => (int)($_POST['sort_order'] ?? 0),
+        ];
+
+        if (empty($data['name'])) {
+            Session::flash('error', 'Nazwa kategorii jest wymagana.');
+            $this->redirect('config/calendar-categories');
+        }
+
+        if ($id > 0) {
+            $catModel->updateCategory($id, $data);
+            Session::flash('success', 'Kategoria została zaktualizowana.');
+        } else {
+            $catModel->create($data);
+            Session::flash('success', 'Kategoria została dodana.');
+        }
+
+        $this->redirect('config/calendar-categories');
+    }
+
+    public function deleteCalendarCategory(string $id): void
+    {
+        $this->requireRole(['admin', 'zarzad']);
+        Csrf::verify();
+
+        $catModel = new \App\Models\CalendarEventCategoryModel();
+        $catModel->delete((int)$id);
+
+        Session::flash('success', 'Kategoria została usunięta.');
+        $this->redirect('config/calendar-categories');
+    }
+
     // ── Event templates overview ─────────────────────────────────────
 
     public function eventTemplates(): void
