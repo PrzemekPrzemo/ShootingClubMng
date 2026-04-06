@@ -32,6 +32,7 @@
                                 : ($license['license_type'] ?? '') === $lt['short_code']; ?>
                             <option value="<?= $lt['id'] ?>"
                                     data-months="<?= e($lt['validity_months'] ?? '') ?>"
+                                    data-no-expiry="<?= $lt['validity_months'] === null ? '1' : '0' ?>"
                                     <?= $sel ? 'selected' : '' ?>>
                                 <?= e($lt['name']) ?>
                             </option>
@@ -66,8 +67,8 @@
                     <input type="date" name="issue_date" id="issueDate" class="form-control"
                            value="<?= e($license['issue_date'] ?? date('Y-m-d')) ?>" required>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">Ważna do <span class="text-danger">*</span></label>
+                <div class="col-md-6" id="validUntilWrap">
+                    <label class="form-label" id="validUntilLabel">Ważna do <span class="text-danger">*</span></label>
                     <input type="date" name="valid_until" id="validUntil" class="form-control"
                            value="<?= e($license['valid_until'] ?? '') ?>" required>
                 </div>
@@ -99,24 +100,40 @@
         </form>
 <script>
 (function () {
-    var typeSelect = document.getElementById('licenseTypeSelect');
-    var issueDate  = document.getElementById('issueDate');
-    var validUntil = document.getElementById('validUntil');
+    var typeSelect      = document.getElementById('licenseTypeSelect');
+    var issueDate       = document.getElementById('issueDate');
+    var validUntil      = document.getElementById('validUntil');
+    var validUntilWrap  = document.getElementById('validUntilWrap');
+    var validUntilLabel = document.getElementById('validUntilLabel');
 
     function recalc() {
-        var opt = typeSelect.options[typeSelect.selectedIndex];
-        var months = parseInt(opt ? opt.dataset.months : '', 10);
-        if (!months || !issueDate.value) return;
-        var d = new Date(issueDate.value);
-        d.setMonth(d.getMonth() + months);
-        d.setDate(d.getDate() - 1);
-        validUntil.value = d.toISOString().slice(0, 10);
+        var opt      = typeSelect.options[typeSelect.selectedIndex];
+        var noExpiry = opt && opt.dataset.noExpiry === '1';
+        var months   = parseInt(opt ? opt.dataset.months : '', 10);
+
+        if (noExpiry) {
+            validUntilWrap.style.display = 'none';
+            validUntil.removeAttribute('required');
+            validUntil.value = '';
+        } else {
+            validUntilWrap.style.display = '';
+            validUntil.setAttribute('required', 'required');
+            if (months && issueDate.value) {
+                var d = new Date(issueDate.value);
+                d.setMonth(d.getMonth() + months);
+                d.setDate(d.getDate() - 1);
+                validUntil.value = d.toISOString().slice(0, 10);
+            }
+        }
     }
 
     typeSelect.addEventListener('change', recalc);
     issueDate.addEventListener('change', function () {
         if (typeSelect.value) recalc();
     });
+
+    // Run on load in case patent is pre-selected (edit mode)
+    if (typeSelect.value) recalc();
 })();
 </script>
     </div>

@@ -15,9 +15,10 @@ class LicenseTypeModel extends BaseModel
         } catch (\PDOException) {
             // migration_v7 not yet run — return legacy types
             return [
-                ['id' => null, 'name' => 'Zawodnicza', 'short_code' => 'zawodnicza', 'is_active' => 1, 'validity_months' => 12, 'description' => null, 'sort_order' => 1],
-                ['id' => null, 'name' => 'Trenerska',  'short_code' => 'trenerska',  'is_active' => 1, 'validity_months' => 12, 'description' => null, 'sort_order' => 2],
-                ['id' => null, 'name' => 'Patent',     'short_code' => 'patent',     'is_active' => 1, 'validity_months' => null,'description' => null, 'sort_order' => 3],
+                ['id' => null, 'name' => 'Zawodnicza',        'short_code' => 'zawodnicza', 'is_active' => 1, 'validity_months' => 12,   'description' => null, 'sort_order' => 1],
+                ['id' => null, 'name' => 'Trenerska',         'short_code' => 'trenerska',  'is_active' => 1, 'validity_months' => 12,   'description' => null, 'sort_order' => 2],
+                ['id' => null, 'name' => 'Patent',            'short_code' => 'patent',     'is_active' => 1, 'validity_months' => null, 'description' => null, 'sort_order' => 3],
+                ['id' => null, 'name' => 'Licencja sędziowska','short_code' => 'sedziowska','is_active' => 1, 'validity_months' => 12,   'description' => null, 'sort_order' => 4],
             ];
         }
     }

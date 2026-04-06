@@ -16,7 +16,7 @@
                     <option value="">— wybierz zawodnika —</option>
                     <?php foreach ($members as $m): ?>
                     <option value="<?= $m['id'] ?>" <?= ($license['member_id'] ?? null) == $m['id'] ? 'selected' : '' ?>>
-                        <?= e($m['last_name']) ?> <?= e($m['first_name']) ?> [<?= e($m['member_number']) ?>]
+                        <?= e($m['full_name']) ?> [<?= e($m['member_number']) ?>]
                     </option>
                     <?php endforeach; ?>
                 </select>

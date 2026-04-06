@@ -75,6 +75,7 @@ class LicensesController extends BaseController
             $this->redirect('licenses/create');
         }
 
+        unset($data['_no_expiry']);
         $this->licenseModel->create($data);
         Session::flash('success', 'Licencja została dodana.');
         $this->redirect('licenses');
@@ -110,6 +111,7 @@ class LicensesController extends BaseController
             $this->redirect("licenses/{$id}/edit");
         }
 
+        unset($data['_no_expiry']);
         $this->licenseModel->updateLicense((int)$id, $data);
         Session::flash('success', 'Licencja została zaktualizowana.');
         $this->redirect('licenses');
@@ -130,10 +132,12 @@ class LicensesController extends BaseController
     {
         $typeId    = ($_POST['license_type_id'] ?? '') !== '' ? (int)$_POST['license_type_id'] : null;
         // Resolve short_code for backward-compat license_type column
-        $typeCode  = 'zawodnicza';
+        $typeCode    = 'zawodnicza';
+        $noExpiry    = false;
         if ($typeId) {
             $lt = (new LicenseTypeModel())->findById($typeId);
             $typeCode = $lt['short_code'] ?? 'zawodnicza';
+            $noExpiry = $lt !== null && $lt['validity_months'] === null;
         }
         return [
             'member_id'       => (int)($_POST['member_id'] ?? 0),
@@ -142,21 +146,22 @@ class LicensesController extends BaseController
             'license_number'  => trim($_POST['license_number'] ?? ''),
             'discipline_id'   => $_POST['discipline_id'] ?: null,
             'issue_date'      => $_POST['issue_date'] ?? '',
-            'valid_until'     => $_POST['valid_until'] ?? '',
+            'valid_until'     => $noExpiry ? null : ($_POST['valid_until'] ?? ''),
             'pzss_qr_code'    => trim($_POST['pzss_qr_code'] ?? '') ?: null,
             'status'          => $_POST['status'] ?? 'aktywna',
             'notes'           => trim($_POST['notes'] ?? '') ?: null,
             'created_by'      => Auth::id(),
+            '_no_expiry'      => $noExpiry,
         ];
     }
 
     private function validate(array $data): array
     {
         $errors = [];
-        if (empty($data['member_id']))      $errors[] = 'Wybierz zawodnika.';
-        if (empty($data['license_number'])) $errors[] = 'Numer licencji jest wymagany.';
-        if (empty($data['issue_date']))     $errors[] = 'Data wydania jest wymagana.';
-        if (empty($data['valid_until']))    $errors[] = 'Data ważności jest wymagana.';
+        if (empty($data['member_id']))                         $errors[] = 'Wybierz zawodnika.';
+        if (empty($data['license_number']))                    $errors[] = 'Numer licencji jest wymagany.';
+        if (empty($data['issue_date']))                        $errors[] = 'Data wydania jest wymagana.';
+        if (empty($data['_no_expiry']) && empty($data['valid_until'])) $errors[] = 'Data ważności jest wymagana.';
         return $errors;
     }
 }
