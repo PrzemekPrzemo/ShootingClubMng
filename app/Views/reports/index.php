@@ -61,4 +61,40 @@
             </div>
         </div>
     </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-building text-info" style="font-size:2rem"></i>
+                <h5 class="mt-2">Raport PZSS</h5>
+                <p class="text-muted small">Lista zawodników i wyniki w formacie PZSS.</p>
+                <a href="<?= url('reports/pzss') ?>" class="btn btn-outline-info btn-sm">
+                    <i class="bi bi-eye"></i> Podgląd
+                </a>
+                <a href="<?= url('reports/pzss?format=csv&type=members') ?>" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-file-earmark-arrow-down"></i> CSV
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-tools text-secondary" style="font-size:2rem"></i>
+                <h5 class="mt-2">Sprzęt</h5>
+                <p class="text-muted small">Stan broni i historia przypisań zawodnikom.</p>
+                <a href="<?= url('reports/equipment') ?>" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-eye"></i> Podgląd
+                </a>
+                <a href="<?= url('reports/equipment?format=csv') ?>" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-file-earmark-arrow-down"></i> CSV
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4 d-flex gap-2">
+    <a href="<?= url('dashboard/stats') ?>" class="btn btn-danger">
+        <i class="bi bi-bar-chart-line"></i> Statystyki zarządu (wykresy)
+    </a>
 </div>

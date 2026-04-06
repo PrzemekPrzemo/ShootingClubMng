@@ -49,6 +49,16 @@
             <i class="bi bi-bell"></i> Powiadomienia
         </a>
     </div>
+    <div class="col-auto">
+        <a href="<?= url('config/features') ?>" class="btn btn-outline-secondary btn-sm <?= str_contains($_SERVER['REQUEST_URI'],'/features') ? 'active':'' ?>">
+            <i class="bi bi-toggles"></i> Funkcjonalności
+        </a>
+    </div>
+    <div class="col-auto">
+        <a href="<?= url('config/audit-log') ?>" class="btn btn-outline-secondary btn-sm <?= str_contains($_SERVER['REQUEST_URI'],'/audit-log') ? 'active':'' ?>">
+            <i class="bi bi-journal-text"></i> Dziennik audytu
+        </a>
+    </div>
 </div>
 
 <div class="row">

@@ -265,7 +265,45 @@
                 <a href="<?= url('reports') ?>" class="btn btn-outline-secondary">
                     <i class="bi bi-file-earmark-bar-graph"></i> Raporty
                 </a>
+                <?php if ($isFinanceRole): ?>
+                <a href="<?= url('dashboard/stats') ?>" class="btn btn-outline-info">
+                    <i class="bi bi-bar-chart-line"></i> Statystyki
+                </a>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
+
+<?php
+// Announcements widget — try to load active announcements
+try {
+    $__announcements = (new \App\Models\AnnouncementModel())->getActive();
+} catch (\Throwable) { $__announcements = []; }
+if (!empty($__announcements)):
+?>
+<div class="mt-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong><i class="bi bi-megaphone text-danger"></i> Ogłoszenia</strong>
+            <?php if ($isFinanceRole): ?>
+            <a href="<?= url('announcements') ?>" class="btn btn-sm btn-outline-secondary">Zarządzaj</a>
+            <?php endif; ?>
+        </div>
+        <div class="card-body p-0">
+            <?php foreach ($__announcements as $ann): ?>
+            <?php $bg = match($ann['priority']) {'pilne'=>'danger','wazne'=>'warning','normal'=>'light',default=>'light'}; ?>
+            <div class="p-3 border-bottom bg-<?= $bg ?> bg-opacity-10">
+                <div class="d-flex justify-content-between">
+                    <strong><?= e($ann['title']) ?></strong>
+                    <?php if ($ann['priority'] !== 'normal'): ?>
+                    <span class="badge bg-<?= $bg === 'warning' ? 'warning text-dark' : $bg ?>"><?= e($ann['priority']) ?></span>
+                    <?php endif; ?>
+                </div>
+                <div class="small mt-1"><?= nl2br(e($ann['body'])) ?></div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>

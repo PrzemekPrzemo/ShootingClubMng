@@ -335,6 +335,44 @@ $router->post('/competitions/entries/:id/discount',         [\App\Controllers\Co
 // Notifications
 $router->post('/dashboard/notifications/read',       [\App\Controllers\DashboardController::class, 'markNotificationsRead']);
 
+// Dashboard stats
+$router->get('/dashboard/stats',                     [\App\Controllers\DashboardController::class, 'stats']);
+
+// Calendar
+$router->get('/calendar',                            [\App\Controllers\CalendarController::class, 'index']);
+
+// Trainings
+$router->get('/trainings',                           [\App\Controllers\TrainingsController::class, 'index']);
+$router->get('/trainings/create',                    [\App\Controllers\TrainingsController::class, 'create']);
+$router->post('/trainings/create',                   [\App\Controllers\TrainingsController::class, 'store']);
+$router->get('/trainings/:id',                       [\App\Controllers\TrainingsController::class, 'show']);
+$router->get('/trainings/:id/edit',                  [\App\Controllers\TrainingsController::class, 'edit']);
+$router->post('/trainings/:id/edit',                 [\App\Controllers\TrainingsController::class, 'update']);
+$router->post('/trainings/:id/delete',               [\App\Controllers\TrainingsController::class, 'destroy']);
+$router->get('/trainings/:id/attendance',            [\App\Controllers\TrainingsController::class, 'attendance']);
+$router->post('/trainings/:id/attendance',           [\App\Controllers\TrainingsController::class, 'saveAttendance']);
+
+// Announcements
+$router->get('/announcements',                       [\App\Controllers\AnnouncementsController::class, 'index']);
+$router->get('/announcements/create',                [\App\Controllers\AnnouncementsController::class, 'create']);
+$router->post('/announcements/create',               [\App\Controllers\AnnouncementsController::class, 'store']);
+$router->get('/announcements/:id/edit',              [\App\Controllers\AnnouncementsController::class, 'edit']);
+$router->post('/announcements/:id/edit',             [\App\Controllers\AnnouncementsController::class, 'update']);
+$router->post('/announcements/:id/delete',           [\App\Controllers\AnnouncementsController::class, 'destroy']);
+$router->post('/announcements/:id/toggle-publish',   [\App\Controllers\AnnouncementsController::class, 'togglePublish']);
+
+// Feature flags + audit log
+$router->get('/config/features',                     [\App\Controllers\ConfigController::class, 'featureFlags']);
+$router->post('/config/features',                    [\App\Controllers\ConfigController::class, 'saveFeatureFlags']);
+$router->get('/config/audit-log',                    [\App\Controllers\ConfigController::class, 'auditLog']);
+
+// Member card
+$router->get('/members/:id/card',                    [\App\Controllers\MembersController::class, 'memberCard']);
+
+// Reports (new)
+$router->get('/reports/pzss',                        [\App\Controllers\ReportsController::class, 'pzss']);
+$router->get('/reports/equipment',                   [\App\Controllers\ReportsController::class, 'equipment']);
+
 // Root path: smart redirect based on session state (before router dispatches)
 (function () {
     $method = $_SERVER['REQUEST_METHOD'];

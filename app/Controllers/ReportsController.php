@@ -6,6 +6,7 @@ use App\Models\MemberModel;
 use App\Models\LicenseModel;
 use App\Models\PaymentModel;
 use App\Models\CompetitionModel;
+use App\Models\WeaponModel;
 use App\Helpers\Auth;
 
 class ReportsController extends BaseController
@@ -153,6 +154,88 @@ class ReportsController extends BaseController
             'data'  => $result['data'],
             'year'  => $year,
         ]);
+    }
+
+    public function pzss(): void
+    {
+        $memberModel = new MemberModel();
+        $type = $_GET['type'] ?? 'members';
+
+        if ($type === 'members') {
+            $result = $memberModel->search(['status' => 'aktywny'], 1, 9999);
+            if ($this->isCsvRequest()) {
+                $this->sendCsv(
+                    'pzss_zawodnicy_' . date('Y-m-d') . '.csv',
+                    ['Nr członk.', 'Nazwisko', 'Imię', 'Data ur.', 'Klasa', 'Nr licencji', 'Ważna do', 'Dyscypliny'],
+                    array_map(fn($m) => [
+                        $m['member_number'], $m['last_name'], $m['first_name'],
+                        $m['birth_date'] ?? '', $m['member_class_name'] ?? '',
+                        '', '', '', // license and disciplines would need additional join
+                    ], $result['data'])
+                );
+            }
+            $this->render('reports/pzss', [
+                'title'   => 'Raport PZSS — Zawodnicy',
+                'type'    => 'members',
+                'data'    => $result['data'],
+            ]);
+            return;
+        }
+
+        // Competition results
+        $compModel = new CompetitionModel();
+        $year      = $_GET['year'] ?? date('Y');
+        $result    = $compModel->getAll(['year' => $year], 1, 9999);
+
+        if ($this->isCsvRequest()) {
+            $this->sendCsv(
+                'pzss_wyniki_' . $year . '.csv',
+                ['Zawody', 'Data', 'Dyscyplina', 'Miejsce', 'Status', 'Zgłoszeń'],
+                array_map(fn($c) => [
+                    $c['name'], $c['competition_date'], $c['discipline_name'] ?? '',
+                    $c['location'] ?? '', $c['status'], $c['entry_count'],
+                ], $result['data'])
+            );
+        }
+
+        $this->render('reports/pzss', [
+            'title' => 'Raport PZSS — Wyniki ' . $year,
+            'type'  => 'results',
+            'data'  => $result['data'],
+            'year'  => $year,
+        ]);
+    }
+
+    public function equipment(): void
+    {
+        try {
+            $model   = new WeaponModel();
+            $result  = $model->getAll([], 1, 9999);
+            $weapons = $result['data'] ?? $result;
+
+            if ($this->isCsvRequest()) {
+                $this->sendCsv(
+                    'sprzet_' . date('Y-m-d') . '.csv',
+                    ['ID', 'Nazwa', 'Typ', 'Numer seryjny', 'Kaliber', 'Producent', 'Stan', 'Przypisany do'],
+                    array_map(fn($w) => [
+                        $w['id'], $w['name'], $w['type'],
+                        $w['serial_number'] ?? '', $w['caliber'] ?? '', $w['manufacturer'] ?? '',
+                        $w['condition'],
+                        trim(($w['assigned_to_last'] ?? '') . ' ' . ($w['assigned_to_first'] ?? '')),
+                    ], $weapons)
+                );
+            }
+
+            $this->render('reports/equipment', [
+                'title'   => 'Raport — Sprzęt',
+                'weapons' => $weapons,
+            ]);
+        } catch (\Throwable) {
+            $this->render('reports/equipment', [
+                'title'   => 'Raport — Sprzęt',
+                'weapons' => [],
+            ]);
+        }
     }
 
     // ----------------------------------------------------------------

@@ -154,4 +154,58 @@ class MemberPortalModel extends BaseModel
             return [];
         }
     }
+
+    /**
+     * Returns statistics per discipline/event for Chart.js.
+     * Returns ['labels' => [...], 'scores' => [...], 'competitions' => [...]]
+     */
+    public function getMemberStats(int $memberId): array
+    {
+        try {
+            // Last 20 results ordered by date for trend chart
+            $stmt = $this->db->prepare("
+                SELECT cer.score, cer.place,
+                       ce.name AS event_name,
+                       c.name AS competition_name,
+                       c.competition_date
+                FROM competition_event_results cer
+                JOIN competition_events ce ON ce.id = cer.competition_event_id
+                JOIN competitions c ON c.id = ce.competition_id
+                WHERE cer.member_id = ? AND cer.score IS NOT NULL
+                ORDER BY c.competition_date ASC, ce.name
+                LIMIT 20
+            ");
+            $stmt->execute([$memberId]);
+            $rows = $stmt->fetchAll();
+
+            $labels = [];
+            $scores = [];
+            foreach ($rows as $r) {
+                $labels[] = date('d.m.Y', strtotime($r['competition_date'])) . ' — ' . $r['event_name'];
+                $scores[] = (float)$r['score'];
+            }
+
+            // Summary stats
+            $stmt2 = $this->db->prepare("
+                SELECT COUNT(*) AS total_starts,
+                       MAX(score) AS best_score,
+                       AVG(score) AS avg_score,
+                       SUM(place = 1) AS gold,
+                       SUM(place = 2) AS silver,
+                       SUM(place = 3) AS bronze
+                FROM competition_event_results
+                WHERE member_id = ? AND score IS NOT NULL
+            ");
+            $stmt2->execute([$memberId]);
+            $summary = $stmt2->fetch();
+
+            return [
+                'labels'  => $labels,
+                'scores'  => $scores,
+                'summary' => $summary ?: [],
+            ];
+        } catch (\PDOException) {
+            return ['labels' => [], 'scores' => [], 'summary' => []];
+        }
+    }
 }

@@ -207,17 +207,20 @@ $allModules = RolePermissionModel::MODULES;
 
 function isActive(string $mod, string $uri): bool {
     return match($mod) {
-        'dashboard'    => str_contains($uri, '/dashboard'),
-        'members'      => str_contains($uri, '/members'),
-        'licenses'     => str_contains($uri, '/licenses'),
-        'finances'     => str_contains($uri, '/finances'),
-        'competitions' => str_contains($uri, '/competitions'),
-        'judges'       => str_contains($uri, '/judges'),
-        'club_fees'    => str_contains($uri, '/club-fees'),
-        'equipment'    => str_contains($uri, '/equipment'),
-        'reports'      => str_contains($uri, '/reports'),
-        'config'       => str_contains($uri, '/config'),
-        default        => false,
+        'dashboard'     => str_contains($uri, '/dashboard'),
+        'members'       => str_contains($uri, '/members'),
+        'licenses'      => str_contains($uri, '/licenses'),
+        'finances'      => str_contains($uri, '/finances'),
+        'competitions'  => str_contains($uri, '/competitions'),
+        'judges'        => str_contains($uri, '/judges'),
+        'club_fees'     => str_contains($uri, '/club-fees'),
+        'equipment'     => str_contains($uri, '/equipment'),
+        'trainings'     => str_contains($uri, '/trainings'),
+        'announcements' => str_contains($uri, '/announcements'),
+        'calendar'      => str_contains($uri, '/calendar'),
+        'reports'       => str_contains($uri, '/reports'),
+        'config'        => str_contains($uri, '/config'),
+        default         => false,
     };
 }
 ?>

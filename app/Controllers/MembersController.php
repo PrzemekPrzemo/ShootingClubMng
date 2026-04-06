@@ -6,6 +6,7 @@ use App\Helpers\Auth;
 use App\Helpers\Csrf;
 use App\Helpers\Session;
 use App\Models\MemberModel;
+use App\Models\SettingModel;
 use App\Models\AgeCategoryModel;
 use App\Models\DisciplineModel;
 use App\Models\MemberClassModel;
@@ -202,6 +203,28 @@ class MembersController extends BaseController
             $errors[] = 'Nieprawidłowy typ członkostwa.';
         }
         return $errors;
+    }
+
+    public function memberCard(string $id): void
+    {
+        $member = $this->memberModel->findById((int)$id);
+        if (!$member) {
+            Session::flash('error', 'Zawodnik nie istnieje.');
+            $this->redirect('members');
+        }
+
+        $disciplines = $this->memberModel->getDisciplines((int)$id);
+        $license     = $this->memberModel->getLatestLicense((int)$id);
+        $clubName    = (new SettingModel())->get('club_name', 'Klub Strzelecki');
+
+        $this->view->setLayout('none');
+        $this->render('members/card', [
+            'title'       => 'Karta zawodnika',
+            'member'      => $member,
+            'disciplines' => $disciplines,
+            'license'     => $license,
+            'clubName'    => $clubName,
+        ]);
     }
 
     private function saveDisciplines(int $memberId): void

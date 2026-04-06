@@ -9,6 +9,9 @@
     ?>
     <span class="badge bg-<?= $sc ?>"><?= e($member['status']) ?></span>
     <div class="ms-auto d-flex gap-2">
+        <a href="<?= url('members/' . $member['id'] . '/card') ?>" class="btn btn-sm btn-outline-secondary" target="_blank" title="Drukuj kartę zawodnika">
+            <i class="bi bi-person-vcard"></i> Karta
+        </a>
         <a href="<?= url('members/' . $member['id'] . '/edit') ?>" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-pencil"></i> Edytuj
         </a>

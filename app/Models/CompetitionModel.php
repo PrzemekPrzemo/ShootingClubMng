@@ -574,6 +574,20 @@ class CompetitionModel extends BaseModel
         return $output;
     }
 
+    public function getForMonth(int $year, int $month): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT c.*, d.name AS discipline_name,
+                   (SELECT COUNT(*) FROM competition_entries WHERE competition_id = c.id) AS entry_count
+            FROM competitions c
+            LEFT JOIN disciplines d ON d.id = c.discipline_id
+            WHERE YEAR(c.competition_date) = ? AND MONTH(c.competition_date) = ?
+            ORDER BY c.competition_date ASC, c.name ASC
+        ");
+        $stmt->execute([$year, $month]);
+        return $stmt->fetchAll();
+    }
+
     public function getUpcoming(int $days = 30): array
     {
         $stmt = $this->db->prepare("

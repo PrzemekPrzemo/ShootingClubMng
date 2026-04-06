@@ -620,6 +620,75 @@ class ConfigController extends BaseController
         $this->redirect('config/notifications');
     }
 
+    // ── Feature flags ────────────────────────────────────────────────
+
+    public function featureFlags(): void
+    {
+        $this->requireRole(['admin']);
+        $settings = $this->settingModel->getAll();
+
+        // All known feature flags with descriptions
+        $allFeatures = [
+            'calendar'        => ['label' => 'Kalendarz klubowy',       'desc' => 'Wspólny widok miesięczny zawodów i treningów.'],
+            'trainings'       => ['label' => 'Moduł treningów',         'desc' => 'Ewidencja sesji treningowych i lista obecności. Wymaga migracji v18.'],
+            'announcements'   => ['label' => 'Ogłoszenia',              'desc' => 'Tablica ogłoszeń dla zarządu. Widoczne na dashboardzie i w portalu. Wymaga migracji v18.'],
+            'audit_log'       => ['label' => 'Dziennik audytu',         'desc' => 'Historia akcji użytkowników (kto co zmienił i kiedy).'],
+            'member_card'     => ['label' => 'Karta zawodnika',         'desc' => 'Wydruk legitymacji zawodniczej (HTML/PDF) z poziomu profilu.'],
+            'stats_dashboard' => ['label' => 'Dashboard statystyk',     'desc' => 'Strona ze zbiorczymi statystykami i wykresami dla zarządu (Chart.js).'],
+            'csv_import'      => ['label' => 'Import CSV (beta)',        'desc' => 'Import danych zawodników i płatności z pliku CSV. Funkcja eksperymentalna.'],
+            'lane_bookings'   => ['label' => 'Rezerwacja stanowisk',    'desc' => 'Rezerwacja torów/stanowisk strzeleckich. Wymaga migracji v19.'],
+        ];
+
+        $this->render('config/feature_flags', [
+            'title'       => 'Funkcjonalności systemu',
+            'settings'    => $settings,
+            'allFeatures' => $allFeatures,
+        ]);
+    }
+
+    public function saveFeatureFlags(): void
+    {
+        $this->requireRole(['admin']);
+        Csrf::verify();
+
+        $known = ['calendar','trainings','announcements','audit_log','member_card','stats_dashboard','csv_import','lane_bookings'];
+        $flags = [];
+        foreach ($known as $f) {
+            $flags[$f] = isset($_POST['feature'][$f]) ? '1' : '0';
+        }
+
+        $this->settingModel->saveFeatureFlags($flags);
+        \App\Helpers\Feature::clearCache();
+        Session::flash('success', 'Ustawienia funkcjonalności zostały zapisane.');
+        $this->redirect('config/features');
+    }
+
+    // ── Audit log ─────────────────────────────────────────────────────
+
+    public function auditLog(): void
+    {
+        $filters = [
+            'entity'    => $_GET['entity']    ?? '',
+            'action'    => $_GET['action']    ?? '',
+            'user_id'   => $_GET['user_id']   ?? '',
+            'date_from' => $_GET['date_from'] ?? '',
+            'date_to'   => $_GET['date_to']   ?? '',
+        ];
+
+        $logModel = new \App\Models\ActivityLogModel();
+        $entries  = $logModel->getRecent($filters, 300);
+        $entities = $logModel->getDistinctEntities();
+        $users    = $this->userModel->getAll();
+
+        $this->render('config/audit_log', [
+            'title'    => 'Dziennik audytu',
+            'entries'  => $entries,
+            'entities' => $entities,
+            'users'    => $users,
+            'filters'  => $filters,
+        ]);
+    }
+
     // ── Event templates overview ─────────────────────────────────────
 
     public function eventTemplates(): void

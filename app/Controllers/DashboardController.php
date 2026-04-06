@@ -31,6 +31,77 @@ class DashboardController extends BaseController
         exit;
     }
 
+    public function stats(): void
+    {
+        $this->requireRole(['admin', 'zarzad']);
+
+        $memberModel  = new MemberModel();
+        $paymentModel = new PaymentModel();
+        $compModel    = new CompetitionModel();
+        $licModel     = new LicenseModel();
+        $year         = (int)date('Y');
+
+        // Member stats by status
+        $memberByStatus = $memberModel->countByStatus();
+
+        // Payments by month (current year)
+        $paymentsByMonth = [];
+        try {
+            $stmt = \App\Helpers\Database::pdo()->prepare("
+                SELECT MONTH(payment_date) AS m, SUM(amount) AS total
+                FROM payments
+                WHERE YEAR(payment_date) = ?
+                GROUP BY MONTH(payment_date)
+                ORDER BY m
+            ");
+            $stmt->execute([$year]);
+            $rows = $stmt->fetchAll();
+            $monthTotals = array_column($rows, 'total', 'm');
+            for ($m = 1; $m <= 12; $m++) {
+                $paymentsByMonth[] = (float)($monthTotals[$m] ?? 0);
+            }
+        } catch (\Throwable) {
+            $paymentsByMonth = array_fill(0, 12, 0);
+        }
+
+        // Competitions per discipline (all time)
+        $compStats = [];
+        try {
+            $stmt = \App\Helpers\Database::pdo()->prepare("
+                SELECT d.name AS discipline, COUNT(c.id) AS cnt
+                FROM competitions c
+                JOIN disciplines d ON d.id = c.discipline_id
+                GROUP BY d.id, d.name
+                ORDER BY cnt DESC
+                LIMIT 10
+            ");
+            $stmt->execute();
+            $compStats = $stmt->fetchAll();
+        } catch (\Throwable) {}
+
+        // Active licenses by type
+        $licStats = [];
+        try {
+            $stmt = \App\Helpers\Database::pdo()->query("
+                SELECT lt.name, COUNT(l.id) AS cnt
+                FROM licenses l
+                JOIN license_types lt ON lt.id = l.license_type_id
+                WHERE l.status = 'aktywna'
+                GROUP BY lt.id, lt.name
+            ");
+            $licStats = $stmt->fetchAll();
+        } catch (\Throwable) {}
+
+        $this->render('dashboard/stats', [
+            'title'           => 'Statystyki klubu',
+            'memberStats'     => $memberByStatus,
+            'paymentsByMonth' => $paymentsByMonth,
+            'compStats'       => $compStats,
+            'licStats'        => $licStats,
+            'year'            => $year,
+        ]);
+    }
+
     public function index(): void
     {
         $memberModel      = new MemberModel();

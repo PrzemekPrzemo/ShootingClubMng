@@ -8,16 +8,19 @@ class RolePermissionModel extends BaseModel
 
     /** Ordered nav modules — used in sidebar and permissions matrix */
     public const MODULES = [
-        'dashboard'    => ['label' => 'Dashboard',       'icon' => 'speedometer2',            'url' => 'dashboard'],
-        'members'      => ['label' => 'Zawodnicy',       'icon' => 'people',                  'url' => 'members'],
-        'licenses'     => ['label' => 'Licencje',        'icon' => 'card-checklist',           'url' => 'licenses'],
-        'finances'     => ['label' => 'Finanse',         'icon' => 'cash-stack',              'url' => 'finances'],
-        'competitions' => ['label' => 'Zawody',          'icon' => 'trophy',                  'url' => 'competitions'],
-        'judges'       => ['label' => 'Sędziowie',       'icon' => 'person-badge',            'url' => 'judges'],
-        'club_fees'    => ['label' => 'Opłaty PZSS',    'icon' => 'bank',                    'url' => 'club-fees'],
-        'equipment'    => ['label' => 'Sprzęt',          'icon' => 'tools',                   'url' => 'equipment'],
-        'reports'      => ['label' => 'Raporty',         'icon' => 'file-earmark-bar-graph',  'url' => 'reports'],
-        'config'       => ['label' => 'Konfiguracja',    'icon' => 'gear',                    'url' => 'config'],
+        'dashboard'     => ['label' => 'Dashboard',       'icon' => 'speedometer2',            'url' => 'dashboard'],
+        'members'       => ['label' => 'Zawodnicy',       'icon' => 'people',                  'url' => 'members'],
+        'licenses'      => ['label' => 'Licencje',        'icon' => 'card-checklist',          'url' => 'licenses'],
+        'finances'      => ['label' => 'Finanse',         'icon' => 'cash-stack',              'url' => 'finances'],
+        'competitions'  => ['label' => 'Zawody',          'icon' => 'trophy',                  'url' => 'competitions'],
+        'judges'        => ['label' => 'Sędziowie',       'icon' => 'person-badge',            'url' => 'judges'],
+        'club_fees'     => ['label' => 'Opłaty PZSS',    'icon' => 'bank',                    'url' => 'club-fees'],
+        'equipment'     => ['label' => 'Sprzęt',          'icon' => 'tools',                   'url' => 'equipment'],
+        'trainings'     => ['label' => 'Treningi',        'icon' => 'calendar-event',          'url' => 'trainings'],
+        'announcements' => ['label' => 'Ogłoszenia',      'icon' => 'megaphone',               'url' => 'announcements'],
+        'calendar'      => ['label' => 'Kalendarz',       'icon' => 'calendar3',               'url' => 'calendar'],
+        'reports'       => ['label' => 'Raporty',         'icon' => 'file-earmark-bar-graph',  'url' => 'reports'],
+        'config'        => ['label' => 'Konfiguracja',    'icon' => 'gear',                    'url' => 'config'],
     ];
 
     public const ROLES = [
@@ -29,10 +32,10 @@ class RolePermissionModel extends BaseModel
 
     /** Fallback when role_permissions table doesn't exist yet */
     public const DEFAULTS = [
-        'admin'      => ['dashboard','members','licenses','finances','competitions','judges','club_fees','equipment','reports','config'],
-        'zarzad'     => ['dashboard','members','licenses','finances','competitions','judges','club_fees','equipment','reports','config'],
-        'instruktor' => ['dashboard','members','licenses','competitions','equipment','reports'],
-        'sędzia'     => ['dashboard','competitions'],
+        'admin'      => ['dashboard','members','licenses','finances','competitions','judges','club_fees','equipment','trainings','announcements','calendar','reports','config'],
+        'zarzad'     => ['dashboard','members','licenses','finances','competitions','judges','club_fees','equipment','trainings','announcements','calendar','reports','config'],
+        'instruktor' => ['dashboard','members','licenses','competitions','equipment','trainings','calendar','reports'],
+        'sędzia'     => ['dashboard','competitions','calendar'],
     ];
 
     /** Per-request cache: [role => [module => bool]] */
@@ -121,7 +124,19 @@ class RolePermissionModel extends BaseModel
                 self::$cache = self::DEFAULTS;
             }
         }
-        return self::$cache[$role] ?? (self::DEFAULTS[$role] ?? []);
+        $modules = self::$cache[$role] ?? (self::DEFAULTS[$role] ?? []);
+
+        // Filter out modules disabled via feature flags (Feature helper caches its own reads)
+        try {
+            $modules = array_values(array_filter(
+                $modules,
+                fn($m) => \App\Helpers\Feature::enabled($m)
+            ));
+        } catch (\Throwable) {
+            // Feature helper not available yet — return unfiltered
+        }
+
+        return $modules;
     }
 
     /** Quick check: can this role access this module? */

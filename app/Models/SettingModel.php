@@ -36,4 +36,27 @@ class SettingModel extends BaseModel
             $this->set($key, $value);
         }
     }
+
+    /**
+     * INSERT OR UPDATE a setting value (safe for feature flags that may not exist yet).
+     */
+    public function upsert(string $key, mixed $value, string $label = '', string $type = 'boolean'): void
+    {
+        $stmt = $this->db->prepare(
+            "INSERT INTO settings (`key`, value, label, type) VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE value = VALUES(value)"
+        );
+        $stmt->execute([$key, $value, $label, $type]);
+    }
+
+    /**
+     * Upsert many feature flags at once.
+     * $flags: ['name' => '0'|'1', ...]
+     */
+    public function saveFeatureFlags(array $flags): void
+    {
+        foreach ($flags as $name => $value) {
+            $this->upsert('feature_' . $name, (string)(int)$value);
+        }
+    }
 }

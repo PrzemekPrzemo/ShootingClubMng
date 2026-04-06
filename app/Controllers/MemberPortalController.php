@@ -203,9 +203,11 @@ class MemberPortalController
 
     public function results(): void
     {
+        $memberId = MemberAuth::id();
         $this->render('portal/results', [
             'title'   => 'Moje wyniki',
-            'results' => $this->portalModel->getMemberResults(MemberAuth::id()),
+            'results' => $this->portalModel->getMemberResults($memberId),
+            'stats'   => $this->portalModel->getMemberStats($memberId),
         ]);
     }
 
