@@ -88,12 +88,13 @@ class AnnouncementModel extends BaseModel
         }
     }
 
-    public function delete(int $id): void
+    public function delete(int $id): bool
     {
         try {
             $this->db->prepare("DELETE FROM announcements WHERE id = ?")->execute([$id]);
+            return true;
         } catch (\PDOException) {
-            // Silently fail
+            return false;
         }
     }
 
