@@ -340,6 +340,11 @@ $router->get('/dashboard/stats',                     [\App\Controllers\Dashboard
 
 // Calendar
 $router->get('/calendar',                            [\App\Controllers\CalendarController::class, 'index']);
+$router->get('/calendar/events/create',              [\App\Controllers\CalendarController::class, 'createEvent']);
+$router->post('/calendar/events/create',             [\App\Controllers\CalendarController::class, 'storeEvent']);
+$router->get('/calendar/events/:id/edit',            [\App\Controllers\CalendarController::class, 'editEvent']);
+$router->post('/calendar/events/:id/edit',           [\App\Controllers\CalendarController::class, 'updateEvent']);
+$router->post('/calendar/events/:id/delete',         [\App\Controllers\CalendarController::class, 'destroyEvent']);
 
 // Trainings
 $router->get('/trainings',                           [\App\Controllers\TrainingsController::class, 'index']);
