@@ -783,6 +783,169 @@ class CompetitionsController extends BaseController
         ];
     }
 
+    // -------------------------------------------------------------------------
+    // Panel sędziego — serie/strzały z metryczki
+    // -------------------------------------------------------------------------
+
+    /**
+     * Lista uczestników z informacją ile serii wpisano.
+     * GET /competitions/:id/events/:eid/series
+     */
+    public function seriesIndex(string $id, string $eid): void
+    {
+        $this->requireRole(['admin', 'zarzad', 'sędzia']);
+        $competition = $this->getCompetition((int)$id);
+        $event       = $this->competitionModel->getEvent((int)$eid);
+        if (!$event || $event['competition_id'] != (int)$id) {
+            Session::flash('error', 'Konkurencja nie istnieje.');
+            $this->redirect("competitions/{$id}/events");
+        }
+
+        $shots      = (int)($event['shots_count'] ?? 0);
+        $isHM       = ($event['scoring_type'] ?? 'decimal') === 'hit_miss';
+        $serieSize  = $isHM ? 5 : 10;
+        $serieCount = $shots > 0 ? (int)ceil($shots / $serieSize) : 6;
+
+        $entries     = $this->competitionModel->getEntries((int)$id);
+        $resultsMap  = $this->competitionModel->getEventResultsMap((int)$eid);
+        $seriesStatus = $this->competitionModel->getSeriesStatusForEvent((int)$eid);
+
+        $this->render('competitions/series_index', [
+            'title'        => 'Serie: ' . $event['name'],
+            'competition'  => $competition,
+            'event'        => $event,
+            'entries'      => $entries,
+            'resultsMap'   => $resultsMap,
+            'seriesStatus' => $seriesStatus,
+            'serieCount'   => $serieCount,
+        ]);
+    }
+
+    /**
+     * Formularz wpisywania serii dla jednego zawodnika.
+     * GET /competitions/:id/events/:eid/series/:mid
+     */
+    public function seriesEntry(string $id, string $eid, string $mid): void
+    {
+        $this->requireRole(['admin', 'zarzad', 'sędzia']);
+        $competition = $this->getCompetition((int)$id);
+        $event       = $this->competitionModel->getEvent((int)$eid);
+        if (!$event || $event['competition_id'] != (int)$id) {
+            Session::flash('error', 'Konkurencja nie istnieje.');
+            $this->redirect("competitions/{$id}/events");
+        }
+
+        $member = $this->memberModel->findById((int)$mid);
+        if (!$member) {
+            Session::flash('error', 'Zawodnik nie istnieje.');
+            $this->redirect("competitions/{$id}/events/{$eid}/series");
+        }
+
+        $shots      = (int)($event['shots_count'] ?? 0);
+        $type       = $event['scoring_type'] ?? 'decimal';
+        $isHM       = $type === 'hit_miss';
+        $serieSize  = $isHM ? 5 : 10;
+        $serieCount = $shots > 0 ? (int)ceil($shots / $serieSize) : 6;
+        if ($shots === 0) $shots = $serieCount * $serieSize;
+
+        $seriesMap   = $this->competitionModel->getSeriesForMember((int)$eid, (int)$mid);
+        $resultsMap  = $this->competitionModel->getEventResultsMap((int)$eid);
+        $officialResult = $resultsMap[(int)$mid] ?? null;
+
+        $this->render('competitions/series_entry', [
+            'title'          => 'Serie: ' . $event['name'] . ' — ' . $member['first_name'] . ' ' . $member['last_name'],
+            'competition'    => $competition,
+            'event'          => $event,
+            'member'         => $member,
+            'seriesMap'      => $seriesMap,
+            'officialResult' => $officialResult,
+            'serieCount'     => $serieCount,
+            'serieSize'      => $serieSize,
+            'isHM'           => $isHM,
+            'type'           => $type,
+        ]);
+    }
+
+    /**
+     * Zapis serii dla jednego zawodnika.
+     * POST /competitions/:id/events/:eid/series/:mid
+     */
+    public function saveSeriesEntry(string $id, string $eid, string $mid): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad', 'sędzia']);
+        $competition = $this->getCompetition((int)$id);
+        $event       = $this->competitionModel->getEvent((int)$eid);
+        if (!$event || $event['competition_id'] != (int)$id) {
+            $this->redirect("competitions/{$id}/events");
+        }
+
+        $member = $this->memberModel->findById((int)$mid);
+        if (!$member) {
+            $this->redirect("competitions/{$id}/events/{$eid}/series");
+        }
+
+        $shots      = (int)($event['shots_count'] ?? 0);
+        $isHM       = ($event['scoring_type'] ?? 'decimal') === 'hit_miss';
+        $serieSize  = $isHM ? 5 : 10;
+        $serieCount = $shots > 0 ? (int)ceil($shots / $serieSize) : 6;
+
+        $postShots  = (array)($_POST['shots']        ?? []);
+        $postTotals = (array)($_POST['series_total'] ?? []);
+        $postX      = (array)($_POST['x_count']      ?? []);
+
+        $totalScore = 0.0;
+        $totalX     = 0;
+
+        for ($s = 1; $s <= $serieCount; $s++) {
+            $rawShots  = (array)($postShots[$s] ?? []);
+            $rawTotal  = trim($postTotals[$s] ?? '');
+            $rawX      = (int)($postX[$s] ?? 0);
+
+            // Filter shots to numbers only
+            $shotValues = [];
+            foreach ($rawShots as $v) {
+                $v = trim($v);
+                if ($v !== '') {
+                    $shotValues[] = ($isHM ? (int)$v : (float)$v);
+                } else {
+                    $shotValues[] = null;
+                }
+            }
+
+            $seriesTotal = $rawTotal !== '' ? (float)$rawTotal : 0.0;
+
+            $this->competitionModel->upsertSeries([
+                'competition_event_id' => (int)$eid,
+                'member_id'            => (int)$mid,
+                'series_number'        => $s,
+                'shots'                => json_encode($shotValues),
+                'series_total'         => $seriesTotal,
+                'x_count'              => max(0, $rawX),
+                'entered_by'           => Auth::id(),
+            ]);
+
+            $totalScore += $seriesTotal;
+            $totalX     += max(0, $rawX);
+        }
+
+        // Aktualizuj oficjalny wynik jeśli checkbox zaznaczony
+        if (!empty($_POST['update_official'])) {
+            $this->competitionModel->upsertEventResult([
+                'competition_event_id' => (int)$eid,
+                'member_id'            => (int)$mid,
+                'score'                => round($totalScore, 2),
+                'score_inner'          => $totalX,
+                'place'                => '',
+                'notes'                => null,
+                'entered_by'           => Auth::id(),
+            ]);
+        }
+
+        Session::flash('success', 'Serie zostały zapisane dla ' . $member['first_name'] . ' ' . $member['last_name'] . '.');
+        $this->redirect("competitions/{$id}/events/{$eid}/series");
+    }
+
     private function validate(array $data): array
     {
         $errors = [];

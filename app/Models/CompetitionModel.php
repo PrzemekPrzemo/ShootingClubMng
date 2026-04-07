@@ -602,4 +602,90 @@ class CompetitionModel extends BaseModel
         $stmt->execute([$days]);
         return $stmt->fetchAll();
     }
+
+    // -------------------------------------------------------------------------
+    // Panel sędziego — serie/strzały z metryczki
+    // -------------------------------------------------------------------------
+
+    /**
+     * Pobierz wszystkie serie dla danego zawodnika w danej konkurencji.
+     * Zwraca mapę [series_number => row].
+     */
+    public function getSeriesForMember(int $eventId, int $memberId): array
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT * FROM competition_series_results
+                WHERE competition_event_id = ? AND member_id = ?
+                ORDER BY series_number ASC
+            ");
+            $stmt->execute([$eventId, $memberId]);
+            $rows = $stmt->fetchAll();
+            $map  = [];
+            foreach ($rows as $row) {
+                $map[(int)$row['series_number']] = $row;
+            }
+            return $map;
+        } catch (\PDOException) {
+            return [];
+        }
+    }
+
+    /**
+     * Wstaw lub zaktualizuj jedną serię (UNIQUE: event+member+series_number).
+     */
+    public function upsertSeries(array $data): void
+    {
+        $stmt = $this->db->prepare("
+            INSERT INTO competition_series_results
+                (competition_event_id, member_id, series_number, shots, series_total, x_count, entered_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                shots        = VALUES(shots),
+                series_total = VALUES(series_total),
+                x_count      = VALUES(x_count),
+                entered_by   = VALUES(entered_by)
+        ");
+        $stmt->execute([
+            $data['competition_event_id'],
+            $data['member_id'],
+            $data['series_number'],
+            $data['shots'],          // JSON string
+            $data['series_total'],
+            $data['x_count'],
+            $data['entered_by'],
+        ]);
+    }
+
+    /**
+     * Podsumowanie wpisanych serii per zawodnik dla danej konkurencji.
+     * Zwraca [member_id => ['series_count' => N, 'computed_total' => X.X, 'total_x' => N]]
+     */
+    public function getSeriesStatusForEvent(int $eventId): array
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT member_id,
+                       COUNT(*)              AS series_count,
+                       SUM(series_total)     AS computed_total,
+                       SUM(x_count)          AS total_x
+                FROM competition_series_results
+                WHERE competition_event_id = ?
+                GROUP BY member_id
+            ");
+            $stmt->execute([$eventId]);
+            $rows = $stmt->fetchAll();
+            $map  = [];
+            foreach ($rows as $row) {
+                $map[(int)$row['member_id']] = [
+                    'series_count'    => (int)$row['series_count'],
+                    'computed_total'  => $row['computed_total'],
+                    'total_x'         => (int)$row['total_x'],
+                ];
+            }
+            return $map;
+        } catch (\PDOException) {
+            return [];
+        }
+    }
 }

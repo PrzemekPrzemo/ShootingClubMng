@@ -208,6 +208,9 @@ $router->post('/competitions/:id/events/add',                     [\App\Controll
 $router->post('/competitions/:id/events/:eid/delete',             [\App\Controllers\CompetitionsController::class, 'deleteEvent']);
 $router->get('/competitions/:id/events/:eid/results',             [\App\Controllers\CompetitionsController::class, 'eventResults']);
 $router->post('/competitions/:id/events/:eid/results/save',       [\App\Controllers\CompetitionsController::class, 'saveEventResults']);
+$router->get('/competitions/:id/events/:eid/series',              [\App\Controllers\CompetitionsController::class, 'seriesIndex']);
+$router->get('/competitions/:id/events/:eid/series/:mid',         [\App\Controllers\CompetitionsController::class, 'seriesEntry']);
+$router->post('/competitions/:id/events/:eid/series/:mid',        [\App\Controllers\CompetitionsController::class, 'saveSeriesEntry']);
 $router->get('/competitions/:id/events/:eid/startcard',           [\App\Controllers\CompetitionsController::class, 'startCard']);
 $router->get('/competitions/:id/events/:eid/scorecard',           [\App\Controllers\CompetitionsController::class, 'memberScorecard']);
 $router->get('/competitions/:id/scorecards',                      [\App\Controllers\CompetitionsController::class, 'scorecardSelector']);
