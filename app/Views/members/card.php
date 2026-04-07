@@ -165,6 +165,14 @@
 
     <div class="card-heading">Legitymacja Zawodnicza</div>
 
+    <?php if (!empty($member['photo_path'])): ?>
+    <div style="text-align:center;margin:2mm 0">
+        <img src="<?= url('members/' . (int)$member['id'] . '/photo') ?>"
+             style="width:18mm;height:18mm;border-radius:50%;object-fit:cover;border:0.3pt solid #ccc"
+             alt="">
+    </div>
+    <?php endif; ?>
+
     <!-- Member number -->
     <div class="card-member-number"><?= e($member['member_number']) ?></div>
 

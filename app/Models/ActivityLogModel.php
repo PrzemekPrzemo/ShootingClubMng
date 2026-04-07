@@ -65,6 +65,23 @@ class ActivityLogModel extends BaseModel
         }
     }
 
+    public function getForMember(int $memberId, int $limit = 100): array
+    {
+        try {
+            $sql = "SELECT al.*, u.full_name AS user_name, u.username
+                    FROM activity_log al
+                    LEFT JOIN users u ON u.id = al.user_id
+                    WHERE al.entity = 'member' AND al.entity_id = ?
+                    ORDER BY al.created_at DESC
+                    LIMIT ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$memberId, $limit]);
+            return $stmt->fetchAll();
+        } catch (\PDOException) {
+            return [];
+        }
+    }
+
     public function getDistinctEntities(): array
     {
         try {

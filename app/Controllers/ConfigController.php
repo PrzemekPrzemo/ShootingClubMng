@@ -57,6 +57,13 @@ class ConfigController extends BaseController
             $data[$key] = trim($_POST[$key] ?? '');
         }
 
+        // Server-side int validation for numeric settings
+        foreach (['alert_payment_days', 'alert_license_days', 'alert_medical_days', 'membership_fee_due_month'] as $k) {
+            if (isset($data[$k]) && $data[$k] !== '') {
+                $data[$k] = (string)max(1, (int)$data[$k]);
+            }
+        }
+
         $this->settingModel->saveMany($data);
         Session::flash('success', 'Konfiguracja została zapisana.');
         $this->redirect('config');

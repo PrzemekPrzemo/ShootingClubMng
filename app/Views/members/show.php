@@ -15,6 +15,11 @@
         <a href="<?= url('members/' . $member['id'] . '/weapons') ?>" class="btn btn-sm btn-outline-secondary" title="Rejestr broni osobistej">
             <i class="bi bi-shield-lock"></i> Broń
         </a>
+        <?php if (in_array($authUser['role'], ['admin','zarzad'])): ?>
+        <a href="<?= url('members/' . $member['id'] . '/history') ?>" class="btn btn-sm btn-outline-secondary" title="Historia zmian profilu">
+            <i class="bi bi-clock-history"></i> Historia
+        </a>
+        <?php endif; ?>
         <a href="<?= url('members/' . $member['id'] . '/edit') ?>" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-pencil"></i> Edytuj
         </a>
@@ -98,6 +103,21 @@
 
     <!-- Sidebar -->
     <div class="col-lg-4">
+        <!-- Photo avatar -->
+        <div class="text-center mb-3">
+            <?php if (!empty($member['photo_path'])): ?>
+            <img src="<?= url('members/' . (int)$member['id'] . '/photo') ?>"
+                 alt="<?= e($member['first_name'] . ' ' . $member['last_name']) ?>"
+                 class="rounded-circle border"
+                 style="width:96px;height:96px;object-fit:cover;border-color:#dee2e6!important">
+            <?php else: ?>
+            <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center text-white fw-bold"
+                 style="width:96px;height:96px;font-size:2rem">
+                <?= e(mb_strtoupper(mb_substr($member['first_name'], 0, 1) . mb_substr($member['last_name'], 0, 1))) ?>
+            </div>
+            <?php endif; ?>
+        </div>
+
         <!-- Składki -->
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between">

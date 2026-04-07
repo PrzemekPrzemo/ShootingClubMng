@@ -4,7 +4,9 @@ namespace App\Controllers;
 
 use App\Helpers\Auth;
 use App\Helpers\Csrf;
+use App\Helpers\MemberAuth;
 use App\Helpers\Session;
+use App\Models\ActivityLogModel;
 use App\Models\MemberModel;
 use App\Models\SettingModel;
 use App\Models\AgeCategoryModel;
@@ -21,6 +23,7 @@ class MembersController extends BaseController
     private MemberClassModel $memberClassModel;
     private MedicalExamModel $examModel;
     private UserModel $userModel;
+    private ActivityLogModel $activityLog;
 
     public function __construct()
     {
@@ -32,6 +35,7 @@ class MembersController extends BaseController
         $this->memberClassModel = new MemberClassModel();
         $this->examModel        = new MedicalExamModel();
         $this->userModel        = new UserModel();
+        $this->activityLog      = new ActivityLogModel();
     }
 
     public function index(): void
@@ -83,6 +87,15 @@ class MembersController extends BaseController
 
         // Handle disciplines
         $this->saveDisciplines($id);
+
+        // Photo upload (two-step: need ID first)
+        $photoPath = $this->handlePhotoUpload($id);
+        if ($photoPath !== null) {
+            $this->memberModel->updateMember($id, ['photo_path' => $photoPath]);
+        }
+
+        // Audit log
+        $this->activityLog->log('member_create', 'member', $id, null);
 
         Session::flash('success', 'Zawodnik został dodany.');
         $this->redirect("members/{$id}");
@@ -145,7 +158,43 @@ class MembersController extends BaseController
             $this->redirect("members/{$id}/edit");
         }
 
+        // Photo upload — update before diff so photo_path change appears in log
+        $oldPhoto  = $member['photo_path'] ?? null;
+        $photoPath = $this->handlePhotoUpload((int)$id);
+        if ($photoPath !== null) {
+            $data['photo_path'] = $photoPath;
+            if ($oldPhoto && file_exists(ROOT_PATH . '/storage/photos/' . $oldPhoto)) {
+                @unlink(ROOT_PATH . '/storage/photos/' . $oldPhoto);
+            }
+        }
+
+        // Compute diff for audit log
+        $skipFields = ['created_at', 'updated_at', 'created_by'];
+        $changed = [];
+        foreach ($data as $field => $newVal) {
+            if (in_array($field, $skipFields, true)) continue;
+            $oldVal = $member[$field] ?? null;
+            if ((string)($oldVal ?? '') !== (string)($newVal ?? '')) {
+                $changed[] = ['field' => $field, 'old' => $oldVal, 'new' => $newVal];
+            }
+        }
+
         $this->memberModel->updateMember((int)$id, $data);
+
+        if ($changed) {
+            $this->activityLog->log('member_update', 'member', (int)$id,
+                json_encode(['changed' => $changed], JSON_UNESCAPED_UNICODE));
+        }
+
+        // Separate status change event
+        foreach ($changed as $c) {
+            if ($c['field'] === 'status') {
+                $this->activityLog->log('member_status_change', 'member', (int)$id,
+                    json_encode(['old' => $c['old'], 'new' => $c['new']], JSON_UNESCAPED_UNICODE));
+                break;
+            }
+        }
+
         Session::flash('success', 'Dane zawodnika zostały zaktualizowane.');
         $this->redirect("members/{$id}");
     }
@@ -162,10 +211,74 @@ class MembersController extends BaseController
         }
 
         // Soft delete — change status instead of delete
+        $oldStatus = $member['status'] ?? null;
         $this->memberModel->updateMember((int)$id, ['status' => 'wykreslony']);
+        $this->activityLog->log('member_status_change', 'member', (int)$id,
+            json_encode(['old' => $oldStatus, 'new' => 'wykreslony', 'action' => 'wykreslenie'],
+                JSON_UNESCAPED_UNICODE));
+
         Session::flash('success', 'Zawodnik został wykreślony.');
         $this->redirect('members');
     }
+
+    // ── History ───────────────────────────────────────────────────────
+
+    public function history(string $id): void
+    {
+        $this->requireRole(['admin', 'zarzad']);
+
+        $member = $this->memberModel->findById((int)$id);
+        if (!$member) {
+            Session::flash('error', 'Zawodnik nie istnieje.');
+            $this->redirect('members');
+        }
+
+        $entries = $this->activityLog->getForMember((int)$id);
+
+        $this->render('members/history', [
+            'title'   => 'Historia zmian — ' . $member['last_name'] . ' ' . $member['first_name'],
+            'member'  => $member,
+            'entries' => $entries,
+        ]);
+    }
+
+    // ── Photo upload + serve ──────────────────────────────────────────
+
+    private function handlePhotoUpload(int $memberId): ?string
+    {
+        if (empty($_FILES['photo']['name'])) {
+            return null;
+        }
+        $file = $_FILES['photo'];
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            return null;
+        }
+        $allowedMimes = ['image/jpeg', 'image/png'];
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mime  = $finfo->file($file['tmp_name']);
+        if (!in_array($mime, $allowedMimes, true)) {
+            Session::flash('error', 'Dozwolone formaty zdjęcia: JPG, PNG.');
+            return null;
+        }
+        if ($file['size'] > 2 * 1024 * 1024) {
+            Session::flash('error', 'Zdjęcie nie może przekraczać 2 MB.');
+            return null;
+        }
+        $storageDir = ROOT_PATH . '/storage/photos';
+        if (!is_dir($storageDir)) {
+            @mkdir($storageDir, 0775, true);
+        }
+        $ext      = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION) ?: 'jpg');
+        $filename = 'member' . $memberId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+        $dest     = $storageDir . '/' . $filename;
+        if (!move_uploaded_file($file['tmp_name'], $dest)) {
+            Session::flash('error', 'Nie udało się zapisać zdjęcia.');
+            return null;
+        }
+        return $filename;
+    }
+
+    // servePhoto is on PhotoController (separate, no requireLogin in constructor)
 
     // ----------------------------------------------------------------
 

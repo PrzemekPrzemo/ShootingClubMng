@@ -380,6 +380,12 @@ $router->post('/config/calendar-categories/:id/delete',  [\App\Controllers\Confi
 // Member card
 $router->get('/members/:id/card',                    [\App\Controllers\MembersController::class, 'memberCard']);
 
+// Member photo (PhotoController — no requireLogin in ctor, handles both Auth and MemberAuth)
+$router->get('/members/:id/photo',                   [\App\Controllers\PhotoController::class, 'serve']);
+
+// Member change history
+$router->get('/members/:id/history',                 [\App\Controllers\MembersController::class, 'history']);
+
 // Member personal weapons
 $router->get('/members/:id/weapons',                        [\App\Controllers\MemberWeaponsController::class, 'index']);
 $router->get('/members/:id/weapons/create',                 [\App\Controllers\MemberWeaponsController::class, 'create']);

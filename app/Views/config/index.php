@@ -98,14 +98,15 @@
             <h6 class="text-muted mb-3">Alerty i terminy</h6>
 
             <?php foreach ([
-                'alert_payment_days'       => ['Próg alertu zaległości (dni)', 'Ile dni przed terminem składki pokazywać alert?'],
-                'alert_license_days'       => ['Próg alertu licencji (dni)', 'Ile dni przed wygaśnięciem licencji?'],
-                'alert_medical_days'       => ['Próg alertu badań (dni)', 'Ile dni przed wygaśnięciem badań?'],
-                'membership_fee_due_month' => ['Miesiąc terminu składki (1-12)', 'W którym miesiącu składka powinna być opłacona?'],
-            ] as $key => [$label, $help]): ?>
+                'alert_payment_days'       => ['Próg alertu zaległości (dni)', 'Ile dni przed terminem składki pokazywać alert?', 7, 365],
+                'alert_license_days'       => ['Próg alertu licencji (dni)', 'Ile dni przed wygaśnięciem licencji pokazywać alert na dashboardzie?', 7, 365],
+                'alert_medical_days'       => ['Próg alertu badań (dni)', 'Ile dni przed wygaśnięciem badań lekarskich?', 7, 365],
+                'membership_fee_due_month' => ['Miesiąc terminu składki (1-12)', 'W którym miesiącu składka powinna być opłacona?', 1, 12],
+            ] as $key => [$label, $help, $min, $max]): ?>
             <div class="mb-3">
                 <label class="form-label"><?= $label ?></label>
-                <input type="number" name="<?= $key ?>" class="form-control" min="1"
+                <input type="number" name="<?= $key ?>" class="form-control"
+                       min="<?= $min ?>" max="<?= $max ?>"
                        value="<?= e($settings[$key]['value'] ?? '') ?>">
                 <div class="form-text"><?= $help ?></div>
             </div>

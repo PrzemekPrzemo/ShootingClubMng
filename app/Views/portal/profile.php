@@ -1,5 +1,13 @@
 <h2 class="h4 mb-4"><i class="bi bi-person"></i> Mój profil</h2>
 
+<?php if (!empty($member['photo_path'])): ?>
+<div class="text-center mb-3">
+    <img src="<?= url('members/' . (int)$member['id'] . '/photo') ?>"
+         alt="Moje zdjęcie" class="rounded-circle border"
+         style="width:80px;height:80px;object-fit:cover">
+</div>
+<?php endif; ?>
+
 <div class="row g-3">
 <div class="col-lg-6">
     <div class="card">

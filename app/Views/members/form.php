@@ -3,7 +3,8 @@
     <h2 class="h4 mb-0"><?= e($title) ?></h2>
 </div>
 
-<form method="post" action="<?= $mode === 'create' ? url('members/create') : url('members/' . $member['id'] . '/edit') ?>">
+<form method="post" enctype="multipart/form-data"
+      action="<?= $mode === 'create' ? url('members/create') : url('members/' . $member['id'] . '/edit') ?>">
     <?= csrf_field() ?>
 
     <div class="row g-4">
@@ -183,6 +184,26 @@
 
         <!-- Sidebar -->
         <div class="col-lg-4">
+            <!-- Photo upload -->
+            <div class="card mb-3">
+                <div class="card-header"><strong>Zdjęcie zawodnika</strong></div>
+                <div class="card-body">
+                    <?php if ($mode === 'edit' && !empty($member['photo_path'])): ?>
+                    <div class="mb-2 text-center">
+                        <img src="<?= url('members/' . (int)$member['id'] . '/photo') ?>"
+                             alt="Aktualne zdjęcie" class="rounded-circle"
+                             style="width:80px;height:80px;object-fit:cover">
+                        <div class="form-text">Aktualne zdjęcie</div>
+                    </div>
+                    <?php endif; ?>
+                    <label class="form-label">
+                        <?= $mode === 'edit' && !empty($member['photo_path']) ? 'Zmień zdjęcie' : 'Dodaj zdjęcie' ?>
+                    </label>
+                    <input type="file" name="photo" class="form-control" accept="image/jpeg,image/png">
+                    <div class="form-text">JPG lub PNG, maks. 2 MB.</div>
+                </div>
+            </div>
+
             <div class="card mb-3">
                 <div class="card-header"><strong>Przynależność do klubu</strong></div>
                 <div class="card-body">
