@@ -25,7 +25,8 @@ abstract class BaseModel
 
     public function findAll(string $orderBy = 'id', string $dir = 'ASC'): array
     {
-        $dir = strtoupper($dir) === 'DESC' ? 'DESC' : 'ASC';
+        $dir     = strtoupper($dir) === 'DESC' ? 'DESC' : 'ASC';
+        $orderBy = preg_replace('/[^a-zA-Z0-9_]/', '', $orderBy);
         $stmt = $this->db->query("SELECT * FROM `{$this->table}` ORDER BY `{$orderBy}` {$dir}");
         return $stmt->fetchAll();
     }
