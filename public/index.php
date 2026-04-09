@@ -182,6 +182,16 @@ $router->get('/admin/settings',                          [\App\Controllers\Admin
 $router->post('/admin/settings',                         [\App\Controllers\AdminController::class, 'saveSettings']);
 $router->get('/admin/switch-club/:id',                   [\App\Controllers\AdminController::class, 'switchClub']);
 
+// Club management (zarząd)
+$router->get('/club/settings',       [\App\Controllers\ClubManagementController::class, 'settings']);
+$router->post('/club/settings',      [\App\Controllers\ClubManagementController::class, 'saveSettings']);
+$router->get('/club/customization',  [\App\Controllers\ClubManagementController::class, 'customization']);
+$router->post('/club/customization', [\App\Controllers\ClubManagementController::class, 'saveCustomization']);
+$router->get('/club/smtp',           [\App\Controllers\ClubManagementController::class, 'smtp']);
+$router->post('/club/smtp',          [\App\Controllers\ClubManagementController::class, 'saveSmtp']);
+$router->get('/club/users',          [\App\Controllers\ClubManagementController::class, 'users']);
+$router->get('/club/logo',           [\App\Controllers\ClubManagementController::class, 'serveLogo']);
+
 // Dashboard
 $router->get('/dashboard',     [\App\Controllers\DashboardController::class, 'index']);
 
