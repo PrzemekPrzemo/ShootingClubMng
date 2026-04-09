@@ -393,10 +393,13 @@ if [[ -f "${INSTALL_DIR}/vendor/autoload.php" ]]; then
     success "vendor/autoload.php już istnieje — pomijam Composer."
 else
     COMPOSER_CMD=""
-    # Szukaj systemowego composera
-    for candidate in composer composer.phar /usr/local/bin/composer /usr/bin/composer; do
+    COMPOSER_IS_PHAR=false
+    # Szukaj systemowego composera (binarka lub .phar)
+    for candidate in /usr/local/bin/composer /usr/bin/composer composer \
+                     "${INSTALL_DIR}/composer.phar" /usr/local/bin/composer.phar; do
         if command -v "$candidate" &>/dev/null || [[ -x "$candidate" ]]; then
             COMPOSER_CMD="$candidate"
+            [[ "$candidate" == *.phar ]] && COMPOSER_IS_PHAR=true
             break
         fi
     done
@@ -407,17 +410,23 @@ else
         $PHP_CMD /tmp/composer-setup.php --quiet --install-dir="${INSTALL_DIR}" --filename=composer.phar
         rm -f /tmp/composer-setup.php
         COMPOSER_CMD="${INSTALL_DIR}/composer.phar"
+        COMPOSER_IS_PHAR=true
         success "Composer pobrany: ${COMPOSER_CMD}"
     else
         success "Composer znaleziony: ${COMPOSER_CMD}"
     fi
 
     info "Instalowanie zależności (bez dev, z optymalizacją autoloadera)…"
-    $PHP_CMD "$COMPOSER_CMD" install \
-        --working-dir="${INSTALL_DIR}" \
-        --no-dev \
-        --optimize-autoloader \
-        --no-interaction 2>&1 | grep -v "^$" | tail -20
+    # Binarka systemowa: wywołaj bezpośrednio; .phar: uruchom przez PHP
+    if $COMPOSER_IS_PHAR; then
+        $PHP_CMD "$COMPOSER_CMD" install \
+            --working-dir="${INSTALL_DIR}" \
+            --no-dev --optimize-autoloader --no-interaction 2>&1 | grep -v "^$" | tail -20
+    else
+        "$COMPOSER_CMD" install \
+            --working-dir="${INSTALL_DIR}" \
+            --no-dev --optimize-autoloader --no-interaction 2>&1 | grep -v "^$" | tail -20
+    fi
     success "Zależności zainstalowane."
 fi
 
