@@ -20,6 +20,7 @@
         <div class="card">
             <div class="card-header"><strong>Zdefiniowane konkurencje</strong></div>
             <div class="card-body p-0">
+              <div class="table-responsive">
                 <table class="table table-hover table-sm mb-0">
                     <thead class="table-dark">
                         <tr>
@@ -113,6 +114,7 @@
                     <?php endif; ?>
                     </tbody>
                 </table>
+              </div>
             </div>
         </div>
     </div>

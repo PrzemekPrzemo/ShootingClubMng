@@ -12,16 +12,14 @@ class View
         $this->layout = $layout;
     }
 
-    public function render(string $template, array $data = []): void
+    public function render(string $__template, array $__data = []): void
     {
-        $this->data = $data;
-        // Use a prefixed variable to avoid extract() collision with key named 'data'
-        $__viewData = $data;
-        extract($__viewData, EXTR_SKIP);
+        $this->data = $__data;
+        extract($__data, EXTR_SKIP);
 
-        $viewFile = ROOT_PATH . '/app/Views/' . $template . '.php';
+        $viewFile = ROOT_PATH . '/app/Views/' . $__template . '.php';
         if (!file_exists($viewFile)) {
-            throw new \RuntimeException("View not found: $template");
+            throw new \RuntimeException("View not found: $__template");
         }
 
         // Buffer inner content
@@ -39,10 +37,10 @@ class View
     }
 
     /** Render a partial (no layout) */
-    public static function partial(string $template, array $data = []): string
+    public static function partial(string $__template, array $__data = []): string
     {
-        extract($data, EXTR_SKIP);
-        $viewFile = ROOT_PATH . '/app/Views/' . $template . '.php';
+        extract($__data, EXTR_SKIP);
+        $viewFile = ROOT_PATH . '/app/Views/' . $__template . '.php';
         if (!file_exists($viewFile)) {
             return '';
         }
