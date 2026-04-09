@@ -99,4 +99,7 @@
     <a href="<?= url('admin/security') ?>" class="btn btn-outline-danger btn-sm">
         <i class="bi bi-shield-check"></i> Audyt bezpieczeństwa
     </a>
+    <a href="<?= url('admin/demos') ?>" class="btn btn-outline-success btn-sm">
+        <i class="bi bi-joystick"></i> Demo
+    </a>
 </div>

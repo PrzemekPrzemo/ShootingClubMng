@@ -44,6 +44,10 @@ switch ($job) {
         require ROOT_PATH . '/cli/process_sms_queue.php';
         break;
 
+    case 'demo_cleanup':
+        require ROOT_PATH . '/cli/cleanup_demos.php';
+        break;
+
     default:
         echo "Unknown job: {$job}\n";
         http_response_code(400);

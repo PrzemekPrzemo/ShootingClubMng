@@ -230,6 +230,16 @@ $router->post('/admin/ads/:id',          [\App\Controllers\AdsController::class,
 $router->post('/admin/ads/:id/toggle',   [\App\Controllers\AdsController::class, 'toggle']);
 $router->post('/admin/ads/:id/delete',   [\App\Controllers\AdsController::class, 'delete']);
 
+// Demo environments (public + superadmin)
+$router->get('/demo',                          [\App\Controllers\DemoController::class, 'landing']);
+$router->get('/admin/demos',                   [\App\Controllers\DemoController::class, 'adminIndex']);
+$router->post('/admin/demos',                  [\App\Controllers\DemoController::class, 'adminCreate']);
+$router->post('/admin/demos/:id/reset',        [\App\Controllers\DemoController::class, 'adminReset']);
+$router->post('/admin/demos/:id/extend',       [\App\Controllers\DemoController::class, 'adminExtend']);
+$router->post('/admin/demos/:id/delete',       [\App\Controllers\DemoController::class, 'adminDelete']);
+$router->get('/admin/demos/:id/login',         [\App\Controllers\DemoController::class, 'adminQuickLogin']);
+$router->get('/admin/demos/:id/login-portal',  [\App\Controllers\DemoController::class, 'adminQuickLoginPortal']);
+
 // 2FA
 $router->get('/2fa/setup',         [\App\Controllers\TwoFactorController::class, 'setup']);
 $router->post('/2fa/enable',       [\App\Controllers\TwoFactorController::class, 'enable']);
