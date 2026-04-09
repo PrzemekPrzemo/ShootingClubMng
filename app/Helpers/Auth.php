@@ -15,10 +15,12 @@ class Auth
             return null;
         }
         return [
-            'id'        => Session::get('user_id'),
-            'username'  => Session::get('username'),
-            'full_name' => Session::get('full_name'),
-            'role'      => Session::get('role'),
+            'id'             => Session::get('user_id'),
+            'username'       => Session::get('username'),
+            'full_name'      => Session::get('full_name'),
+            'role'           => Session::get('role'),
+            'club_id'        => Session::get('club_id'),
+            'is_super_admin' => (bool)Session::get('is_super_admin', false),
         ];
     }
 
@@ -70,10 +72,27 @@ class Auth
         Session::remove('member_status');
         Session::remove('must_change_password');
 
-        Session::set('user_id',   $user['id']);
-        Session::set('username',  $user['username']);
-        Session::set('full_name', $user['full_name']);
-        Session::set('role',      $user['role']);
+        Session::set('user_id',        $user['id']);
+        Session::set('username',       $user['username']);
+        Session::set('full_name',      $user['full_name']);
+        Session::set('role',           $user['role']);
+        Session::set('is_super_admin', !empty($user['is_super_admin']));
+
+        // club_id ustawiany osobno przez setClub() po wyborze klubu
+    }
+
+    /** Ustaw aktywny klub w sesji (po zalogowaniu lub przełączeniu). */
+    public static function setClub(int $clubId, string $roleInClub): void
+    {
+        Session::set('club_id', $clubId);
+        Session::set('role', $roleInClub);
+        ClubContext::set($clubId);
+    }
+
+    /** Czy zalogowany user jest super adminem? */
+    public static function isSuperAdmin(): bool
+    {
+        return (bool)Session::get('is_super_admin', false);
     }
 
     public static function logout(): void
