@@ -149,7 +149,7 @@
                     <p class="mb-0">
                         Ważna do: <?= format_date($license['valid_until']) ?>
                         <span class="badge bg-<?= alert_class($days, 60) ?>">
-                            <?= $days >= 0 ? "za {$days} dni" : 'WYGASŁA' ?>
+                            <?= $days === null ? 'bezterminowa' : ($days >= 0 ? "za {$days} dni" : 'WYGASŁA') ?>
                         </span>
                     </p>
                 <?php else: ?>
@@ -191,7 +191,7 @@
                     <p class="mb-0">
                         Ważne do: <?= format_date($medical['valid_until']) ?>
                         <span class="badge bg-<?= alert_class($days, 30) ?>">
-                            <?= $days >= 0 ? "za {$days} dni" : 'WYGASŁE' ?>
+                            <?= $days === null ? 'bezterminowa' : ($days >= 0 ? "za {$days} dni" : 'WYGASŁE') ?>
                         </span>
                     </p>
                     <a href="<?= url('members/' . $member['id'] . '/exams') ?>" class="small">Historia badań</a>

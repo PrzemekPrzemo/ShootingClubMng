@@ -85,7 +85,8 @@
                     <td><?= format_date($exam['valid_until']) ?></td>
                     <td>
                         <span class="badge bg-<?= alert_class($days, 30) ?>">
-                            <?php if ($days < 0): ?>Wygasłe (<?= abs($days) ?> dni temu)
+                            <?php if ($days === null): ?>bezterminowa
+                            <?php elseif ($days < 0): ?>Wygasłe (<?= abs($days) ?> dni temu)
                             <?php elseif ($days === 0): ?>Dziś wygasa
                             <?php else: ?>za <?= $days ?> dni<?php endif; ?>
                         </span>

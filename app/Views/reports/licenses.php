@@ -24,7 +24,7 @@
                     <td class="small"><?= e($l['discipline_name'] ?? '—') ?></td>
                     <td class="small"><?= format_date($l['issue_date']) ?></td>
                     <td class="small"><?= format_date($l['valid_until']) ?></td>
-                    <td><span class="badge bg-<?= alert_class($days, 60) ?>"><?= $days >= 0 ? "za {$days} dni" : abs($days).' dni temu' ?></span></td>
+                    <td><span class="badge bg-<?= alert_class($days, 60) ?>"><?= $days === null ? 'bezterminowa' : ($days >= 0 ? "za {$days} dni" : abs($days).' dni temu') ?></span></td>
                     <td><?php $sc = match($l['status']) { 'aktywna'=>'success','wygasla'=>'danger',default=>'warning' }; ?><span class="badge bg-<?= $sc ?>"><?= e($l['status']) ?></span></td>
                 </tr>
             <?php endforeach; ?>

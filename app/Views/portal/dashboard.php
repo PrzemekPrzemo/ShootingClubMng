@@ -121,7 +121,7 @@
                                 <small class="text-muted d-block"><?= e($l['discipline_name'] ?? '—') ?></small>
                             </td>
                             <td class="text-end align-middle">
-                                <span class="badge bg-<?= alert_class($days, 60) ?>">do <?= format_date($l['valid_until']) ?></span>
+                                <span class="badge bg-<?= alert_class($days, 60) ?>"><?= $days === null ? 'bezterminowa' : 'do ' . format_date($l['valid_until']) ?></span>
                             </td>
                         </tr>
                     <?php endforeach; ?>

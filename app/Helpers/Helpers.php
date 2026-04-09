@@ -73,8 +73,9 @@ if (!function_exists('format_money')) {
 
 if (!function_exists('days_until')) {
     /** Returns days from today to $date (negative = overdue) */
-    function days_until(string $date): int
+    function days_until(?string $date): ?int
     {
+        if ($date === null) return null;
         $today = new DateTime('today');
         $target = new DateTime($date);
         return (int)$today->diff($target)->days * ($target >= $today ? 1 : -1);
@@ -83,8 +84,9 @@ if (!function_exists('days_until')) {
 
 if (!function_exists('alert_class')) {
     /** Bootstrap badge class based on days remaining */
-    function alert_class(int $days, int $warnDays = 30): string
+    function alert_class(?int $days, int $warnDays = 30): string
     {
+        if ($days === null)   return 'secondary';
         if ($days < 0)        return 'danger';
         if ($days <= $warnDays) return 'warning';
         return 'success';

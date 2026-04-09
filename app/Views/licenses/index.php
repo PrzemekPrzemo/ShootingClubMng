@@ -88,7 +88,7 @@
                         <td class="small"><?= format_date($lic['valid_until']) ?></td>
                         <td>
                             <span class="badge bg-<?= alert_class($days, 60) ?>">
-                                <?= $days >= 0 ? "za {$days} dni" : abs($days) . ' dni temu' ?>
+                                <?= $days === null ? 'bezterminowa' : ($days >= 0 ? "za {$days} dni" : abs($days) . ' dni temu') ?>
                             </span>
                         </td>
                         <td>
