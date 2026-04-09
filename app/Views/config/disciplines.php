@@ -19,9 +19,19 @@
                         </tr>
                     </thead>
                     <tbody>
-                    <?php foreach ($disciplines as $d): ?>
+                    <?php
+                    $currentClubId = \App\Helpers\ClubContext::current();
+                    foreach ($disciplines as $d):
+                        $isGlobal = empty($d['club_id']);
+                        $canEdit  = !$isGlobal || $currentClubId === null; // superadmin can edit global
+                    ?>
                         <tr class="<?= $d['is_active'] ? '' : 'text-muted' ?>">
-                            <td><?= e($d['name']) ?></td>
+                            <td>
+                                <?= e($d['name']) ?>
+                                <?php if ($isGlobal && $currentClubId !== null): ?>
+                                    <span class="badge bg-secondary ms-1" title="Wpis globalny — tylko do odczytu">Globalny</span>
+                                <?php endif; ?>
+                            </td>
                             <td><code><?= e($d['short_code']) ?></code></td>
                             <td class="small text-muted"><?= e($d['description'] ?? '') ?></td>
                             <td>
@@ -37,6 +47,7 @@
                                    title="Szablony konkurencji dla tej dyscypliny">
                                     <i class="bi bi-list-check"></i>
                                 </a>
+                                <?php if ($canEdit): ?>
                                 <a href="<?= url('config/disciplines?edit=' . $d['id']) ?>"
                                    class="btn btn-xs btn-outline-primary py-0 px-1"><i class="bi bi-pencil"></i></a>
 
@@ -57,6 +68,9 @@
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
+                                <?php else: ?>
+                                <span class="text-muted" title="Wpis globalny — tylko do odczytu"><i class="bi bi-lock"></i></span>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

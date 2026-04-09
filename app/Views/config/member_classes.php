@@ -19,10 +19,20 @@
                         </tr>
                     </thead>
                     <tbody>
-                    <?php foreach ($classes as $c): ?>
+                    <?php
+                    $currentClubId = \App\Helpers\ClubContext::current();
+                    foreach ($classes as $c):
+                        $isGlobal = empty($c['club_id']);
+                        $canEdit  = !$isGlobal || $currentClubId === null;
+                    ?>
                         <tr class="<?= $c['is_active'] ? '' : 'text-muted' ?>">
                             <td class="text-center"><?= $c['sort_order'] ?></td>
-                            <td><?= e($c['name']) ?></td>
+                            <td>
+                                <?= e($c['name']) ?>
+                                <?php if ($isGlobal && $currentClubId !== null): ?>
+                                    <span class="badge bg-secondary ms-1" title="Wpis globalny — tylko do odczytu">Globalny</span>
+                                <?php endif; ?>
+                            </td>
                             <td><code><?= e($c['short_code']) ?></code></td>
                             <td>
                                 <?= $c['is_active']
@@ -30,6 +40,7 @@
                                     : '<span class="badge bg-secondary">nieaktywna</span>' ?>
                             </td>
                             <td class="text-end" style="white-space:nowrap">
+                                <?php if ($canEdit): ?>
                                 <a href="<?= url('config/member-classes?edit=' . $c['id']) ?>"
                                    class="btn btn-xs btn-outline-primary py-0 px-1"><i class="bi bi-pencil"></i></a>
                                 <form method="post" action="<?= url('config/member-classes/' . $c['id'] . '/delete') ?>"
@@ -40,6 +51,9 @@
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
+                                <?php else: ?>
+                                <span class="text-muted" title="Wpis globalny — tylko do odczytu"><i class="bi bi-lock"></i></span>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

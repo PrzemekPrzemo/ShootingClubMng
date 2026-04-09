@@ -47,10 +47,20 @@ $currentPath = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
                         </tr>
                     </thead>
                     <tbody>
-                    <?php foreach ($licenseTypes as $lt): ?>
+                    <?php
+                    $currentClubId = \App\Helpers\ClubContext::current();
+                    foreach ($licenseTypes as $lt):
+                        $isGlobal = empty($lt['club_id']);
+                        $canEdit  = !$isGlobal || $currentClubId === null;
+                    ?>
                         <tr class="<?= $lt['is_active'] ? '' : 'table-secondary text-muted' ?>">
                             <td class="text-center text-muted small"><?= $lt['sort_order'] ?></td>
-                            <td><strong><?= e($lt['name']) ?></strong></td>
+                            <td>
+                                <strong><?= e($lt['name']) ?></strong>
+                                <?php if ($isGlobal && $currentClubId !== null): ?>
+                                    <span class="badge bg-secondary ms-1" title="Wpis globalny — tylko do odczytu">Globalny</span>
+                                <?php endif; ?>
+                            </td>
                             <td><code><?= e($lt['short_code']) ?></code></td>
                             <td class="text-center">
                                 <?= $lt['validity_months'] !== null
@@ -66,7 +76,7 @@ $currentPath = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
                                 <?php endif; ?>
                             </td>
                             <td class="text-end" style="white-space:nowrap">
-                                <?php if ($lt['id'] !== null): ?>
+                                <?php if ($lt['id'] !== null && $canEdit): ?>
                                 <a href="<?= url('config/license-types?edit=' . $lt['id']) ?>"
                                    class="btn btn-xs btn-outline-primary py-0 px-1">
                                     <i class="bi bi-pencil"></i>
@@ -89,6 +99,8 @@ $currentPath = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
+                                <?php elseif (!$canEdit): ?>
+                                <span class="text-muted" title="Wpis globalny — tylko do odczytu"><i class="bi bi-lock"></i></span>
                                 <?php else: ?>
                                 <span class="text-muted small">wbudowany</span>
                                 <?php endif; ?>

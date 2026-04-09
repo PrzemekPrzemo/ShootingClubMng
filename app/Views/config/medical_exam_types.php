@@ -53,11 +53,19 @@
                         </tr>
                     </thead>
                     <tbody>
-                    <?php foreach ($examTypes as $t): ?>
+                    <?php
+                    $currentClubId = \App\Helpers\ClubContext::current();
+                    foreach ($examTypes as $t):
+                        $isGlobal = empty($t['club_id']);
+                        $canEdit  = !$isGlobal || $currentClubId === null;
+                    ?>
                         <tr class="<?= $t['is_active'] ? '' : 'table-secondary text-muted' ?>">
                             <td class="text-muted small"><?= $t['sort_order'] ?></td>
                             <td>
                                 <?= e($t['name']) ?>
+                                <?php if ($isGlobal && $currentClubId !== null): ?>
+                                    <span class="badge bg-secondary ms-1" title="Wpis globalny — tylko do odczytu">Globalny</span>
+                                <?php endif; ?>
                             </td>
                             <td class="text-center">
                                 <?php
@@ -75,6 +83,7 @@
                                 </span>
                             </td>
                             <td class="text-end" style="white-space:nowrap">
+                                <?php if ($canEdit): ?>
                                 <a href="<?= url('config/medical-exam-types?edit=' . $t['id']) ?>"
                                    class="btn btn-sm btn-outline-secondary py-0"><i class="bi bi-pencil"></i></a>
                                 <form method="post" action="<?= url('config/medical-exam-types/' . $t['id'] . '/delete') ?>"
@@ -84,6 +93,9 @@
                                         <i class="bi bi-<?= $t['is_active'] ? 'pause' : 'play' ?>"></i>
                                     </button>
                                 </form>
+                                <?php else: ?>
+                                <span class="text-muted" title="Wpis globalny — tylko do odczytu"><i class="bi bi-lock"></i></span>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

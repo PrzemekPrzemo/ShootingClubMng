@@ -286,7 +286,8 @@ class ConfigController extends BaseController
     {
         Csrf::verify();
 
-        $id   = (int)($_POST['id'] ?? 0);
+        $id     = (int)($_POST['id'] ?? 0);
+        $clubId = \App\Helpers\ClubContext::current();
         $data = [
             'name'       => trim($_POST['name'] ?? ''),
             'short_code' => strtoupper(trim($_POST['short_code'] ?? '')),
@@ -300,9 +301,18 @@ class ConfigController extends BaseController
         }
 
         if ($id > 0) {
+            // Clubs may only edit their own entries; global entries (club_id=NULL) are read-only
+            if ($clubId !== null) {
+                $existing = $this->disciplineModel->findById($id);
+                if (!$existing || (int)($existing['club_id'] ?? 0) !== $clubId) {
+                    Session::flash('error', 'Nie możesz edytować globalnego wpisu słownika.');
+                    $this->redirect('config/disciplines');
+                }
+            }
             $this->disciplineModel->saveUpdate($id, $data);
             Session::flash('success', 'Dyscyplina zaktualizowana.');
         } else {
+            $data['club_id'] = $clubId; // NULL for superadmin (global), int for club
             $this->disciplineModel->save($data);
             Session::flash('success', 'Dyscyplina dodana.');
         }
@@ -315,7 +325,18 @@ class ConfigController extends BaseController
         Csrf::verify();
         $this->requireRole(['admin']);
 
-        $intId = (int)$id;
+        $intId  = (int)$id;
+        $clubId = \App\Helpers\ClubContext::current();
+
+        // Clubs may only delete their own entries
+        if ($clubId !== null) {
+            $existing = $this->disciplineModel->findById($intId);
+            if (!$existing || (int)($existing['club_id'] ?? 0) !== $clubId) {
+                Session::flash('error', 'Nie możesz usunąć globalnego wpisu słownika.');
+                $this->redirect('config/disciplines');
+            }
+        }
+
         if ($this->disciplineModel->isUsed($intId)) {
             // Dezaktywuj zamiast usuwać — są powiązane rekordy
             $this->disciplineModel->toggle($intId);
@@ -432,7 +453,8 @@ class ConfigController extends BaseController
     {
         Csrf::verify();
 
-        $id   = (int)($_POST['id'] ?? 0);
+        $id     = (int)($_POST['id'] ?? 0);
+        $clubId = \App\Helpers\ClubContext::current();
         $data = [
             'name'       => trim($_POST['name'] ?? ''),
             'short_code' => strtoupper(trim($_POST['short_code'] ?? '')),
@@ -446,9 +468,17 @@ class ConfigController extends BaseController
         }
 
         if ($id > 0) {
+            if ($clubId !== null) {
+                $existing = $this->memberClassModel->findById($id);
+                if (!$existing || (int)($existing['club_id'] ?? 0) !== $clubId) {
+                    Session::flash('error', 'Nie możesz edytować globalnego wpisu słownika.');
+                    $this->redirect('config/member-classes');
+                }
+            }
             $this->memberClassModel->saveUpdate($id, $data);
             Session::flash('success', 'Klasa zaktualizowana.');
         } else {
+            $data['club_id'] = $clubId;
             $this->memberClassModel->save($data);
             Session::flash('success', 'Klasa dodana.');
         }
@@ -460,7 +490,19 @@ class ConfigController extends BaseController
     {
         Csrf::verify();
         $this->requireRole(['admin']);
-        $this->memberClassModel->delete((int)$id);
+
+        $intId  = (int)$id;
+        $clubId = \App\Helpers\ClubContext::current();
+
+        if ($clubId !== null) {
+            $existing = $this->memberClassModel->findById($intId);
+            if (!$existing || (int)($existing['club_id'] ?? 0) !== $clubId) {
+                Session::flash('error', 'Nie możesz usunąć globalnego wpisu słownika.');
+                $this->redirect('config/member-classes');
+            }
+        }
+
+        $this->memberClassModel->delete($intId);
         Session::flash('success', 'Klasa usunięta.');
         $this->redirect('config/member-classes');
     }
@@ -483,7 +525,8 @@ class ConfigController extends BaseController
     {
         Csrf::verify();
 
-        $id   = (int)($_POST['id'] ?? 0);
+        $id     = (int)($_POST['id'] ?? 0);
+        $clubId = \App\Helpers\ClubContext::current();
         $data = [
             'name'            => trim($_POST['name'] ?? ''),
             'required_for'    => in_array($_POST['required_for'] ?? '', ['patent','license','both']) ? $_POST['required_for'] : 'both',
@@ -498,9 +541,17 @@ class ConfigController extends BaseController
         }
 
         if ($id > 0) {
+            if ($clubId !== null) {
+                $existing = $this->examTypeModel->findById($id);
+                if (!$existing || (int)($existing['club_id'] ?? 0) !== $clubId) {
+                    Session::flash('error', 'Nie możesz edytować globalnego wpisu słownika.');
+                    $this->redirect('config/medical-exam-types');
+                }
+            }
             $this->examTypeModel->saveUpdate($id, $data);
             Session::flash('success', 'Typ badania zaktualizowany.');
         } else {
+            $data['club_id'] = $clubId;
             $this->examTypeModel->save($data);
             Session::flash('success', 'Typ badania dodany.');
         }
@@ -512,7 +563,19 @@ class ConfigController extends BaseController
     {
         Csrf::verify();
         $this->requireRole(['admin']);
-        $this->examTypeModel->toggle((int)$id);
+
+        $intId  = (int)$id;
+        $clubId = \App\Helpers\ClubContext::current();
+
+        if ($clubId !== null) {
+            $existing = $this->examTypeModel->findById($intId);
+            if (!$existing || (int)($existing['club_id'] ?? 0) !== $clubId) {
+                Session::flash('error', 'Nie możesz usunąć globalnego wpisu słownika.');
+                $this->redirect('config/medical-exam-types');
+            }
+        }
+
+        $this->examTypeModel->toggle($intId);
         Session::flash('success', 'Status typu badania zmieniony.');
         $this->redirect('config/medical-exam-types');
     }
@@ -548,6 +611,7 @@ class ConfigController extends BaseController
             $this->redirect('config/license-types');
         }
 
+        $clubId = \App\Helpers\ClubContext::current();
         $data = [
             'name'            => $name,
             'short_code'      => $code,
@@ -558,9 +622,17 @@ class ConfigController extends BaseController
         ];
 
         if ($id > 0) {
+            if ($clubId !== null) {
+                $existing = $model->findById($id);
+                if (!$existing || (int)($existing['club_id'] ?? 0) !== $clubId) {
+                    Session::flash('error', 'Nie możesz edytować globalnego wpisu słownika.');
+                    $this->redirect('config/license-types');
+                }
+            }
             $model->saveUpdate($id, $data);
             Session::flash('success', 'Typ licencji zaktualizowany.');
         } else {
+            $data['club_id'] = $clubId;
             $model->save($data);
             Session::flash('success', 'Typ licencji dodany.');
         }
@@ -572,8 +644,17 @@ class ConfigController extends BaseController
     {
         Csrf::verify();
         $this->requireRole(['admin']);
-        $model = new LicenseTypeModel();
-        $intId = (int)$id;
+        $model  = new LicenseTypeModel();
+        $intId  = (int)$id;
+        $clubId = \App\Helpers\ClubContext::current();
+
+        if ($clubId !== null) {
+            $existing = $model->findById($intId);
+            if (!$existing || (int)($existing['club_id'] ?? 0) !== $clubId) {
+                Session::flash('error', 'Nie możesz usunąć globalnego wpisu słownika.');
+                $this->redirect('config/license-types');
+            }
+        }
 
         if ($model->isUsed($intId)) {
             $model->toggle($intId);
