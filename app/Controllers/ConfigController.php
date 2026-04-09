@@ -685,7 +685,7 @@ class ConfigController extends BaseController
         $logModel = new \App\Models\ActivityLogModel();
         $entries  = $logModel->getRecent($filters, 300);
         $entities = $logModel->getDistinctEntities();
-        $users    = $this->userModel->getAll();
+        $users    = $this->userModel->getAllUsers();
 
         $this->render('config/audit_log', [
             'title'    => 'Dziennik audytu',
