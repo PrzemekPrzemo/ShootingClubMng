@@ -112,6 +112,73 @@
                 <?php endforeach; ?>
             </div>
 
+            <hr class="my-4">
+            <h6 class="text-uppercase text-muted small mb-3"><i class="bi bi-envelope-gear"></i> Konfiguracja SMTP</h6>
+            <p class="text-muted small mb-2">Zostaw wyłączone, aby używać globalnego SMTP systemu.</p>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="smtp_enabled" name="smtp_enabled"
+                       <?= !empty($smtpConfig['smtp_enabled']) ? 'checked' : '' ?>>
+                <label class="form-check-label" for="smtp_enabled">Własny serwer SMTP dla tego klubu</label>
+            </div>
+
+            <div id="smtp_fields" <?= empty($smtpConfig['smtp_enabled']) ? 'style="display:none"' : '' ?>>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
+                        <label class="form-label">Serwer SMTP</label>
+                        <input type="text" class="form-control" name="smtp_host"
+                               value="<?= e($smtpConfig['smtp_host'] ?? '') ?>" placeholder="smtp.example.com">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Port</label>
+                        <input type="number" class="form-control" name="smtp_port"
+                               value="<?= (int)($smtpConfig['smtp_port'] ?? 587) ?>" min="1" max="65535">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Szyfrowanie</label>
+                        <select class="form-select" name="smtp_secure">
+                            <?php foreach (['tls' => 'TLS (STARTTLS)', 'ssl' => 'SSL', '' => 'Brak'] as $val => $lbl): ?>
+                            <option value="<?= $val ?>" <?= ($smtpConfig['smtp_secure'] ?? 'tls') === $val ? 'selected' : '' ?>><?= $lbl ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Użytkownik SMTP</label>
+                        <input type="text" class="form-control" name="smtp_user"
+                               value="<?= e($smtpConfig['smtp_user'] ?? '') ?>" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Hasło SMTP</label>
+                    <input type="password" class="form-control" name="smtp_pass_enc"
+                           autocomplete="new-password"
+                           placeholder="<?= $isEdit && !empty($smtpConfig['smtp_has_pass']) ? 'Zostaw puste = bez zmian' : 'Hasło' ?>">
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Nadawca — adres e-mail</label>
+                        <input type="email" class="form-control" name="smtp_from_email"
+                               value="<?= e($smtpConfig['smtp_from_email'] ?? '') ?>" placeholder="noreply@klub.pl">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nadawca — nazwa</label>
+                        <input type="text" class="form-control" name="smtp_from_name"
+                               value="<?= e($smtpConfig['smtp_from_name'] ?? '') ?>" placeholder="Nazwa Klubu">
+                    </div>
+                </div>
+            </div>
+
+            <script>
+            document.getElementById('smtp_enabled').addEventListener('change', function () {
+                document.getElementById('smtp_fields').style.display = this.checked ? '' : 'none';
+            });
+            </script>
+
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check-lg"></i> <?= $isEdit ? 'Zapisz' : 'Utwórz' ?>

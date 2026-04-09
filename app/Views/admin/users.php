@@ -56,6 +56,13 @@
                             : '<span class="badge bg-secondary">Nieaktywny</span>' ?>
                     </td>
                     <td class="text-end text-nowrap">
+                        <?php if ($user['is_active'] && empty($user['is_super_admin']) && !empty($user['clubs'])): ?>
+                        <a href="<?= url("admin/impersonate/user/{$user['id']}") ?>"
+                           class="btn btn-sm btn-outline-warning" title="Zaloguj jako"
+                           onclick="return confirm('Zalogować się jako <?= e(addslashes($user['full_name'])) ?>?')">
+                            <i class="bi bi-person-fill-gear"></i>
+                        </a>
+                        <?php endif; ?>
                         <a href="<?= url("admin/users/{$user['id']}/edit") ?>" class="btn btn-sm btn-outline-secondary" title="Edytuj">
                             <i class="bi bi-pencil"></i>
                         </a>

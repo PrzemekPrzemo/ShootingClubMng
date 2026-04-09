@@ -201,6 +201,7 @@ $router->post('/admin/settings',                         [\App\Controllers\Admin
 $router->get('/admin/switch-club/:id',                   [\App\Controllers\AdminController::class, 'switchClub']);
 $router->get('/admin/exit-club',                         [\App\Controllers\AdminController::class, 'exitClub']);
 $router->get('/admin/impersonate/club/:clubId/user/:userId', [\App\Controllers\AdminController::class, 'impersonateClubUser']);
+$router->get('/admin/impersonate/user/:userId',             [\App\Controllers\AdminController::class, 'impersonateUser']);
 $router->get('/admin/impersonate/member/:memberId',          [\App\Controllers\AdminController::class, 'impersonateMember']);
 $router->get('/admin/stop-impersonation',                    [\App\Controllers\AdminController::class, 'stopImpersonation']);
 $router->get('/admin/users',                                 [\App\Controllers\AdminController::class, 'users']);

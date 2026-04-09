@@ -80,6 +80,7 @@ class AdminController extends BaseController
             'club'         => null,
             'subscription' => null,
             'clubModules'  => [],
+            'smtpConfig'   => ['smtp_enabled' => false, 'smtp_host' => '', 'smtp_port' => 587, 'smtp_secure' => 'tls', 'smtp_user' => '', 'smtp_has_pass' => false, 'smtp_from_email' => '', 'smtp_from_name' => ''],
         ]);
     }
 
@@ -137,12 +138,23 @@ class AdminController extends BaseController
         $settings     = new ClubSettingsModel();
         $subscription = (new SubscriptionModel())->getForClub((int)$id);
         $clubModules  = $settings->getModules((int)$id);
+        $smtpConfig   = [
+            'smtp_enabled'    => (bool)$settings->get((int)$id, 'smtp_enabled', false),
+            'smtp_host'       => (string)$settings->get((int)$id, 'smtp_host', ''),
+            'smtp_port'       => (int)$settings->get((int)$id, 'smtp_port', 587),
+            'smtp_secure'     => (string)$settings->get((int)$id, 'smtp_secure', 'tls'),
+            'smtp_user'       => (string)$settings->get((int)$id, 'smtp_user', ''),
+            'smtp_has_pass'   => (string)$settings->get((int)$id, 'smtp_pass_enc', '') !== '',
+            'smtp_from_email' => (string)$settings->get((int)$id, 'smtp_from_email', ''),
+            'smtp_from_name'  => (string)$settings->get((int)$id, 'smtp_from_name', ''),
+        ];
 
         $this->render('admin/club_form', [
             'title'        => 'Edycja klubu — ' . $club['name'],
             'club'         => $club,
             'subscription' => $subscription,
             'clubModules'  => $clubModules,
+            'smtpConfig'   => $smtpConfig,
         ]);
     }
 
@@ -187,6 +199,23 @@ class AdminController extends BaseController
         // Moduły
         $settings = new ClubSettingsModel();
         $settings->setModules((int)$id, $_POST['modules'] ?? []);
+
+        // SMTP settings
+        $settings->set((int)$id, 'smtp_enabled', isset($_POST['smtp_enabled']) ? '1' : '0', 'Własny SMTP', 'boolean');
+        foreach ([
+            'smtp_host'       => 'SMTP Host',
+            'smtp_port'       => 'SMTP Port',
+            'smtp_secure'     => 'SMTP Szyfrowanie',
+            'smtp_user'       => 'SMTP Użytkownik',
+            'smtp_from_email' => 'Nadawca e-mail',
+            'smtp_from_name'  => 'Nazwa nadawcy',
+        ] as $key => $label) {
+            $settings->set((int)$id, $key, trim($_POST[$key] ?? ''), $label, $key === 'smtp_port' ? 'number' : 'text');
+        }
+        $smtpPw = trim($_POST['smtp_pass_enc'] ?? '');
+        if ($smtpPw !== '') {
+            $settings->set((int)$id, 'smtp_pass_enc', $smtpPw, 'SMTP Hasło', 'text');
+        }
 
         Session::flash('success', 'Zapisano zmiany.');
         $this->redirect('admin/clubs');
@@ -299,6 +328,28 @@ class AdminController extends BaseController
 
         Auth::impersonateClubUser($user, (int)$clubId, $roleInClub);
         Session::flash('warning', "Tryb impersonacji: logujesz się jako <strong>{$user['full_name']}</strong> w klubie <strong>{$club['name']}</strong>. <a href='" . url('admin/stop-impersonation') . "'>Zakończ</a>");
+        $this->redirect('dashboard');
+    }
+
+    /** GET /admin/impersonate/user/:userId — logowanie jako użytkownik (bez podawania clubId w URL) */
+    public function impersonateUser(string $userId): void
+    {
+        $user = $this->userModel->findById((int)$userId);
+        if (!$user || !empty($user['is_super_admin'])) {
+            Session::flash('error', 'Nie można impersonować tego użytkownika.');
+            $this->redirect('admin/users');
+        }
+
+        $clubs = $this->userModel->getClubsForUser((int)$userId);
+        if (empty($clubs)) {
+            Session::flash('error', "Użytkownik „{$user['full_name']}" nie jest przypisany do żadnego klubu.");
+            $this->redirect('admin/users');
+        }
+
+        $firstClub = $clubs[0];
+        $this->logImpersonation((int)$userId, 'club_user', (int)$firstClub['club_id']);
+        Auth::impersonateClubUser($user, (int)$firstClub['club_id'], $firstClub['highest_role']);
+        Session::flash('warning', "Tryb impersonacji: logujesz się jako <strong>{$user['full_name']}</strong> w klubie <strong>{$firstClub['club_name']}</strong>. <a href='" . url('admin/stop-impersonation') . "'>Zakończ</a>");
         $this->redirect('dashboard');
     }
 
