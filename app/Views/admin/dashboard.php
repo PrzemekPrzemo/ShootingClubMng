@@ -78,10 +78,25 @@
 </div>
 
 <div class="mt-3 d-flex flex-wrap gap-2">
-    <a href="<?= url('admin/settings') ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-gear"></i> Ustawienia globalne
+    <a href="<?= url('admin/settings') ?>" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-gear"></i> Ustawienia
     </a>
-    <a href="<?= url('admin/subscriptions') ?>" class="btn btn-outline-primary">
-        <i class="bi bi-credit-card-2-front"></i> Subskrypcje klubów
+    <a href="<?= url('admin/subscriptions') ?>" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-credit-card-2-front"></i> Subskrypcje
+    </a>
+    <a href="<?= url('admin/subscriptions/plans') ?>" class="btn btn-outline-info btn-sm">
+        <i class="bi bi-sliders"></i> Plany / Ceny
+    </a>
+    <a href="<?= url('admin/subscriptions/invoices') ?>" class="btn btn-outline-success btn-sm">
+        <i class="bi bi-receipt"></i> Faktury
+    </a>
+    <a href="<?= url('admin/analytics') ?>" class="btn btn-outline-warning btn-sm">
+        <i class="bi bi-bar-chart-line"></i> Analityka
+    </a>
+    <a href="<?= url('admin/ads') ?>" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-megaphone"></i> Reklamy
+    </a>
+    <a href="<?= url('admin/security') ?>" class="btn btn-outline-danger btn-sm">
+        <i class="bi bi-shield-check"></i> Audyt bezpieczeństwa
     </a>
 </div>

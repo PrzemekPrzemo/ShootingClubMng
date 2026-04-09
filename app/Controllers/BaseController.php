@@ -8,6 +8,7 @@ use App\Helpers\Auth;
 use App\Helpers\ClubContext;
 use App\Models\RolePermissionModel;
 use App\Models\ClubCustomizationModel;
+use App\Models\SubscriptionModel;
 
 abstract class BaseController
 {
@@ -119,6 +120,45 @@ abstract class BaseController
         if (!Auth::isSuperAdmin()) {
             http_response_code(403);
             die('Brak uprawnień — wymagany dostęp super admina.');
+        }
+    }
+
+    /**
+     * Sprawdza subskrypcję aktualnego klubu.
+     * Jeśli wygasła → przekierowanie na stronę informacyjną.
+     * Superadmin pomija check.
+     */
+    protected function checkSubscription(): void
+    {
+        if (Auth::isSuperAdmin()) return;
+        $clubId = ClubContext::current();
+        if ($clubId === null) return;
+        try {
+            $sub = new SubscriptionModel();
+            if ($sub->isExpired($clubId)) {
+                $this->render('subscriptions/expired', [
+                    'title' => 'Subskrypcja wygasła',
+                ]);
+                exit;
+            }
+        } catch (\Throwable) {
+            // Before migration — ignore
+        }
+    }
+
+    /**
+     * Sprawdza czy klub nie przekroczył limitu zawodników.
+     * Zwraca false jeśli można dodać, true jeśli limit osiągnięty.
+     */
+    protected function isOverMemberLimit(): bool
+    {
+        if (Auth::isSuperAdmin()) return false;
+        $clubId = ClubContext::current();
+        if ($clubId === null) return false;
+        try {
+            return (new SubscriptionModel())->isOverMemberLimit($clubId);
+        } catch (\Throwable) {
+            return false;
         }
     }
 }

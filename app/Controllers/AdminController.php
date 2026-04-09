@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Helpers\Auth;
 use App\Helpers\ClubContext;
 use App\Helpers\Csrf;
+use App\Helpers\Database;
 use App\Helpers\Session;
 use App\Models\ClubModel;
 use App\Models\ClubCustomizationModel;
@@ -92,7 +93,7 @@ class AdminController extends BaseController
         $settings = new ClubSettingsModel();
         $settings->set($clubId, 'smtp_enabled', '0', 'Własny SMTP', 'boolean');
 
-        Session::flash('success', "Klub „{$data['name']}" został utworzony.");
+        Session::flash('success', "Klub \"{$data['name']}\" zostal utworzony.");
         $this->redirect('admin/clubs');
     }
 
@@ -224,5 +225,68 @@ class AdminController extends BaseController
         Auth::setClub((int)$id, 'admin');
         Session::flash('success', "Przełączono kontekst na: {$club['name']}");
         $this->redirect('dashboard');
+    }
+
+    // ── Impersonation ────────────────────────────────────────────────────────
+
+    /** GET /admin/impersonate/club/:clubId/user/:userId — logowanie jako użytkownik klubu */
+    public function impersonateClubUser(string $clubId, string $userId): void
+    {
+        $club = $this->clubModel->findById((int)$clubId);
+        $user = $this->userModel->findById((int)$userId);
+
+        if (!$club || !$user) {
+            Session::flash('error', 'Nie znaleziono użytkownika lub klubu.');
+            $this->redirect('admin/dashboard');
+        }
+
+        $roleInClub = $this->userModel->getRoleInClub((int)$userId, (int)$clubId) ?? 'admin';
+
+        // Log impersonation
+        $this->logImpersonation((int)$userId, 'club_user', (int)$clubId);
+
+        Auth::impersonateClubUser($user, (int)$clubId, $roleInClub);
+        Session::flash('warning', "Tryb impersonacji: logujesz się jako <strong>{$user['full_name']}</strong> w klubie <strong>{$club['name']}</strong>. <a href='" . url('admin/stop-impersonation') . "'>Zakończ</a>");
+        $this->redirect('dashboard');
+    }
+
+    /** GET /admin/impersonate/member/:memberId — logowanie jako zawodnik (portal) */
+    public function impersonateMember(string $memberId): void
+    {
+        $db   = Database::getInstance();
+        $stmt = $db->prepare("SELECT * FROM members WHERE id = ? LIMIT 1");
+        $stmt->execute([(int)$memberId]);
+        $member = $stmt->fetch();
+
+        if (!$member) {
+            Session::flash('error', 'Zawodnik nie istnieje.');
+            $this->redirect('admin/dashboard');
+        }
+
+        // Log impersonation
+        $this->logImpersonation((int)$memberId, 'member', (int)$member['club_id']);
+
+        Auth::impersonateMember($member);
+        Session::flash('warning', "Impersonacja zawodnika: <strong>{$member['first_name']} {$member['last_name']}</strong>. <a href='" . url('admin/stop-impersonation') . "'>Zakończ</a>");
+        $this->redirect('portal');
+    }
+
+    /** GET /admin/stop-impersonation */
+    public function stopImpersonation(): void
+    {
+        Auth::stopImpersonation();
+        Session::flash('success', 'Zakończono impersonację. Wróciłeś do konta superadmina.');
+        $this->redirect('admin/dashboard');
+    }
+
+    private function logImpersonation(int $targetId, string $targetType, int $clubId): void
+    {
+        try {
+            $db = Database::getInstance();
+            $db->prepare(
+                "INSERT INTO impersonation_log (admin_user_id, target_type, target_id, target_club_id)
+                 VALUES (?, ?, ?, ?)"
+            )->execute([Auth::id(), $targetType, $targetId, $clubId]);
+        } catch (\Throwable) {}
     }
 }

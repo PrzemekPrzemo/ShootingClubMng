@@ -283,6 +283,9 @@ function isActive(string $mod, string $uri): bool {
         <button class="sb-collapse-btn" id="desktopCollapse" title="Zwiń sidebar">
             <i class="bi bi-chevron-left"></i>
         </button>
+        <a href="<?= url('2fa/setup') ?>" class="sb-logout" title="Ustawienia 2FA">
+            <i class="bi bi-shield-lock"></i>
+        </a>
         <a href="<?= url('auth/logout') ?>" class="sb-logout" title="Wyloguj">
             <i class="bi bi-box-arrow-right"></i>
         </a>
@@ -358,15 +361,27 @@ function isActive(string $mod, string $uri): bool {
         <strong>Okres próbny wygasł.</strong> Skontaktuj się z administratorem systemu, aby przedłużyć dostęp.
     </div>
     <?php       endif;
+            }
         }
     } catch (\Throwable) { /* table may not exist before migration */ }
     ?>
+
+    <!-- Impersonation banner -->
+    <?php if (\App\Helpers\Auth::isImpersonating()): ?>
+    <div class="alert alert-danger mb-0 rounded-0 py-2 text-center" style="position:sticky;top:0;z-index:1050">
+        <i class="bi bi-person-fill-exclamation"></i>
+        <strong>TRYB IMPERSONACJI</strong> — przeglądasz system jako inny użytkownik.
+        <a href="<?= url('admin/stop-impersonation') ?>" class="btn btn-sm btn-danger ms-3">
+            <i class="bi bi-x-circle"></i> Zakończ
+        </a>
+    </div>
+    <?php endif; ?>
 
     <!-- Flash messages -->
     <div style="padding: .75rem 1.5rem 0">
         <?php if (!empty($flashSuccess)): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle"></i> <?= e($flashSuccess) ?>
+                <i class="bi bi-check-circle"></i> <?= $flashSuccess ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
@@ -378,11 +393,14 @@ function isActive(string $mod, string $uri): bool {
         <?php endif; ?>
         <?php if (!empty($flashWarning)): ?>
             <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-circle"></i> <?= e($flashWarning) ?>
+                <i class="bi bi-exclamation-circle"></i> <?= $flashWarning ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
     </div>
+
+    <!-- Ads banner (club_ui) -->
+    <?php $adsTarget = 'club_ui'; include ROOT_PATH . '/app/Views/partials/ads_banner.php'; ?>
 
     <!-- Main content -->
     <main id="main-content">

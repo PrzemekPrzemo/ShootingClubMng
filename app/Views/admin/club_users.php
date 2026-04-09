@@ -28,7 +28,11 @@
                     <td><?= e($user['username']) ?></td>
                     <td><?= e($user['email']) ?></td>
                     <td><span class="badge bg-info"><?= e($user['club_role']) ?></span></td>
-                    <td class="text-end">
+                    <td class="text-end d-flex gap-1 justify-content-end">
+                        <a href="<?= url("admin/impersonate/club/{$club['id']}/user/{$user['id']}") ?>"
+                           class="btn btn-sm btn-outline-warning" title="Zaloguj się jako ten użytkownik">
+                            <i class="bi bi-person-fill-gear"></i>
+                        </a>
                         <a href="<?= url("admin/clubs/{$club['id']}/users/{$user['id']}/remove") ?>"
                            class="btn btn-sm btn-outline-danger"
                            onclick="return confirm('Usunąć tego użytkownika z klubu?')">

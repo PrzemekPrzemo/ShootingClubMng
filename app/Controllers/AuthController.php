@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Helpers\Auth;
 use App\Helpers\ClubContext;
 use App\Helpers\Csrf;
+use App\Helpers\RateLimiter;
 use App\Helpers\Session;
 use App\Models\UserModel;
 
@@ -45,13 +46,32 @@ class AuthController extends BaseController
             $this->redirect('auth/login');
         }
 
+        // Rate limiting: 5 attempts per 15 min per IP+username
+        $rlKey = RateLimiter::key('admin_login', ($_SERVER['REMOTE_ADDR'] ?? '') . $username);
+        if (RateLimiter::isBlocked($rlKey)) {
+            $secs = RateLimiter::secondsUntilReset($rlKey);
+            $mins = (int)ceil($secs / 60);
+            Session::flash('error', "Zbyt wiele prób logowania. Spróbuj za {$mins} min.");
+            $this->redirect('auth/login');
+        }
+
         $user = $this->userModel->findByUsername($username);
 
         if (!$user || !password_verify($password, $user['password'])) {
-            // Log failed attempt
+            RateLimiter::attempt($rlKey);
             $this->logActivity(null, 'login_failed', 'users', null, "Nieudana próba logowania: {$username}");
             Session::flash('error', 'Nieprawidłowy login lub hasło.');
             $this->redirect('auth/login');
+        }
+        RateLimiter::clear($rlKey);
+
+        // Check if 2FA is required before completing login
+        if (!empty($user['totp_enabled'])) {
+            Session::set('totp_required', true);
+            Session::set('totp_pending_user_id', $user['id']);
+            // Store full user data temporarily for post-2FA login
+            Session::set('totp_pending_user', $user);
+            $this->redirect('2fa/verify');
         }
 
         $this->userModel->updateLastLogin($user['id']);

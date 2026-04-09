@@ -8,6 +8,9 @@ use App\Models\PaymentModel;
 use App\Models\CompetitionModel;
 use App\Models\WeaponModel;
 use App\Helpers\Auth;
+use App\Helpers\ClubContext;
+use App\Helpers\Database;
+use App\Helpers\PdfHelper;
 
 class ReportsController extends BaseController
 {
@@ -258,5 +261,64 @@ class ReportsController extends BaseController
         }
         fclose($out);
         exit;
+    }
+
+    // ── Financial PDF report ──────────────────────────────────────────
+
+    public function financePdf(): void
+    {
+        $this->requireRole(['admin', 'zarzad']);
+        $this->requireClubContext();
+
+        $clubId = ClubContext::current();
+        $year   = (int)($_GET['year'] ?? date('Y'));
+        $db     = Database::getInstance();
+
+        try {
+            // Monthly summary
+            $stmt = $db->prepare(
+                "SELECT MONTH(payment_date) AS month,
+                        SUM(amount) AS total,
+                        COUNT(*) AS count
+                 FROM payments
+                 WHERE club_id = ? AND YEAR(payment_date) = ?
+                 GROUP BY MONTH(payment_date)
+                 ORDER BY MONTH(payment_date)"
+            );
+            $stmt->execute([$clubId, $year]);
+            $monthly = $stmt->fetchAll();
+
+            // By type
+            $stmt = $db->prepare(
+                "SELECT pt.name AS type_name, SUM(p.amount) AS total, COUNT(*) AS count
+                 FROM payments p
+                 JOIN payment_types pt ON pt.id = p.payment_type_id
+                 WHERE p.club_id = ? AND YEAR(p.payment_date) = ?
+                 GROUP BY pt.name
+                 ORDER BY total DESC"
+            );
+            $stmt->execute([$clubId, $year]);
+            $byType = $stmt->fetchAll();
+
+            // Club name
+            $clubName = $db->prepare("SELECT name FROM clubs WHERE id=?");
+            $clubName->execute([$clubId]);
+            $clubName = $clubName->fetchColumn() ?: 'Klub';
+
+            $yearTotal = array_sum(array_column($monthly, 'total'));
+        } catch (\Throwable $e) {
+            \App\Helpers\Session::flash('error', 'Błąd generowania raportu: ' . $e->getMessage());
+            $this->redirect('reports');
+        }
+
+        $html = $this->renderToString('pdf/finance_report', [
+            'clubName' => $clubName,
+            'year'     => $year,
+            'monthly'  => $monthly,
+            'byType'   => $byType,
+            'total'    => $yearTotal,
+        ]);
+
+        PdfHelper::send($html, "raport_finansowy_{$year}.pdf", 'A4', false);
     }
 }

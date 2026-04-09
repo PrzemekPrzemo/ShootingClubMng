@@ -98,6 +98,9 @@
         </div>
     <?php endif; ?>
 
+    <!-- Ads banner (member_portal) -->
+    <?php $adsTarget = 'member_portal'; include ROOT_PATH . '/app/Views/partials/ads_banner.php'; ?>
+
     <?= $content ?>
 </div>
 

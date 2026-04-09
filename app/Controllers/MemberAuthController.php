@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Helpers\ClubContext;
 use App\Helpers\Csrf;
 use App\Helpers\MemberAuth;
+use App\Helpers\RateLimiter;
 use App\Helpers\Session;
 use App\Helpers\View;
 use App\Helpers\Database;
@@ -51,6 +52,14 @@ class MemberAuthController
             $this->redirectTo('portal/login');
         }
 
+        // Rate limiting: 5 attempts per 15 min per IP
+        $rlKey = RateLimiter::key('member_login', ($_SERVER['REMOTE_ADDR'] ?? '') . $login);
+        if (RateLimiter::isBlocked($rlKey)) {
+            $mins = (int)ceil(RateLimiter::secondsUntilReset($rlKey) / 60);
+            Session::flash('error', "Zbyt wiele prób logowania. Spróbuj za {$mins} min.");
+            $this->redirectTo('portal/login');
+        }
+
         $db      = Database::getInstance();
         $clubId  = ClubContext::current();
 
@@ -77,6 +86,7 @@ class MemberAuthController
         $member = $stmt->fetch();
 
         if (!$member) {
+            RateLimiter::attempt($rlKey);
             Session::flash('error', 'Nieprawidłowy e-mail lub hasło.');
             $this->redirectTo('portal/login');
         }
@@ -111,6 +121,7 @@ class MemberAuthController
             $this->redirectTo('portal/login');
         }
 
+        RateLimiter::clear($rlKey);
         MemberAuth::login($member);
 
         // Ustaw kontekst klubu zawodnika

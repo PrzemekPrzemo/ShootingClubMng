@@ -197,10 +197,46 @@ $router->get('/admin/clubs/:clubId/users/:userId/remove', [\App\Controllers\Admi
 $router->get('/admin/settings',                          [\App\Controllers\AdminController::class, 'settings']);
 $router->post('/admin/settings',                         [\App\Controllers\AdminController::class, 'saveSettings']);
 $router->get('/admin/switch-club/:id',                   [\App\Controllers\AdminController::class, 'switchClub']);
-$router->get('/admin/subscriptions',              [\App\Controllers\SubscriptionController::class, 'adminIndex']);
-$router->get('/admin/subscriptions/:id/edit',     [\App\Controllers\SubscriptionController::class, 'adminEdit']);
-$router->post('/admin/subscriptions/:id',         [\App\Controllers\SubscriptionController::class, 'adminSave']);
-$router->get('/subscription',                     [\App\Controllers\SubscriptionController::class, 'clubView']);
+$router->get('/admin/impersonate/club/:clubId/user/:userId', [\App\Controllers\AdminController::class, 'impersonateClubUser']);
+$router->get('/admin/impersonate/member/:memberId',          [\App\Controllers\AdminController::class, 'impersonateMember']);
+$router->get('/admin/stop-impersonation',                    [\App\Controllers\AdminController::class, 'stopImpersonation']);
+
+// Subscriptions
+$router->get('/admin/subscriptions',                   [\App\Controllers\SubscriptionController::class, 'adminIndex']);
+$router->get('/admin/subscriptions/plans',             [\App\Controllers\SubscriptionController::class, 'adminPlans']);
+$router->post('/admin/subscriptions/plans',            [\App\Controllers\SubscriptionController::class, 'adminSavePlans']);
+$router->get('/admin/subscriptions/invoices',          [\App\Controllers\SubscriptionController::class, 'adminInvoices']);
+$router->post('/admin/subscriptions/invoices',         [\App\Controllers\SubscriptionController::class, 'adminIssueInvoice']);
+$router->post('/admin/subscriptions/invoices/:id/paid',[\App\Controllers\SubscriptionController::class, 'adminMarkInvoicePaid']);
+$router->get('/admin/subscriptions/:id/edit',          [\App\Controllers\SubscriptionController::class, 'adminEdit']);
+$router->post('/admin/subscriptions/:id',              [\App\Controllers\SubscriptionController::class, 'adminSave']);
+$router->get('/subscription',                          [\App\Controllers\SubscriptionController::class, 'clubView']);
+
+// Security audit (superadmin)
+$router->get('/admin/security',  [\App\Controllers\AdminSecurityController::class, 'index']);
+
+// Analytics (superadmin)
+$router->get('/admin/analytics',          [\App\Controllers\AdminAnalyticsController::class, 'index']);
+$router->get('/admin/analytics/revenue',  [\App\Controllers\AdminAnalyticsController::class, 'revenue']);
+$router->get('/admin/analytics/clubs',    [\App\Controllers\AdminAnalyticsController::class, 'clubs']);
+$router->get('/admin/analytics/activity', [\App\Controllers\AdminAnalyticsController::class, 'activity']);
+
+// Ads (superadmin)
+$router->get('/admin/ads',               [\App\Controllers\AdsController::class, 'index']);
+$router->get('/admin/ads/create',        [\App\Controllers\AdsController::class, 'create']);
+$router->post('/admin/ads',              [\App\Controllers\AdsController::class, 'store']);
+$router->get('/admin/ads/:id/edit',      [\App\Controllers\AdsController::class, 'edit']);
+$router->post('/admin/ads/:id',          [\App\Controllers\AdsController::class, 'update']);
+$router->post('/admin/ads/:id/toggle',   [\App\Controllers\AdsController::class, 'toggle']);
+$router->post('/admin/ads/:id/delete',   [\App\Controllers\AdsController::class, 'delete']);
+
+// 2FA
+$router->get('/2fa/setup',         [\App\Controllers\TwoFactorController::class, 'setup']);
+$router->post('/2fa/enable',       [\App\Controllers\TwoFactorController::class, 'enable']);
+$router->post('/2fa/disable',      [\App\Controllers\TwoFactorController::class, 'disable']);
+$router->get('/2fa/backup-codes',  [\App\Controllers\TwoFactorController::class, 'backupCodes']);
+$router->get('/2fa/verify',        [\App\Controllers\TwoFactorController::class, 'showVerify']);
+$router->post('/2fa/verify',       [\App\Controllers\TwoFactorController::class, 'verify']);
 
 // Club management (zarząd)
 $router->get('/club/settings',       [\App\Controllers\ClubManagementController::class, 'settings']);
@@ -277,6 +313,8 @@ $router->post('/competitions/:id/unlock',            [\App\Controllers\Competiti
 $router->get('/competitions/:id/rankings',           [\App\Controllers\CompetitionsController::class, 'rankings']);
 $router->get('/competitions/:id/protocol',           [\App\Controllers\CompetitionsController::class, 'protocol']);
 $router->get('/competitions/:id/protocol.pdf',       [\App\Controllers\CompetitionsController::class, 'protocolPdf']);
+$router->get('/competitions/:id/certificates',       [\App\Controllers\CertificateController::class, 'preview']);
+$router->get('/competitions/:id/certificates.pdf',   [\App\Controllers\CertificateController::class, 'pdf']);
 // Competition events (konkurencje)
 $router->get('/competitions/:id/events',                          [\App\Controllers\CompetitionsController::class, 'events']);
 $router->post('/competitions/:id/events/add',                     [\App\Controllers\CompetitionsController::class, 'addEvent']);
@@ -485,6 +523,7 @@ $router->get('/security',                            [\App\Controllers\SecurityC
 // Reports (new)
 $router->get('/reports/pzss',                        [\App\Controllers\ReportsController::class, 'pzss']);
 $router->get('/reports/equipment',                   [\App\Controllers\ReportsController::class, 'equipment']);
+$router->get('/reports/finances.pdf',                [\App\Controllers\ReportsController::class, 'financePdf']);
 
 // Root path: smart redirect based on session state (before router dispatches)
 (function () {
