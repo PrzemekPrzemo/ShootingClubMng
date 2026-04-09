@@ -484,7 +484,7 @@ class CompetitionsController extends BaseController
         }
 
         // Load club name and license numbers
-        $clubName   = (new SettingModel())->get('club_name', '');
+        $clubName   = current_club_name('');
         $licenseMap = (new LicenseModel())->getLicenseMapForMembers($memberIds);
 
         // Build cards: member × event (member outer, event inner)
@@ -743,7 +743,7 @@ class CompetitionsController extends BaseController
         $competition = $this->getCompetition((int)$id);
         $rankings    = $this->competitionModel->calcRankings((int)$id);
         $judges      = $this->competitionModel->getCompetitionJudges((int)$id);
-        $clubName    = (new SettingModel())->get('club_name', '');
+        $clubName    = current_club_name('');
 
         $view = new \App\Helpers\View();
         $view->setLayout('print');
@@ -763,7 +763,7 @@ class CompetitionsController extends BaseController
         $competition = $this->getCompetition((int)$id);
         $rankings    = $this->competitionModel->calcRankings((int)$id);
         $judges      = $this->competitionModel->getCompetitionJudges((int)$id);
-        $clubName    = (new SettingModel())->get('club_name', '');
+        $clubName    = current_club_name('');
 
         $html = $this->renderToString('pdf/competition_protocol', [
             'competition' => $competition,

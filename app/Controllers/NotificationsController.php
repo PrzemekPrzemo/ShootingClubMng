@@ -27,18 +27,16 @@ class NotificationsController extends BaseController
     public function populate(string $type): void
     {
         Csrf::verify();
-        $settings = new SettingModel();
-
         $count = match($type) {
             'competition' => $this->queueModel->queueCompetitionReminders(
-                (int)($settings->get('notify_competition_days', 7))
+                (int)club_setting('notify_competition_days', 7)
             ),
             'payment'  => $this->queueModel->queuePaymentReminders(),
             'license'  => $this->queueModel->queueLicenseReminders(
-                (int)($settings->get('notify_license_days', 30))
+                (int)club_setting('notify_license_days', 30)
             ),
             'medical'  => $this->queueModel->queueMedicalReminders(
-                (int)($settings->get('notify_medical_days', 30))
+                (int)club_setting('notify_medical_days', 30)
             ),
             default    => 0,
         };

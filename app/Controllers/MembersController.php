@@ -535,7 +535,7 @@ class MembersController extends BaseController
 
         $disciplines = $this->memberModel->getDisciplines((int)$id);
         $license     = $this->memberModel->getLatestLicense((int)$id);
-        $clubName    = (new SettingModel())->get('club_name', 'Klub Strzelecki');
+        $clubName    = current_club_name('Klub Strzelecki');
 
         $this->view->setLayout('none');
         $this->render('members/card', [
@@ -557,7 +557,7 @@ class MembersController extends BaseController
 
         $disciplines = $this->memberModel->getDisciplines((int)$id);
         $license     = $this->memberModel->getLatestLicense((int)$id);
-        $clubName    = (new SettingModel())->get('club_name', 'Klub Strzelecki');
+        $clubName    = current_club_name('Klub Strzelecki');
 
         $html = $this->renderToString('pdf/member_card', [
             'member'      => $member,

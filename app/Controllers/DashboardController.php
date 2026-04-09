@@ -114,8 +114,8 @@ class DashboardController extends BaseController
         $settingModel     = new SettingModel();
         $notifModel       = new NotificationModel();
 
-        $alertLicDays = (int)$settingModel->get('alert_license_days', 60);
-        $alertMedDays = (int)$settingModel->get('alert_medical_days', 30);
+        $alertLicDays = (int)club_setting('alert_license_days', 60);
+        $alertMedDays = (int)club_setting('alert_medical_days', 30);
         $year         = (int)date('Y');
 
         // Club fees summary

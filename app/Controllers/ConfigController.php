@@ -38,12 +38,23 @@ class ConfigController extends BaseController
 
     public function index(): void
     {
-        $clubId = ClubContext::current();
-        $club   = $clubId ? (new ClubModel())->findById($clubId) : null;
+        $clubId      = ClubContext::current();
+        $club        = $clubId ? (new ClubModel())->findById($clubId) : null;
+        $clubSettings = $clubId ? (new \App\Models\ClubSettingsModel())->getAll($clubId) : [];
+
+        // Merge: per-club settings override global defaults
+        $perClubKeys = ['alert_payment_days', 'alert_license_days', 'alert_medical_days',
+                        'membership_fee_due_month', 'pzss_portal_url'];
+        $settings    = $this->settingModel->getAll();
+        foreach ($perClubKeys as $k) {
+            if (isset($clubSettings[$k])) {
+                $settings[$k] = ['key' => $k, 'value' => $clubSettings[$k]];
+            }
+        }
 
         $this->render('config/index', [
             'title'    => 'Konfiguracja',
-            'settings' => $this->settingModel->getAll(),
+            'settings' => $settings,
             'club'     => $club,
         ]);
     }
@@ -52,25 +63,39 @@ class ConfigController extends BaseController
     {
         Csrf::verify();
 
-        // club_name/address/email/phone są zarządzane przez superadmina w /admin/clubs/:id/edit
-        $allowed = [
+        $perClubKeys = [
             'alert_payment_days', 'alert_license_days', 'alert_medical_days',
             'membership_fee_due_month', 'pzss_portal_url',
         ];
 
         $data = [];
-        foreach ($allowed as $key) {
+        foreach ($perClubKeys as $key) {
             $data[$key] = trim($_POST[$key] ?? '');
         }
 
-        // Server-side int validation for numeric settings
         foreach (['alert_payment_days', 'alert_license_days', 'alert_medical_days', 'membership_fee_due_month'] as $k) {
             if (isset($data[$k]) && $data[$k] !== '') {
                 $data[$k] = (string)max(1, (int)$data[$k]);
             }
         }
 
-        $this->settingModel->saveMany($data);
+        $clubId = ClubContext::current();
+        if ($clubId !== null) {
+            // Zapisz per-klub — nie wpływa na inne kluby
+            $clubSettings = new \App\Models\ClubSettingsModel();
+            foreach ($data as $key => $value) {
+                if ($value !== '') {
+                    $type = in_array($key, ['alert_payment_days', 'alert_license_days',
+                                            'alert_medical_days', 'membership_fee_due_month'])
+                        ? 'number' : 'text';
+                    $clubSettings->set($clubId, $key, $value, $key, $type);
+                }
+            }
+        } else {
+            // Superadmin bez kontekstu klubu → zapisz globalnie
+            $this->settingModel->saveMany($data);
+        }
+
         Session::flash('success', 'Konfiguracja została zapisana.');
         $this->redirect('config');
     }
@@ -599,9 +624,21 @@ class ConfigController extends BaseController
 
     public function notifications(): void
     {
-        $settings = (new SettingModel())->getAll();
-        $queueModel = new \App\Models\EmailQueueModel();
+        $clubId     = ClubContext::current();
+        $globalSettings = (new SettingModel())->getAll();
 
+        // Per-club overrides for notification days
+        $perClubNotifKeys = ['notify_competition_days', 'notify_license_days', 'notify_medical_days'];
+        if ($clubId) {
+            $clubSettings = (new \App\Models\ClubSettingsModel())->getAll($clubId);
+            foreach ($perClubNotifKeys as $k) {
+                if (isset($clubSettings[$k])) {
+                    $globalSettings[$k] = ['key' => $k, 'value' => $clubSettings[$k]];
+                }
+            }
+        }
+
+        $queueModel = new \App\Models\EmailQueueModel();
         $filters = [
             'status' => $_GET['status'] ?? '',
             'type'   => $_GET['type']   ?? '',
@@ -610,7 +647,7 @@ class ConfigController extends BaseController
 
         $this->render('config/notifications', [
             'title'       => 'Powiadomienia e-mail',
-            'settings'    => $settings,
+            'settings'    => $globalSettings,
             'counts'      => $queueModel->countByStatus(),
             'queueResult' => $queueModel->getRecent($filters, $page),
             'filters'     => $filters,
@@ -621,20 +658,35 @@ class ConfigController extends BaseController
     {
         Csrf::verify();
 
-        $allowed = [
-            'mail_from_email',
-            'mail_from_name',
-            'notify_competition_days',
-            'notify_license_days',
-            'notify_medical_days',
-        ];
+        $clubId = ClubContext::current();
 
-        $data = [];
-        foreach ($allowed as $key) {
-            $data[$key] = trim($_POST[$key] ?? '');
+        // mail_from_* stays global (or per club SMTP configured separately)
+        $globalAllowed = ['mail_from_email', 'mail_from_name'];
+        $perClubAllowed = ['notify_competition_days', 'notify_license_days', 'notify_medical_days'];
+
+        $globalData = [];
+        foreach ($globalAllowed as $key) {
+            $globalData[$key] = trim($_POST[$key] ?? '');
+        }
+        $this->settingModel->saveMany($globalData);
+
+        // Per-club notification days
+        if ($clubId !== null) {
+            $cs = new \App\Models\ClubSettingsModel();
+            foreach ($perClubAllowed as $key) {
+                $val = trim($_POST[$key] ?? '');
+                if ($val !== '') {
+                    $cs->set($clubId, $key, (string)max(1, (int)$val), $key, 'number');
+                }
+            }
+        } else {
+            $perData = [];
+            foreach ($perClubAllowed as $key) {
+                $perData[$key] = trim($_POST[$key] ?? '');
+            }
+            $this->settingModel->saveMany($perData);
         }
 
-        $this->settingModel->saveMany($data);
         Session::flash('success', 'Ustawienia powiadomień zapisane.');
         $this->redirect('config/notifications');
     }

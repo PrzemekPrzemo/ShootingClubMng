@@ -99,3 +99,41 @@ if (!function_exists('now')) {
         return (new DateTime())->format($format);
     }
 }
+
+/**
+ * Czyta ustawienie per-klub z club_settings, z fallbackiem do globalnej tabeli settings.
+ * Dzięki temu każdy klub ma własne wartości alertów, terminów itp.
+ */
+if (!function_exists('club_setting')) {
+    function club_setting(string $key, mixed $default = null): mixed
+    {
+        $clubId = \App\Helpers\ClubContext::current();
+        if ($clubId !== null) {
+            $val = (new \App\Models\ClubSettingsModel())->get($clubId, $key);
+            if ($val !== null) {
+                return $val;
+            }
+        }
+        return (new \App\Models\SettingModel())->get($key, $default);
+    }
+}
+
+/**
+ * Zwraca nazwę aktualnego klubu z tabeli clubs.
+ * Fallback do parametru $default gdy brak kontekstu.
+ */
+if (!function_exists('current_club_name')) {
+    function current_club_name(string $default = ''): string
+    {
+        $clubId = \App\Helpers\ClubContext::current();
+        if ($clubId === null) {
+            return $default;
+        }
+        static $cache = [];
+        if (!isset($cache[$clubId])) {
+            $row = (new \App\Models\ClubModel())->findById($clubId);
+            $cache[$clubId] = $row['name'] ?? $default;
+        }
+        return $cache[$clubId];
+    }
+}
