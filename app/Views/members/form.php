@@ -317,4 +317,49 @@ document.getElementById('disciplinesContainer').addEventListener('click', functi
         e.target.closest('.discipline-row').remove();
     }
 });
+
+// PESEL → data urodzenia + płeć
+(function () {
+    const peselInput = document.querySelector('input[name="pesel"]');
+    if (!peselInput) return;
+
+    function parsePesel(pesel) {
+        if (!/^\d{11}$/.test(pesel)) return null;
+
+        let yy    = parseInt(pesel.substring(0, 2), 10);
+        let month = parseInt(pesel.substring(2, 4), 10);
+        let day   = parseInt(pesel.substring(4, 6), 10);
+        const genderDigit = parseInt(pesel[9], 10);
+
+        let year;
+        if (month >= 81 && month <= 92)      { year = 1800 + yy; month -= 80; }
+        else if (month >= 1 && month <= 12)  { year = 1900 + yy; }
+        else if (month >= 21 && month <= 32) { year = 2000 + yy; month -= 20; }
+        else if (month >= 41 && month <= 52) { year = 2100 + yy; month -= 40; }
+        else if (month >= 61 && month <= 72) { year = 2200 + yy; month -= 60; }
+        else return null;
+
+        const mm = String(month).padStart(2, '0');
+        const dd = String(day).padStart(2, '0');
+        return {
+            date:   `${year}-${mm}-${dd}`,
+            gender: genderDigit % 2 === 1 ? 'M' : 'K'
+        };
+    }
+
+    peselInput.addEventListener('input', function () {
+        const result = parsePesel(this.value.trim());
+        if (!result) return;
+
+        const birthInput  = document.querySelector('input[name="birth_date"]');
+        const genderSelect = document.querySelector('select[name="gender"]');
+
+        if (birthInput && !birthInput.value) {
+            birthInput.value = result.date;
+        }
+        if (genderSelect && !genderSelect.value) {
+            genderSelect.value = result.gender;
+        }
+    });
+}());
 </script>
