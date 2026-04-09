@@ -76,26 +76,43 @@
 <div class="card">
     <div class="card-header"><strong>Dane klubu i alerty</strong></div>
     <div class="card-body">
+        <?php if (!empty($club)): ?>
+        <div class="card border-secondary mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong><i class="bi bi-building"></i> Dane klubu</strong>
+                <small class="text-muted">Zarządzane przez administratora systemu</small>
+            </div>
+            <div class="card-body pb-1">
+                <div class="row g-2">
+                    <?php foreach ([
+                        'name'    => 'Nazwa klubu',
+                        'short_name' => 'Skrót',
+                        'email'   => 'E-mail',
+                        'phone'   => 'Telefon',
+                        'address' => 'Adres',
+                        'nip'     => 'NIP',
+                    ] as $key => $label): ?>
+                    <?php if (!empty($club[$key])): ?>
+                    <div class="col-md-6 mb-2">
+                        <div class="text-muted small"><?= $label ?></div>
+                        <div><?= e($club[$key]) ?></div>
+                    </div>
+                    <?php endif; ?>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <form method="post" action="<?= url('config') ?>">
             <?= csrf_field() ?>
 
-            <h6 class="text-muted mb-3">Dane klubu</h6>
-            <?php foreach ([
-                'club_name'    => 'Nazwa klubu',
-                'club_address' => 'Adres',
-                'club_email'   => 'E-mail',
-                'club_phone'   => 'Telefon',
-                'pzss_portal_url' => 'URL portalu PZSS',
-            ] as $key => $label): ?>
-            <div class="mb-3">
-                <label class="form-label"><?= $label ?></label>
-                <input type="text" name="<?= $key ?>" class="form-control"
-                       value="<?= e($settings[$key]['value'] ?? '') ?>">
-            </div>
-            <?php endforeach; ?>
-
-            <hr>
             <h6 class="text-muted mb-3">Alerty i terminy</h6>
+            <div class="mb-3">
+                <label class="form-label">URL portalu PZSS</label>
+                <input type="text" name="pzss_portal_url" class="form-control"
+                       value="<?= e($settings['pzss_portal_url']['value'] ?? '') ?>">
+            </div>
 
             <?php foreach ([
                 'alert_payment_days'       => ['Próg alertu zaległości (dni)', 'Ile dni przed terminem składki pokazywać alert?', 7, 365],

@@ -12,6 +12,8 @@ use App\Models\MemberClassModel;
 use App\Models\MedicalExamTypeModel;
 use App\Models\LicenseTypeModel;
 use App\Models\RolePermissionModel;
+use App\Models\ClubModel;
+use App\Helpers\ClubContext;
 
 class ConfigController extends BaseController
 {
@@ -36,9 +38,13 @@ class ConfigController extends BaseController
 
     public function index(): void
     {
+        $clubId = ClubContext::current();
+        $club   = $clubId ? (new ClubModel())->findById($clubId) : null;
+
         $this->render('config/index', [
             'title'    => 'Konfiguracja',
             'settings' => $this->settingModel->getAll(),
+            'club'     => $club,
         ]);
     }
 
@@ -46,8 +52,8 @@ class ConfigController extends BaseController
     {
         Csrf::verify();
 
+        // club_name/address/email/phone są zarządzane przez superadmina w /admin/clubs/:id/edit
         $allowed = [
-            'club_name', 'club_address', 'club_email', 'club_phone',
             'alert_payment_days', 'alert_license_days', 'alert_medical_days',
             'membership_fee_due_month', 'pzss_portal_url',
         ];
@@ -118,9 +124,15 @@ class ConfigController extends BaseController
     public function users(): void
     {
         $permModel = new RolePermissionModel();
+        // Ukryj konta superadmina — zarządzane wyłącznie przez panel /admin/users
+        $users = array_values(array_filter(
+            $this->userModel->getAllUsers(),
+            fn($u) => empty($u['is_super_admin'])
+        ));
+
         $this->render('config/users', [
             'title'      => 'Użytkownicy systemu',
-            'users'      => $this->userModel->getAllUsers(),
+            'users'      => $users,
             'permMatrix' => $permModel->getMatrix(),
             'modules'    => RolePermissionModel::MODULES,
             'roles'      => RolePermissionModel::ROLES,
