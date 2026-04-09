@@ -237,8 +237,10 @@ $router->get('/competitions/:id',                    [\App\Controllers\Competiti
 $router->get('/competitions/:id/edit',               [\App\Controllers\CompetitionsController::class, 'edit']);
 $router->post('/competitions/:id/edit',              [\App\Controllers\CompetitionsController::class, 'update']);
 $router->post('/competitions/:id/delete',            [\App\Controllers\CompetitionsController::class, 'destroy']);
-$router->get('/competitions/:id/entries',            [\App\Controllers\CompetitionsController::class, 'entries']);
-$router->post('/competitions/:id/entries/add',       [\App\Controllers\CompetitionsController::class, 'addEntry']);
+$router->get('/competitions/:id/entries',                    [\App\Controllers\CompetitionsController::class, 'entries']);
+$router->post('/competitions/:id/entries/add',               [\App\Controllers\CompetitionsController::class, 'addEntry']);
+$router->get('/competitions/:id/entries/search-external',    [\App\Controllers\CompetitionsController::class, 'searchExternalMember']);
+$router->post('/competitions/:id/entries/add-external',      [\App\Controllers\CompetitionsController::class, 'addExternalEntry']);
 $router->post('/competitions/:id/entries/:eid/remove', [\App\Controllers\CompetitionsController::class, 'removeEntry']);
 $router->get('/competitions/:id/entries/:eid/events',  [\App\Controllers\CompetitionsController::class, 'entryEvents']);
 $router->post('/competitions/:id/entries/:eid/events', [\App\Controllers\CompetitionsController::class, 'saveEntryEvents']);

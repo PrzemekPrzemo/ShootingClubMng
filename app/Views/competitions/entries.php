@@ -203,6 +203,79 @@ $hasFees   = array_sum($entryFees) > 0 || !empty($entryFees);
                 </form>
             </div>
         </div>
+
+        <!-- Cross-club: zawodnik spoza klubu -->
+        <div class="card mt-3">
+            <div class="card-header"><strong><i class="bi bi-search"></i> Zawodnik z innego klubu</strong></div>
+            <div class="card-body">
+                <div class="input-group input-group-sm mb-2">
+                    <input type="text" class="form-control" id="extSearch" placeholder="PESEL lub nr licencji" minlength="3">
+                    <button class="btn btn-outline-primary" type="button" id="extSearchBtn">
+                        <i class="bi bi-search"></i> Szukaj
+                    </button>
+                </div>
+                <div id="extResults" class="small"></div>
+                <form method="post" action="<?= url('competitions/' . $competition['id'] . '/entries/add-external') ?>" id="extForm" style="display:none">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="member_id" id="extMemberId">
+                    <input type="hidden" name="class" value="">
+                    <input type="hidden" name="group_id" value="">
+                    <div class="d-flex align-items-center gap-2 mt-2">
+                        <span id="extMemberName" class="fw-bold"></span>
+                        <span id="extClubName" class="text-muted small"></span>
+                        <button type="submit" class="btn btn-sm btn-outline-success ms-auto">
+                            <i class="bi bi-person-plus"></i> Zgłoś
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script>
+        (function() {
+            var inp = document.getElementById('extSearch');
+            var btn = document.getElementById('extSearchBtn');
+            var res = document.getElementById('extResults');
+            var frm = document.getElementById('extForm');
+            var compId = <?= (int)$competition['id'] ?>;
+
+            function doSearch() {
+                var q = inp.value.trim();
+                if (q.length < 3) { res.textContent = 'Min. 3 znaki.'; return; }
+                res.innerHTML = '<span class="text-muted">Szukam...</span>';
+                frm.style.display = 'none';
+                fetch('<?= url('') ?>competitions/' + compId + '/entries/search-external?q=' + encodeURIComponent(q))
+                    .then(function(r){ return r.json(); })
+                    .then(function(data){
+                        if (!data.results || data.results.length === 0) {
+                            res.textContent = 'Nie znaleziono zawodnika.';
+                            return;
+                        }
+                        var html = '';
+                        data.results.forEach(function(m){
+                            html += '<div class="d-flex align-items-center gap-2 py-1 border-bottom">';
+                            html += '<span>' + m.name + '</span>';
+                            html += '<span class="text-muted small">(' + m.club_short + ')</span>';
+                            html += '<span class="text-muted small">Lic: ' + m.license_number + '</span>';
+                            html += '<button type="button" class="btn btn-sm btn-outline-primary ms-auto ext-pick" data-id="' + m.id + '" data-name="' + m.name + '" data-club="' + m.club_name + '"><i class="bi bi-plus"></i></button>';
+                            html += '</div>';
+                        });
+                        res.innerHTML = html;
+                        res.querySelectorAll('.ext-pick').forEach(function(b){
+                            b.addEventListener('click', function(){
+                                document.getElementById('extMemberId').value = this.dataset.id;
+                                document.getElementById('extMemberName').textContent = this.dataset.name;
+                                document.getElementById('extClubName').textContent = this.dataset.club;
+                                frm.style.display = 'block';
+                            });
+                        });
+                    })
+                    .catch(function(){ res.textContent = 'Błąd wyszukiwania.'; });
+            }
+
+            btn.addEventListener('click', doSearch);
+            inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); doSearch(); }});
+        })();
+        </script>
         <?php else: ?>
         <div class="alert alert-info">Zapisy są zamknięte (status: <?= e($competition['status']) ?>).</div>
         <?php endif; ?>

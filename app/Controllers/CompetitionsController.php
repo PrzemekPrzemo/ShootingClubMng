@@ -953,4 +953,109 @@ class CompetitionsController extends BaseController
         if (empty($data['competition_date'])) $errors[] = 'Data zawodów jest wymagana.';
         return $errors;
     }
+
+    // ── Cross-club: wyszukiwanie zawodnika z innego klubu ────────────────
+
+    /**
+     * GET /competitions/:id/entries/search-external?q=PESEL_OR_LICENSE
+     *
+     * Wyszukuje zawodnika po PESEL lub numerze licencji w CAŁEJ bazie
+     * (cross-club). Zwraca JSON. Nie ujawnia PESEL w odpowiedzi.
+     * Wymaga roli admin/zarzad w klubie organizującym.
+     */
+    public function searchExternalMember(string $id): void
+    {
+        $this->requireRole(['admin', 'zarzad']);
+
+        $competition = $this->getCompetition((int)$id);
+        $q = trim($_GET['q'] ?? '');
+
+        if (strlen($q) < 3) {
+            $this->json(['results' => [], 'message' => 'Wpisz min. 3 znaki.']);
+        }
+
+        $db = Database::pdo();
+        $stmt = $db->prepare(
+            "SELECT DISTINCT m.id, m.first_name, m.last_name, m.club_id,
+                    c.name AS club_name, c.short_name AS club_short,
+                    l.license_number
+             FROM members m
+             JOIN clubs c ON c.id = m.club_id
+             LEFT JOIN licenses l ON l.member_id = m.id AND l.status = 'aktywna'
+             WHERE m.status = 'aktywny'
+               AND (m.pesel = ? OR l.license_number = ?)
+             LIMIT 10"
+        );
+        $stmt->execute([$q, $q]);
+        $rows = $stmt->fetchAll();
+
+        $results = [];
+        foreach ($rows as $r) {
+            $results[] = [
+                'id'             => (int)$r['id'],
+                'name'           => $r['first_name'] . ' ' . $r['last_name'],
+                'club_name'      => $r['club_name'],
+                'club_short'     => $r['club_short'],
+                'license_number' => $r['license_number'] ?? '—',
+                'is_external'    => (int)$r['club_id'] !== (int)$competition['club_id'],
+            ];
+        }
+
+        $this->json(['results' => $results]);
+    }
+
+    /**
+     * POST /competitions/:id/entries/add-external
+     *
+     * Dodaje zawodnika spoza klubu do zawodów (cross-club entry).
+     */
+    public function addExternalEntry(string $id): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad']);
+
+        $competition = $this->getCompetition((int)$id);
+
+        if ($competition['status'] !== 'otwarte') {
+            Session::flash('error', 'Zapisy są zamknięte.');
+            $this->redirect("competitions/{$id}/entries");
+        }
+
+        $memberId = (int)($_POST['member_id'] ?? 0);
+        if (!$memberId) {
+            Session::flash('error', 'Nie wybrano zawodnika.');
+            $this->redirect("competitions/{$id}/entries");
+        }
+
+        // Sprawdź że zawodnik istnieje (bez filtra club_id)
+        $db   = Database::pdo();
+        $stmt = $db->prepare("SELECT * FROM members WHERE id = ? AND status = 'aktywny' LIMIT 1");
+        $stmt->execute([$memberId]);
+        $member = $stmt->fetch();
+
+        if (!$member) {
+            Session::flash('error', 'Zawodnik nie istnieje lub jest nieaktywny.');
+            $this->redirect("competitions/{$id}/entries");
+        }
+
+        try {
+            $this->competitionModel->addEntry([
+                'competition_id' => (int)$id,
+                'member_id'      => $memberId,
+                'group_id'       => ($_POST['group_id'] ?? '') ?: null,
+                'class'          => ($_POST['class'] ?? '') ?: null,
+                'status'         => 'zgloszony',
+                'registered_by'  => Auth::id(),
+            ]);
+            Session::flash('success', "Zawodnik zewnętrzny ({$member['first_name']} {$member['last_name']}) został zgłoszony.");
+        } catch (\PDOException $e) {
+            if (str_contains($e->getMessage(), 'Duplicate') || $e->getCode() == 23000) {
+                Session::flash('error', 'Ten zawodnik jest już zgłoszony.');
+            } else {
+                throw $e;
+            }
+        }
+
+        $this->redirect("competitions/{$id}/entries");
+    }
 }
