@@ -35,6 +35,9 @@ class AdminController extends BaseController
 
     public function dashboard(): void
     {
+        // Always exit club context when entering admin dashboard
+        ClubContext::clear();
+
         $stats = $this->clubModel->getGlobalStats();
         $clubs = $this->clubModel->getActive();
 
@@ -43,6 +46,13 @@ class AdminController extends BaseController
             'stats'  => $stats,
             'clubs'  => $clubs,
         ]);
+    }
+
+    /** GET /admin/exit-club — clear club context and return to admin panel */
+    public function exitClub(): void
+    {
+        ClubContext::clear();
+        $this->redirect('admin/dashboard');
     }
 
     // ── Clubs CRUD ───────────────────────────────────────────────────────────

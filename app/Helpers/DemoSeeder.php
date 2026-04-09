@@ -98,8 +98,8 @@ class DemoSeeder
         foreach ($people as $p) {
             $db->prepare(
                 "INSERT INTO members
-                    (club_id, first_name, last_name, gender, birth_date, pesel, email, phone, is_active, joined_date)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, CURDATE())"
+                    (club_id, first_name, last_name, gender, birth_date, pesel, email, phone, status, joined_date)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'aktywny', CURDATE())"
             )->execute([$cid, $p[0], $p[1], $p[2], $p[3], $p[4], $p[5], $p[6]]);
             $ids[] = (int)$db->lastInsertId();
         }

@@ -291,18 +291,39 @@ $__brandText       = $__hasClubCtx
         <?php endforeach; ?>
     </ul>
 
-    <?php else: ?>
-    <!-- ── Club nav ── -->
+    <?php elseif ($__isSuperAdminNav && $__hasClubCtx): ?>
+    <!-- ── Admin managing club — limited nav ── -->
     <ul class="sb-nav">
-        <?php if ($__isSuperAdminNav && $__hasClubCtx): ?>
+        <?php
+        $__clubAdminNav = [
+            ['icon' => 'speedometer2',  'label' => 'Dashboard',    'url' => 'dashboard',              'match' => '/dashboard'],
+            ['icon' => 'people',        'label' => 'Zawodnicy',     'url' => 'members',                'match' => '/members'],
+            ['icon' => 'gear',          'label' => 'Konfiguracja',  'url' => 'config',                 'match' => '/config'],
+            ['icon' => 'book',          'label' => 'Słowniki',      'url' => 'config/disciplines',     'match' => '/config/disciplines'],
+            ['icon' => 'bell',          'label' => 'Powiadomienia', 'url' => 'config/notifications',   'match' => '/config/notifications'],
+        ];
+        foreach ($__clubAdminNav as $__item):
+            $__aActive = str_contains($uri, $__item['match']);
+        ?>
         <li>
-            <a href="<?= url('admin/dashboard') ?>" class="sb-link" style="color:#ff8c8c">
+            <a href="<?= url($__item['url']) ?>" class="sb-link <?= $__aActive ? 'active' : '' ?>">
+                <i class="bi bi-<?= $__item['icon'] ?>"></i>
+                <span><?= $__item['label'] ?></span>
+            </a>
+        </li>
+        <?php endforeach; ?>
+        <li><hr style="border-color:rgba(255,255,255,.1);margin:.3rem .75rem"></li>
+        <li>
+            <a href="<?= url('admin/exit-club') ?>" class="sb-link" style="color:#ff8c8c">
                 <i class="bi bi-arrow-left-circle"></i>
                 <span>Panel admina</span>
             </a>
         </li>
-        <li><hr style="border-color:rgba(255,255,255,.1);margin:.3rem .75rem"></li>
-        <?php endif; ?>
+    </ul>
+
+    <?php else: ?>
+    <!-- ── Club nav ── -->
+    <ul class="sb-nav">
         <?php foreach ($allModules as $mod => $cfg):
             if (!in_array($mod, $navModules, true)) continue;
             $active = isActive($mod, $uri);
@@ -368,7 +389,7 @@ $__brandText       = $__hasClubCtx
             </a>
             <?php endif; } ?>
             <?php if (!empty($isSuperAdmin)): ?>
-                <a href="<?= url('admin/dashboard') ?>" class="text-decoration-none me-1" title="Panel administratora">
+                <a href="<?= url($__hasClubCtx ? 'admin/exit-club' : 'admin/dashboard') ?>" class="text-decoration-none me-1" title="Panel administratora">
                     <i class="bi bi-shield-lock text-danger" style="font-size:1.1rem"></i>
                 </a>
             <?php endif; ?>

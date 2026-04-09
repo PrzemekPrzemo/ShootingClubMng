@@ -199,6 +199,7 @@ $router->get('/admin/clubs/:clubId/users/:userId/remove', [\App\Controllers\Admi
 $router->get('/admin/settings',                          [\App\Controllers\AdminController::class, 'settings']);
 $router->post('/admin/settings',                         [\App\Controllers\AdminController::class, 'saveSettings']);
 $router->get('/admin/switch-club/:id',                   [\App\Controllers\AdminController::class, 'switchClub']);
+$router->get('/admin/exit-club',                         [\App\Controllers\AdminController::class, 'exitClub']);
 $router->get('/admin/impersonate/club/:clubId/user/:userId', [\App\Controllers\AdminController::class, 'impersonateClubUser']);
 $router->get('/admin/impersonate/member/:memberId',          [\App\Controllers\AdminController::class, 'impersonateMember']);
 $router->get('/admin/stop-impersonation',                    [\App\Controllers\AdminController::class, 'stopImpersonation']);
