@@ -757,6 +757,26 @@ class CompetitionsController extends BaseController
         exit;
     }
 
+    public function protocolPdf(string $id): void
+    {
+        $this->requireRole(['admin', 'zarzad', 'instruktor', 'sędzia']);
+        $competition = $this->getCompetition((int)$id);
+        $rankings    = $this->competitionModel->calcRankings((int)$id);
+        $judges      = $this->competitionModel->getCompetitionJudges((int)$id);
+        $clubName    = (new SettingModel())->get('club_name', '');
+
+        $html = $this->renderToString('pdf/competition_protocol', [
+            'competition' => $competition,
+            'rankings'    => $rankings,
+            'judges'      => $judges,
+            'clubName'    => $clubName,
+        ]);
+
+        $safe     = preg_replace('/[^a-zA-Z0-9_-]/', '_', $competition['name']);
+        $filename = 'protokol_' . $safe . '_' . date('Ymd') . '.pdf';
+        \App\Helpers\PdfHelper::send($html, $filename, 'A4');
+    }
+
     // ── Private helpers ──────────────────────────────────────────────
 
     private function getCompetition(int $id): array

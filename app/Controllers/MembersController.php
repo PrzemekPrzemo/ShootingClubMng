@@ -341,6 +341,30 @@ class MembersController extends BaseController
         ]);
     }
 
+    public function memberCardPdf(string $id): void
+    {
+        $member = $this->memberModel->findById((int)$id);
+        if (!$member) {
+            Session::flash('error', 'Zawodnik nie istnieje.');
+            $this->redirect('members');
+        }
+
+        $disciplines = $this->memberModel->getDisciplines((int)$id);
+        $license     = $this->memberModel->getLatestLicense((int)$id);
+        $clubName    = (new SettingModel())->get('club_name', 'Klub Strzelecki');
+
+        $html = $this->renderToString('pdf/member_card', [
+            'member'      => $member,
+            'disciplines' => $disciplines,
+            'license'     => $license,
+            'clubName'    => $clubName,
+        ]);
+
+        $safe     = preg_replace('/[^a-zA-Z0-9_-]/', '_', $member['last_name'] . '_' . $member['first_name']);
+        $filename = 'legitymacja_' . $safe . '.pdf';
+        \App\Helpers\PdfHelper::send($html, $filename, 'A5');
+    }
+
     private function saveDisciplines(int $memberId): void
     {
         $disciplineIds  = $_POST['discipline_ids'] ?? [];

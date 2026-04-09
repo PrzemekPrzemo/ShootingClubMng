@@ -122,6 +122,12 @@ register_shutdown_function(function () use ($debugMode, $logDir): void {
 });
 
 
+// Vendor autoloader (composer)
+$vendorAutoload = ROOT_PATH . '/vendor/autoload.php';
+if (file_exists($vendorAutoload)) {
+    require $vendorAutoload;
+}
+
 // Autoloader (simple PSR-4 style)
 spl_autoload_register(function (string $class): void {
     $prefix = 'App\\';
@@ -249,6 +255,7 @@ $router->post('/competitions/:id/results/save',      [\App\Controllers\Competiti
 $router->post('/competitions/:id/unlock',            [\App\Controllers\CompetitionsController::class, 'unlockResults']);
 $router->get('/competitions/:id/rankings',           [\App\Controllers\CompetitionsController::class, 'rankings']);
 $router->get('/competitions/:id/protocol',           [\App\Controllers\CompetitionsController::class, 'protocol']);
+$router->get('/competitions/:id/protocol.pdf',       [\App\Controllers\CompetitionsController::class, 'protocolPdf']);
 // Competition events (konkurencje)
 $router->get('/competitions/:id/events',                          [\App\Controllers\CompetitionsController::class, 'events']);
 $router->post('/competitions/:id/events/add',                     [\App\Controllers\CompetitionsController::class, 'addEvent']);
@@ -429,6 +436,7 @@ $router->post('/config/calendar-categories/:id/delete',  [\App\Controllers\Confi
 
 // Member card
 $router->get('/members/:id/card',                    [\App\Controllers\MembersController::class, 'memberCard']);
+$router->get('/members/:id/card.pdf',                [\App\Controllers\MembersController::class, 'memberCardPdf']);
 
 // Member photo (PhotoController — no requireLogin in ctor, handles both Auth and MemberAuth)
 $router->get('/members/:id/photo',                   [\App\Controllers\PhotoController::class, 'serve']);

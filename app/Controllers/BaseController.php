@@ -40,6 +40,18 @@ abstract class BaseController
         $this->render($template, $data);
     }
 
+    /**
+     * Renders a view template to a string (no layout). Used for PDF generation.
+     */
+    protected function renderToString(string $template, array $data = []): string
+    {
+        $file = ROOT_PATH . '/app/Views/' . $template . '.php';
+        ob_start();
+        extract($data, EXTR_SKIP);
+        include $file;
+        return ob_get_clean();
+    }
+
     protected function redirect(string $path): never
     {
         header('Location: ' . url($path));

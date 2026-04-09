@@ -25,6 +25,11 @@ $sc = match($competition['status']) {
            class="btn btn-sm btn-outline-dark">
             <i class="bi bi-printer"></i> Protokół
         </a>
+        <a href="<?= url('competitions/' . $competition['id'] . '/protocol.pdf') ?>"
+           class="btn btn-sm btn-outline-danger"
+           title="Pobierz protokół PDF">
+            <i class="bi bi-file-earmark-pdf"></i> PDF
+        </a>
         <a href="<?= url('competitions/' . $competition['id'] . '/scorecards') ?>" class="btn btn-sm btn-outline-dark">
             <i class="bi bi-file-person"></i> Metryczki A5
         </a>
