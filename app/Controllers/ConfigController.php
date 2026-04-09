@@ -104,8 +104,21 @@ class ConfigController extends BaseController
 
     public function categories(): void
     {
-        $editId   = (int)($_GET['edit'] ?? 0);
-        $editItem = $editId ? $this->categoryModel->findById($editId) : null;
+        $editId  = (int)($_GET['edit'] ?? 0);
+        $copyId  = (int)($_GET['copy'] ?? 0);
+        $editItem = null;
+
+        if ($editId) {
+            $editItem = $this->categoryModel->findById($editId);
+        } elseif ($copyId) {
+            $source = $this->categoryModel->findById($copyId);
+            if ($source) {
+                $editItem = $source;
+                $editItem['id']      = 0;     // treat as new — creates per-club entry
+                $editItem['club_id'] = null;  // will be set on save
+                $editItem['_is_copy'] = true;
+            }
+        }
 
         $this->render('config/categories', [
             'title'      => 'Kategorie wiekowe',
