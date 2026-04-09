@@ -104,9 +104,13 @@ class ConfigController extends BaseController
 
     public function categories(): void
     {
+        $editId   = (int)($_GET['edit'] ?? 0);
+        $editItem = $editId ? $this->categoryModel->findById($editId) : null;
+
         $this->render('config/categories', [
             'title'      => 'Kategorie wiekowe',
             'categories' => $this->categoryModel->getAll(),
+            'editItem'   => $editItem,
         ]);
     }
 
@@ -114,7 +118,8 @@ class ConfigController extends BaseController
     {
         Csrf::verify();
 
-        $id   = (int)($_POST['id'] ?? 0);
+        $id     = (int)($_POST['id'] ?? 0);
+        $clubId = \App\Helpers\ClubContext::current();
         $data = [
             'name'       => trim($_POST['name'] ?? ''),
             'age_from'   => (int)($_POST['age_from'] ?? 0),
@@ -128,9 +133,17 @@ class ConfigController extends BaseController
         }
 
         if ($id > 0) {
+            if ($clubId !== null) {
+                $existing = $this->categoryModel->findById($id);
+                if (!$existing || (int)($existing['club_id'] ?? 0) !== $clubId) {
+                    Session::flash('error', 'Nie możesz edytować globalnego wpisu słownika.');
+                    $this->redirect('config/categories');
+                }
+            }
             $this->categoryModel->saveUpdate($id, $data);
             Session::flash('success', 'Kategoria zaktualizowana.');
         } else {
+            $data['club_id'] = $clubId;
             $this->categoryModel->save($data);
             Session::flash('success', 'Kategoria dodana.');
         }
@@ -141,8 +154,20 @@ class ConfigController extends BaseController
     public function deleteCategory(string $id): void
     {
         Csrf::verify();
-        $this->requireRole(['admin']);
-        $this->categoryModel->delete((int)$id);
+        $this->requireRole(['admin', 'zarzad']);
+
+        $intId  = (int)$id;
+        $clubId = \App\Helpers\ClubContext::current();
+
+        if ($clubId !== null) {
+            $existing = $this->categoryModel->findById($intId);
+            if (!$existing || (int)($existing['club_id'] ?? 0) !== $clubId) {
+                Session::flash('error', 'Nie możesz usunąć globalnego wpisu słownika.');
+                $this->redirect('config/categories');
+            }
+        }
+
+        $this->categoryModel->delete($intId);
         Session::flash('success', 'Kategoria usunięta.');
         $this->redirect('config/categories');
     }
@@ -337,7 +362,7 @@ class ConfigController extends BaseController
     public function deleteDiscipline(string $id): void
     {
         Csrf::verify();
-        $this->requireRole(['admin']);
+        $this->requireRole(['admin', 'zarzad']);
 
         $intId  = (int)$id;
         $clubId = \App\Helpers\ClubContext::current();
@@ -436,7 +461,17 @@ class ConfigController extends BaseController
     public function deleteTemplate(string $id, string $tid): void
     {
         Csrf::verify();
-        $this->requireRole(['admin']);
+        $this->requireRole(['admin', 'zarzad']);
+
+        $clubId = \App\Helpers\ClubContext::current();
+        if ($clubId !== null) {
+            $discipline = $this->disciplineModel->findById((int)$id);
+            if (!$discipline || (int)($discipline['club_id'] ?? 0) !== $clubId) {
+                Session::flash('error', 'Nie możesz usunąć szablonu globalnej dyscypliny.');
+                $this->redirect("config/disciplines/{$id}/templates");
+            }
+        }
+
         $this->disciplineModel->deleteTemplate((int)$tid);
         Session::flash('success', 'Szablon usunięty.');
         $this->redirect("config/disciplines/{$id}/templates");
@@ -503,7 +538,7 @@ class ConfigController extends BaseController
     public function deleteMemberClass(string $id): void
     {
         Csrf::verify();
-        $this->requireRole(['admin']);
+        $this->requireRole(['admin', 'zarzad']);
 
         $intId  = (int)$id;
         $clubId = \App\Helpers\ClubContext::current();
@@ -576,7 +611,7 @@ class ConfigController extends BaseController
     public function deleteMedicalExamType(string $id): void
     {
         Csrf::verify();
-        $this->requireRole(['admin']);
+        $this->requireRole(['admin', 'zarzad']);
 
         $intId  = (int)$id;
         $clubId = \App\Helpers\ClubContext::current();
@@ -657,7 +692,7 @@ class ConfigController extends BaseController
     public function deleteLicenseType(string $id): void
     {
         Csrf::verify();
-        $this->requireRole(['admin']);
+        $this->requireRole(['admin', 'zarzad']);
         $model  = new LicenseTypeModel();
         $intId  = (int)$id;
         $clubId = \App\Helpers\ClubContext::current();
