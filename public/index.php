@@ -137,6 +137,23 @@ require ROOT_PATH . '/app/Helpers/Helpers.php';
 // Session
 \App\Helpers\Session::start();
 
+// ── Multi-club: subdomain detection ──────────────────────────────────────────
+// Reads base_domain from settings table (cached in config) and detects
+// club subdomain from HTTP_HOST before routing.
+$baseDomain = '';
+try {
+    $db = \App\Helpers\Database::pdo();
+    $bds = $db->prepare("SELECT `value` FROM `settings` WHERE `key` = 'base_domain' LIMIT 1");
+    $bds->execute();
+    $bdr = $bds->fetch();
+    $baseDomain = $bdr ? (string)$bdr['value'] : '';
+} catch (\Throwable) {
+    // table may not exist yet during initial setup
+}
+if ($baseDomain !== '') {
+    \App\Helpers\ClubContext::setFromSubdomain($_SERVER['HTTP_HOST'] ?? '', $baseDomain);
+}
+
 // ============================================================
 // Routes
 // ============================================================
@@ -146,6 +163,10 @@ $router = new \App\Helpers\Router();
 $router->get('/auth/login',    [\App\Controllers\AuthController::class, 'showLogin']);
 $router->post('/auth/login',   [\App\Controllers\AuthController::class, 'login']);
 $router->get('/auth/logout',   [\App\Controllers\AuthController::class, 'logout']);
+
+// Club selector (multi-club)
+$router->get('/club-select',       [\App\Controllers\ClubSelectorController::class, 'show']);
+$router->post('/club-select/:id',  [\App\Controllers\ClubSelectorController::class, 'select']);
 
 // Dashboard
 $router->get('/dashboard',     [\App\Controllers\DashboardController::class, 'index']);

@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Helpers\ClubContext;
 use App\Helpers\Csrf;
 use App\Helpers\MemberAuth;
 use App\Helpers\Session;
@@ -42,17 +43,37 @@ class MemberAuthController
     {
         Csrf::verify();
 
-        $email    = trim($_POST['email']    ?? '');
+        $login    = trim($_POST['email']    ?? '');
         $password = trim($_POST['password'] ?? '');
 
-        if (!$email || !$password) {
-            Session::flash('error', 'Podaj e-mail i hasło.');
+        if (!$login || !$password) {
+            Session::flash('error', 'Podaj e-mail / PESEL / nr licencji i hasło.');
             $this->redirectTo('portal/login');
         }
 
-        $db   = Database::getInstance();
-        $stmt = $db->prepare("SELECT * FROM members WHERE email = ? LIMIT 1");
-        $stmt->execute([$email]);
+        $db      = Database::getInstance();
+        $clubId  = ClubContext::current();
+
+        // Wyszukaj zawodnika po email, PESEL lub numerze licencji
+        // Jeśli subdomena ustawiona — szukaj tylko w tym klubie
+        if ($clubId !== null) {
+            $stmt = $db->prepare(
+                "SELECT m.* FROM members m
+                 LEFT JOIN licenses l ON l.member_id = m.id
+                 WHERE m.club_id = ? AND (m.email = ? OR m.pesel = ? OR l.license_number = ?)
+                 LIMIT 1"
+            );
+            $stmt->execute([$clubId, $login, $login, $login]);
+        } else {
+            // Bez subdomeny — szukaj globalnie (email lub PESEL)
+            $stmt = $db->prepare(
+                "SELECT m.* FROM members m
+                 LEFT JOIN licenses l ON l.member_id = m.id
+                 WHERE m.email = ? OR m.pesel = ? OR l.license_number = ?
+                 LIMIT 1"
+            );
+            $stmt->execute([$login, $login, $login]);
+        }
         $member = $stmt->fetch();
 
         if (!$member) {
@@ -91,6 +112,11 @@ class MemberAuthController
         }
 
         MemberAuth::login($member);
+
+        // Ustaw kontekst klubu zawodnika
+        if (!empty($member['club_id'])) {
+            ClubContext::set((int)$member['club_id']);
+        }
 
         if ($member['must_change_password']) {
             $this->redirectTo('portal/change-password');

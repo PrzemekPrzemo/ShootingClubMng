@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Helpers\Auth;
+use App\Helpers\ClubContext;
 use App\Helpers\Csrf;
 use App\Helpers\Session;
 use App\Models\UserModel;
@@ -57,6 +58,45 @@ class AuthController extends BaseController
         Auth::login($user);
         $this->logActivity($user['id'], 'login', 'users', $user['id'], 'Zalogowanie do systemu');
 
+        // --- Multi-club: ustal kontekst klubu ---
+        if (!empty($user['is_super_admin'])) {
+            // Super admin → panel globalny (chyba że subdomena wymusza klub)
+            $subClubId = ClubContext::current();
+            if ($subClubId !== null) {
+                $role = $this->userModel->getRoleInClub($user['id'], $subClubId) ?? 'admin';
+                Auth::setClub($subClubId, $role);
+                $this->redirect('dashboard');
+            }
+            $this->redirect('admin/dashboard');
+        }
+
+        $clubs = $this->userModel->getClubsForUser($user['id']);
+
+        if (count($clubs) === 0) {
+            Session::flash('error', 'Twoje konto nie jest przypisane do żadnego klubu.');
+            Auth::logout();
+            $this->redirect('auth/login');
+        }
+
+        if (count($clubs) === 1) {
+            Auth::setClub((int)$clubs[0]['club_id'], $clubs[0]['role']);
+        } else {
+            // Jeśli subdomena określa klub — użyj go
+            $subClubId = ClubContext::current();
+            if ($subClubId !== null) {
+                $match = array_filter($clubs, fn($c) => (int)$c['club_id'] === $subClubId);
+                if ($match) {
+                    $c = reset($match);
+                    Auth::setClub($subClubId, $c['role']);
+                }
+            }
+            // Brak subdomeny + wiele klubów → selektor
+            if (ClubContext::current() === null) {
+                Session::set('pending_clubs', $clubs);
+                $this->redirect('club-select');
+            }
+        }
+
         $intended = Session::get('intended_url');
         Session::remove('intended_url');
 
@@ -65,7 +105,8 @@ class AuthController extends BaseController
         }
 
         // Role-based default landing page
-        $this->redirect(match($user['role']) {
+        $effectiveRole = Auth::role() ?? 'admin';
+        $this->redirect(match($effectiveRole) {
             'sędzia'     => 'competitions',
             'instruktor' => 'competitions',
             default      => 'dashboard',
