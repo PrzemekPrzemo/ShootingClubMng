@@ -7,7 +7,17 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="<?= url('css/app.css') ?>">
+    <?php
+    // Club branding — inject CSS custom properties
+    $__primaryColor = $clubBranding['primary_color'] ?? '#dc3545';
+    $__navbarBg     = $clubBranding['navbar_bg']     ?? '#1a1f2e';
+    $__customCss    = $clubBranding['custom_css']     ?? '';
+    ?>
     <style>
+        :root {
+            --club-primary: <?= htmlspecialchars($__primaryColor, ENT_QUOTES) ?>;
+            --club-navbar:  <?= htmlspecialchars($__navbarBg, ENT_QUOTES) ?>;
+        }
         /* ── Critical layout — inlined so it works even if app.css lags ── */
         html, body { height: 100%; margin: 0; padding: 0; }
         body { display: flex; flex-direction: column; background: #f0f2f5; font-size: .92rem; }
@@ -23,7 +33,7 @@
         #sidebar {
             width: 240px;
             min-width: 240px;
-            background: #1a1f2e;
+            background: var(--club-navbar, #1a1f2e);
             display: flex;
             flex-direction: column;
             position: sticky;
@@ -49,7 +59,7 @@
             overflow: hidden;
             flex-shrink: 0;
         }
-        .sb-brand i { font-size: 1.35rem; color: #dc3545; flex-shrink: 0; }
+        .sb-brand i { font-size: 1.35rem; color: var(--club-primary, #dc3545); flex-shrink: 0; }
         .sb-brand-text { font-weight: 700; font-size: .97rem; transition: opacity .2s; }
         #sidebar.collapsed .sb-brand-text { opacity: 0; width: 0; overflow: hidden; }
 
@@ -75,7 +85,7 @@
         .sb-link i { font-size: 1.05rem; flex-shrink: 0; width: 1.25rem; text-align: center; }
         .sb-link span { transition: opacity .2s; }
         .sb-link:hover { background: #2a3147; color: #fff; }
-        .sb-link.active { background: #dc3545; color: #fff; font-weight: 600; }
+        .sb-link.active { background: var(--club-primary, #dc3545); color: #fff; font-weight: 600; }
         #sidebar.collapsed .sb-link { justify-content: center; padding-left: 0; padding-right: 0; }
         #sidebar.collapsed .sb-link span { opacity: 0; width: 0; overflow: hidden; }
 
@@ -193,6 +203,10 @@
             #page-area { margin: 0; }
             #main-content { padding: 0; }
         }
+        <?php if ($__customCss): ?>
+        /* Custom CSS per klub */
+        <?= $__customCss ?>
+        <?php endif; ?>
     </style>
 </head>
 <body>
@@ -231,8 +245,12 @@ function isActive(string $mod, string $uri): bool {
 <!-- ── Sidebar ──────────────────────────────────────────────────────── -->
 <nav id="sidebar">
     <a href="<?= url('dashboard') ?>" class="sb-brand">
-        <i class="bi bi-bullseye"></i>
-        <span class="sb-brand-text">Klub Strzelecki</span>
+        <?php if (!empty($clubBranding['logo_path'])): ?>
+            <img src="<?= url('club/logo') ?>" alt="" style="height:26px;width:auto;flex-shrink:0">
+        <?php else: ?>
+            <i class="bi bi-bullseye"></i>
+        <?php endif; ?>
+        <span class="sb-brand-text"><?= e($clubBranding['club_name'] ?? 'Klub Strzelecki') ?></span>
     </a>
 
     <ul class="sb-nav">
@@ -296,6 +314,16 @@ function isActive(string $mod, string $uri): bool {
                 </span>
             </a>
             <?php endif; } ?>
+            <?php if (!empty($isSuperAdmin)): ?>
+                <a href="<?= url('admin/dashboard') ?>" class="text-decoration-none me-1" title="Panel administratora">
+                    <i class="bi bi-shield-lock text-danger" style="font-size:1.1rem"></i>
+                </a>
+            <?php endif; ?>
+            <?php if (in_array($authUser['role'] ?? '', ['admin', 'zarzad'])): ?>
+                <a href="<?= url('club/settings') ?>" class="text-decoration-none me-1" title="Ustawienia klubu">
+                    <i class="bi bi-building" style="font-size:1rem"></i>
+                </a>
+            <?php endif; ?>
             <span class="d-none d-md-inline"><?= e($authUser['full_name'] ?? '') ?></span>
             <a href="<?= url('auth/logout') ?>" title="Wyloguj"><i class="bi bi-box-arrow-right"></i></a>
         </div>
@@ -329,7 +357,7 @@ function isActive(string $mod, string $uri): bool {
     </main>
 
     <footer class="main-foot">
-        &copy; <?= date('Y') ?> Klub Strzelecki &mdash; System zarządzania v1.0
+        &copy; <?= date('Y') ?> <?= e($clubBranding['club_name'] ?? 'Klub Strzelecki') ?> &mdash; System zarządzania
     </footer>
 
 </div><!-- /page-area -->

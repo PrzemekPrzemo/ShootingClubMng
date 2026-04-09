@@ -26,13 +26,20 @@ class ClubCustomizationModel
     public function getForClub(int $clubId): array
     {
         $stmt = $this->db->prepare(
-            "SELECT * FROM `club_customization` WHERE club_id = ? LIMIT 1"
+            "SELECT cc.*, c.name AS club_name, c.short_name
+             FROM `club_customization` cc
+             JOIN `clubs` c ON c.id = cc.club_id
+             WHERE cc.club_id = ? LIMIT 1"
         );
         $stmt->execute([$clubId]);
         $row = $stmt->fetch();
 
         if (!$row) {
-            return array_merge(self::DEFAULTS, ['club_id' => $clubId]);
+            // Fallback — pobierz przynajmniej nazwę klubu
+            $cs = $this->db->prepare("SELECT name AS club_name FROM clubs WHERE id = ? LIMIT 1");
+            $cs->execute([$clubId]);
+            $clubRow = $cs->fetch();
+            return array_merge(self::DEFAULTS, ['club_id' => $clubId, 'club_name' => $clubRow['club_name'] ?? null]);
         }
 
         return $row;
@@ -43,7 +50,7 @@ class ClubCustomizationModel
     {
         $clubId = \App\Helpers\ClubContext::current();
         if ($clubId === null) {
-            return self::DEFAULTS;
+            return array_merge(self::DEFAULTS, ['club_name' => null]);
         }
         return (new self())->getForClub($clubId);
     }
