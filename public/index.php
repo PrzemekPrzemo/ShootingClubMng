@@ -425,6 +425,14 @@ $router->get('/config/license-types',                   [\App\Controllers\Config
 $router->post('/config/license-types',                  [\App\Controllers\ConfigController::class, 'saveLicenseType']);
 $router->post('/config/license-types/:id/delete',       [\App\Controllers\ConfigController::class, 'deleteLicenseType']);
 $router->post('/config/license-types/:id/toggle',       [\App\Controllers\ConfigController::class, 'toggleLicenseType']);
+// Discipline classes
+$router->get('/config/discipline-classes',              [\App\Controllers\ConfigController::class, 'disciplineClasses']);
+$router->post('/config/discipline-classes',             [\App\Controllers\ConfigController::class, 'saveDisciplineClass']);
+$router->post('/config/discipline-classes/:id/delete',  [\App\Controllers\ConfigController::class, 'deleteDisciplineClass']);
+// Member types
+$router->get('/config/member-types',                    [\App\Controllers\ConfigController::class, 'memberTypes']);
+$router->post('/config/member-types',                   [\App\Controllers\ConfigController::class, 'saveMemberType']);
+$router->post('/config/member-types/:id/delete',        [\App\Controllers\ConfigController::class, 'deleteMemberType']);
 // Fee rates (cennik składek)
 $router->get('/config/fee-rates',                       [\App\Controllers\FeeConfigController::class, 'index']);
 $router->post('/config/fee-rates/type',                 [\App\Controllers\FeeConfigController::class, 'saveType']);

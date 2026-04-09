@@ -14,6 +14,8 @@ use App\Models\DisciplineModel;
 use App\Models\MemberClassModel;
 use App\Models\MedicalExamModel;
 use App\Models\UserModel;
+use App\Models\DisciplineClassModel;
+use App\Models\MemberTypeModel;
 
 class MembersController extends BaseController
 {
@@ -271,10 +273,12 @@ class MembersController extends BaseController
             'categories'    => $this->categoryModel->getAll(),
             'memberClasses' => $this->memberClassModel->getActive(),
             'disciplines'   => $this->disciplineModel->getActive(),
-            'instructors'   => ($clubId = \App\Helpers\ClubContext::current())
-                                ? $this->userModel->getInstructorsForClub($clubId)
-                                : $this->userModel->getInstructors(),
-            'mode'          => 'create',
+            'instructors'       => ($clubId = \App\Helpers\ClubContext::current())
+                                    ? $this->userModel->getInstructorsForClub($clubId)
+                                    : $this->userModel->getInstructors(),
+            'disciplineClasses' => (new DisciplineClassModel())->getActive(),
+            'memberTypes'       => (new MemberTypeModel())->getActive(),
+            'mode'              => 'create',
         ]);
     }
 
@@ -342,10 +346,12 @@ class MembersController extends BaseController
             'categories'    => $this->categoryModel->getAll(),
             'memberClasses' => $this->memberClassModel->getActive(),
             'disciplines'   => $this->disciplineModel->getActive(),
-            'instructors'   => ($clubId = \App\Helpers\ClubContext::current())
-                                ? $this->userModel->getInstructorsForClub($clubId)
-                                : $this->userModel->getInstructors(),
-            'memberDiscs'   => $this->memberModel->getDisciplines((int)$id),
+            'instructors'       => ($clubId = \App\Helpers\ClubContext::current())
+                                    ? $this->userModel->getInstructorsForClub($clubId)
+                                    : $this->userModel->getInstructors(),
+            'disciplineClasses' => (new DisciplineClassModel())->getActive(),
+            'memberTypes'       => (new MemberTypeModel())->getActive(),
+            'memberDiscs'       => $this->memberModel->getDisciplines((int)$id),
             'mode'          => 'edit',
         ]);
     }

@@ -106,8 +106,8 @@
                         <div class="col-md-2">
                             <select name="discipline_classes[]" class="form-select form-select-sm">
                                 <option value="">Klasa</option>
-                                <?php foreach (['Master','A','B','C','D'] as $cls): ?>
-                                    <option value="<?= $cls ?>" <?= $md['class'] === $cls ? 'selected':'' ?>><?= $cls ?></option>
+                                <?php foreach ($disciplineClasses as $cls): ?>
+                                    <option value="<?= e($cls['name']) ?>" <?= $md['class'] === $cls['name'] ? 'selected':'' ?>><?= e($cls['name']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -141,8 +141,8 @@
                         <div class="col-md-2">
                             <select name="discipline_classes[]" class="form-select form-select-sm">
                                 <option value="">Klasa</option>
-                                <?php foreach (['Master','A','B','C','D'] as $cls): ?>
-                                    <option value="<?= $cls ?>"><?= $cls ?></option>
+                                <?php foreach ($disciplineClasses as $cls): ?>
+                                    <option value="<?= e($cls['name']) ?>"><?= e($cls['name']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -210,8 +210,10 @@
                     <div class="mb-3">
                         <label class="form-label">Typ członkostwa <span class="text-danger">*</span></label>
                         <select name="member_type" class="form-select">
-                            <option value="rekreacyjny" <?= (old('member_type', $member['member_type'] ?? 'rekreacyjny')) === 'rekreacyjny' ? 'selected':'' ?>>Rekreacyjny</option>
-                            <option value="wyczynowy"   <?= (old('member_type', $member['member_type'] ?? '')) === 'wyczynowy'   ? 'selected':'' ?>>Wyczynowy</option>
+                            <?php $currentType = old('member_type', $member['member_type'] ?? ''); ?>
+                            <?php foreach ($memberTypes as $mt): ?>
+                            <option value="<?= e($mt['name']) ?>" <?= $currentType === $mt['name'] ? 'selected' : '' ?>><?= e($mt['name']) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="mb-3">

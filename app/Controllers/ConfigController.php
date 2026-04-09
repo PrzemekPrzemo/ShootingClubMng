@@ -13,6 +13,8 @@ use App\Models\MedicalExamTypeModel;
 use App\Models\LicenseTypeModel;
 use App\Models\RolePermissionModel;
 use App\Models\ClubModel;
+use App\Models\DisciplineClassModel;
+use App\Models\MemberTypeModel;
 use App\Helpers\ClubContext;
 
 class ConfigController extends BaseController
@@ -932,5 +934,151 @@ class ConfigController extends BaseController
             'disciplines'  => $disciplines,
             'byDiscipline' => $byDiscipline,
         ]);
+    }
+
+    // ── Discipline classes ───────────────────────────────────────────
+
+    public function disciplineClasses(): void
+    {
+        $model    = new DisciplineClassModel();
+        $editItem = null;
+        if (!empty($_GET['edit'])) {
+            $editItem = $model->findById((int)$_GET['edit']);
+        }
+        $this->render('config/discipline_classes', [
+            'title'    => 'Klasy sportowe',
+            'items'    => $model->getAll(),
+            'editItem' => $editItem,
+        ]);
+    }
+
+    public function saveDisciplineClass(): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad']);
+
+        $model  = new DisciplineClassModel();
+        $id     = (int)($_POST['id'] ?? 0);
+        $clubId = ClubContext::current();
+
+        $data = [
+            'name'       => trim($_POST['name'] ?? ''),
+            'sort_order' => (int)($_POST['sort_order'] ?? 0),
+            'is_active'  => isset($_POST['is_active']) ? 1 : 0,
+        ];
+
+        if ($data['name'] === '') {
+            Session::flash('error', 'Nazwa jest wymagana.');
+            $this->redirect('config/discipline-classes');
+        }
+
+        if ($id === 0) {
+            $data['club_id'] = $clubId;
+            $model->insert($data);
+            Session::flash('success', 'Klasa dodana.');
+        } else {
+            if ($clubId !== null) {
+                $existing = $model->findById($id);
+                if (!$existing || (int)($existing['club_id'] ?? 0) !== $clubId) {
+                    Session::flash('error', 'Nie możesz edytować globalnego wpisu.');
+                    $this->redirect('config/discipline-classes');
+                }
+            }
+            $model->update($id, $data);
+            Session::flash('success', 'Klasa zaktualizowana.');
+        }
+        $this->redirect('config/discipline-classes');
+    }
+
+    public function deleteDisciplineClass(string $id): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad']);
+
+        $model  = new DisciplineClassModel();
+        $clubId = ClubContext::current();
+        if ($clubId !== null) {
+            $existing = $model->findById((int)$id);
+            if (!$existing || (int)($existing['club_id'] ?? 0) !== $clubId) {
+                Session::flash('error', 'Nie możesz usunąć globalnego wpisu.');
+                $this->redirect('config/discipline-classes');
+            }
+        }
+        $model->delete((int)$id);
+        Session::flash('success', 'Klasa usunięta.');
+        $this->redirect('config/discipline-classes');
+    }
+
+    // ── Member types ─────────────────────────────────────────────────
+
+    public function memberTypes(): void
+    {
+        $model    = new MemberTypeModel();
+        $editItem = null;
+        if (!empty($_GET['edit'])) {
+            $editItem = $model->findById((int)$_GET['edit']);
+        }
+        $this->render('config/member_types', [
+            'title'    => 'Typy członkostwa',
+            'items'    => $model->getAll(),
+            'editItem' => $editItem,
+        ]);
+    }
+
+    public function saveMemberType(): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad']);
+
+        $model  = new MemberTypeModel();
+        $id     = (int)($_POST['id'] ?? 0);
+        $clubId = ClubContext::current();
+
+        $data = [
+            'name'       => trim($_POST['name'] ?? ''),
+            'sort_order' => (int)($_POST['sort_order'] ?? 0),
+            'is_active'  => isset($_POST['is_active']) ? 1 : 0,
+        ];
+
+        if ($data['name'] === '') {
+            Session::flash('error', 'Nazwa jest wymagana.');
+            $this->redirect('config/member-types');
+        }
+
+        if ($id === 0) {
+            $data['club_id'] = $clubId;
+            $model->insert($data);
+            Session::flash('success', 'Typ członkostwa dodany.');
+        } else {
+            if ($clubId !== null) {
+                $existing = $model->findById($id);
+                if (!$existing || (int)($existing['club_id'] ?? 0) !== $clubId) {
+                    Session::flash('error', 'Nie możesz edytować globalnego wpisu.');
+                    $this->redirect('config/member-types');
+                }
+            }
+            $model->update($id, $data);
+            Session::flash('success', 'Typ zaktualizowany.');
+        }
+        $this->redirect('config/member-types');
+    }
+
+    public function deleteMemberType(string $id): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad']);
+
+        $model  = new MemberTypeModel();
+        $clubId = ClubContext::current();
+        if ($clubId !== null) {
+            $existing = $model->findById((int)$id);
+            if (!$existing || (int)($existing['club_id'] ?? 0) !== $clubId) {
+                Session::flash('error', 'Nie możesz usunąć globalnego wpisu.');
+                $this->redirect('config/member-types');
+            }
+        }
+        $model->delete((int)$id);
+        Session::flash('success', 'Typ usunięty.');
+        $this->redirect('config/member-types');
     }
 }
