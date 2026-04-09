@@ -207,6 +207,10 @@ $router->get('/club/smtp',           [\App\Controllers\ClubManagementController:
 $router->post('/club/smtp',          [\App\Controllers\ClubManagementController::class, 'saveSmtp']);
 $router->get('/club/users',          [\App\Controllers\ClubManagementController::class, 'users']);
 $router->get('/club/logo',           [\App\Controllers\ClubManagementController::class, 'serveLogo']);
+$router->get('/club/email-templates',            [\App\Controllers\EmailTemplatesController::class, 'index']);
+$router->get('/club/email-templates/:type/edit', [\App\Controllers\EmailTemplatesController::class, 'edit']);
+$router->post('/club/email-templates/:type',     [\App\Controllers\EmailTemplatesController::class, 'save']);
+$router->post('/club/email-templates/:type/reset',[\App\Controllers\EmailTemplatesController::class, 'reset']);
 
 // Dashboard
 $router->get('/dashboard',     [\App\Controllers\DashboardController::class, 'index']);

@@ -69,3 +69,18 @@
         <i class="bi bi-check-lg"></i> Zapisz
     </button>
 </form>
+
+<div class="mt-4 d-flex flex-wrap gap-2">
+    <a href="<?= url('club/customization') ?>" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-palette"></i> Wygląd i branding
+    </a>
+    <a href="<?= url('club/smtp') ?>" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-send"></i> Konfiguracja SMTP
+    </a>
+    <a href="<?= url('club/email-templates') ?>" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-envelope-gear"></i> Szablony e-mail
+    </a>
+    <a href="<?= url('club/users') ?>" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-people"></i> Użytkownicy klubu
+    </a>
+</div>
