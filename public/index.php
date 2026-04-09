@@ -197,6 +197,10 @@ $router->get('/admin/clubs/:clubId/users/:userId/remove', [\App\Controllers\Admi
 $router->get('/admin/settings',                          [\App\Controllers\AdminController::class, 'settings']);
 $router->post('/admin/settings',                         [\App\Controllers\AdminController::class, 'saveSettings']);
 $router->get('/admin/switch-club/:id',                   [\App\Controllers\AdminController::class, 'switchClub']);
+$router->get('/admin/subscriptions',              [\App\Controllers\SubscriptionController::class, 'adminIndex']);
+$router->get('/admin/subscriptions/:id/edit',     [\App\Controllers\SubscriptionController::class, 'adminEdit']);
+$router->post('/admin/subscriptions/:id',         [\App\Controllers\SubscriptionController::class, 'adminSave']);
+$router->get('/subscription',                     [\App\Controllers\SubscriptionController::class, 'clubView']);
 
 // Club management (zarząd)
 $router->get('/club/settings',       [\App\Controllers\ClubManagementController::class, 'settings']);

@@ -77,8 +77,11 @@
     </div>
 </div>
 
-<div class="mt-3">
+<div class="mt-3 d-flex flex-wrap gap-2">
     <a href="<?= url('admin/settings') ?>" class="btn btn-outline-secondary">
         <i class="bi bi-gear"></i> Ustawienia globalne
+    </a>
+    <a href="<?= url('admin/subscriptions') ?>" class="btn btn-outline-primary">
+        <i class="bi bi-credit-card-2-front"></i> Subskrypcje klubów
     </a>
 </div>

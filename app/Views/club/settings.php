@@ -83,4 +83,7 @@
     <a href="<?= url('club/users') ?>" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-people"></i> Użytkownicy klubu
     </a>
+    <a href="<?= url('subscription') ?>" class="btn btn-outline-info btn-sm">
+        <i class="bi bi-credit-card-2-front"></i> Plan subskrypcji
+    </a>
 </div>
