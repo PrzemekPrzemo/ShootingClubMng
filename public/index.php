@@ -168,6 +168,20 @@ $router->get('/auth/logout',   [\App\Controllers\AuthController::class, 'logout'
 $router->get('/club-select',       [\App\Controllers\ClubSelectorController::class, 'show']);
 $router->post('/club-select/:id',  [\App\Controllers\ClubSelectorController::class, 'select']);
 
+// Admin (super admin panel)
+$router->get('/admin/dashboard',                         [\App\Controllers\AdminController::class, 'dashboard']);
+$router->get('/admin/clubs',                             [\App\Controllers\AdminController::class, 'clubs']);
+$router->get('/admin/clubs/create',                      [\App\Controllers\AdminController::class, 'createClub']);
+$router->post('/admin/clubs/create',                     [\App\Controllers\AdminController::class, 'storeClub']);
+$router->get('/admin/clubs/:id/edit',                    [\App\Controllers\AdminController::class, 'editClub']);
+$router->post('/admin/clubs/:id/edit',                   [\App\Controllers\AdminController::class, 'updateClub']);
+$router->get('/admin/clubs/:id/users',                   [\App\Controllers\AdminController::class, 'clubUsers']);
+$router->post('/admin/clubs/:id/users',                  [\App\Controllers\AdminController::class, 'addClubUser']);
+$router->get('/admin/clubs/:clubId/users/:userId/remove', [\App\Controllers\AdminController::class, 'removeClubUser']);
+$router->get('/admin/settings',                          [\App\Controllers\AdminController::class, 'settings']);
+$router->post('/admin/settings',                         [\App\Controllers\AdminController::class, 'saveSettings']);
+$router->get('/admin/switch-club/:id',                   [\App\Controllers\AdminController::class, 'switchClub']);
+
 // Dashboard
 $router->get('/dashboard',     [\App\Controllers\DashboardController::class, 'index']);
 
