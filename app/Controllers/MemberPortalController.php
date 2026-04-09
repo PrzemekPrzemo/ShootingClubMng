@@ -216,10 +216,24 @@ class MemberPortalController
     public function competitions(): void
     {
         $memberId = MemberAuth::id();
+        $db = Database::getInstance();
+
+        // Waitlist entries for this member
+        $wlStmt = $db->prepare(
+            "SELECT cw.position, c.name AS competition_name, c.competition_date
+             FROM competition_waitlist cw
+             JOIN competitions c ON c.id = cw.competition_id
+             WHERE cw.member_id = ?
+             ORDER BY c.competition_date"
+        );
+        $wlStmt->execute([$memberId]);
+        $myWaitlist = $wlStmt->fetchAll();
+
         $this->render('portal/competitions', [
             'title'            => 'Zawody',
             'openCompetitions' => $this->portalModel->getOpenCompetitions($memberId),
             'myEntries'        => $this->portalModel->getMemberEntries($memberId),
+            'myWaitlist'       => $myWaitlist,
         ]);
     }
 
@@ -271,6 +285,35 @@ class MemberPortalController
 
         $eventIds = array_map('intval', (array)($_POST['event_ids'] ?? []));
         $db       = Database::getInstance();
+
+        // Check capacity — if full, offer waitlist
+        if (!empty($competition['max_entries'])) {
+            $countStmt = $db->prepare(
+                "SELECT COUNT(*) FROM competition_entries WHERE competition_id = ? AND status NOT IN ('wycofany','zdyskwalifikowany')"
+            );
+            $countStmt->execute([(int)$id]);
+            $currentCount = (int)$countStmt->fetchColumn();
+
+            if ($currentCount >= (int)$competition['max_entries']) {
+                // Check if already on waitlist
+                $wlStmt = $db->prepare("SELECT id FROM competition_waitlist WHERE competition_id = ? AND member_id = ? LIMIT 1");
+                $wlStmt->execute([(int)$id, $memberId]);
+                if ($wlStmt->fetch()) {
+                    Session::flash('warning', 'Już jesteś na liście rezerwowej tych zawodów.');
+                } else {
+                    // Find next position
+                    $posStmt = $db->prepare("SELECT COALESCE(MAX(position), 0) + 1 FROM competition_waitlist WHERE competition_id = ?");
+                    $posStmt->execute([(int)$id]);
+                    $position = (int)$posStmt->fetchColumn();
+
+                    $db->prepare("INSERT INTO competition_waitlist (competition_id, member_id, position) VALUES (?, ?, ?)")
+                       ->execute([(int)$id, $memberId, $position]);
+
+                    Session::flash('info', 'Zawody są pełne. Zostałeś/aś dodany/a do listy rezerwowej (pozycja ' . $position . '). Powiadomimy Cię, gdy pojawi się wolne miejsce.');
+                }
+                $this->redirectTo('portal/competitions');
+            }
+        }
 
         // Upsert entry (allow re-registration if previously withdrawn)
         $s = $db->prepare("SELECT id, status FROM competition_entries WHERE competition_id = ? AND member_id = ?");
@@ -348,11 +391,45 @@ class MemberPortalController
             $this->redirectTo('portal/competitions');
         }
 
+        $competitionId = (int)$entry['competition_id'];
         $db->prepare("UPDATE competition_entries SET status = 'wycofany' WHERE id = ?")
            ->execute([(int)$entryId]);
 
+        // Notify first person on waitlist
+        $this->notifyWaitlistFirst($db, $competitionId);
+
         Session::flash('success', 'Zgłoszenie zostało wycofane.');
         $this->redirectTo('portal/competitions');
+    }
+
+    private function notifyWaitlistFirst(\PDO $db, int $competitionId): void
+    {
+        $stmt = $db->prepare(
+            "SELECT cw.*, m.email, m.first_name, m.last_name, c.name AS competition_name
+             FROM competition_waitlist cw
+             JOIN members m ON m.id = cw.member_id
+             JOIN competitions c ON c.id = cw.competition_id
+             WHERE cw.competition_id = ? AND cw.notified_at IS NULL
+             ORDER BY cw.position
+             LIMIT 1"
+        );
+        $stmt->execute([$competitionId]);
+        $first = $stmt->fetch();
+
+        if (!$first || empty($first['email'])) return;
+
+        $db->prepare("UPDATE competition_waitlist SET notified_at = NOW() WHERE id = ?")->execute([$first['id']]);
+
+        // Send notification e-mail
+        $clubId = \App\Helpers\ClubContext::current() ?? 1;
+        $html = "<p>Drogi/a " . htmlspecialchars($first['first_name'] . ' ' . $first['last_name']) . ",</p>"
+            . "<p>Pojawiło się wolne miejsce na zawodach <strong>" . htmlspecialchars($first['competition_name']) . "</strong>.</p>"
+            . "<p>Zaloguj się do portalu, aby zarejestrować swój udział.</p>"
+            . "<p>Pozdrawiamy,<br>Klub</p>";
+
+        try {
+            \App\Helpers\EmailService::send($clubId, $first['email'], $first['first_name'] . ' ' . $first['last_name'], 'Wolne miejsce na zawodach: ' . $first['competition_name'], $html);
+        } catch (\Throwable) {}
     }
 
     // ── Fees ─────────────────────────────────────────────────────────────────

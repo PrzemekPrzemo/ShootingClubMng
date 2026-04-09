@@ -94,3 +94,29 @@
     </div>
 </div>
 <?php endif; ?>
+
+<?php if (!empty($myWaitlist)): ?>
+<div class="card mt-3">
+    <div class="card-header"><strong><i class="bi bi-hourglass-split"></i> Lista rezerwowa</strong></div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+            <thead class="table-dark">
+                <tr><th>Zawody</th><th>Data</th><th class="text-center">Pozycja</th></tr>
+            </thead>
+            <tbody>
+            <?php foreach ($myWaitlist as $w): ?>
+                <tr>
+                    <td><?= e($w['competition_name']) ?></td>
+                    <td class="small text-muted"><?= format_date($w['competition_date']) ?></td>
+                    <td class="text-center"><span class="badge bg-warning text-dark"><?= (int)$w['position'] ?></span></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer text-muted small">
+        <i class="bi bi-info-circle"></i>
+        Gdy pojawi się wolne miejsce, wyślemy Ci wiadomość e-mail.
+    </div>
+</div>
+<?php endif; ?>
