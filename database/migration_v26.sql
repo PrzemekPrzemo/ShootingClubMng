@@ -75,9 +75,10 @@ CREATE TABLE IF NOT EXISTS `competition_waitlist` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Lista rezerwowa na zawody';
 
--- Dodaj max_entries do competitions jeśli jeszcze nie ma
+-- Dodaj max_entries i is_public do competitions jeśli jeszcze nie ma
 ALTER TABLE `competitions`
-    ADD COLUMN IF NOT EXISTS `max_entries` INT UNSIGNED NULL COMMENT 'Maks. liczba zgłoszeń; NULL = bez limitu';
+    ADD COLUMN IF NOT EXISTS `max_entries` INT UNSIGNED NULL COMMENT 'Maks. liczba zgłoszeń; NULL = bez limitu',
+    ADD COLUMN IF NOT EXISTS `is_public`   TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Czy wyniki są publiczne (widoczne bez logowania)';
 
 -- ===========================================================================
 -- 5. SZABLONY E-MAIL PER KLUB

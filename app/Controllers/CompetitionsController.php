@@ -799,6 +799,7 @@ class CompetitionsController extends BaseController
             'description'      => trim($_POST['description'] ?? '') ?: null,
             'status'           => $_POST['status'] ?? 'planowane',
             'max_entries'      => $_POST['max_entries'] ?: null,
+            'is_public'        => !empty($_POST['is_public']) ? 1 : 0,
             'created_by'       => Auth::id(),
         ];
     }

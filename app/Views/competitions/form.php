@@ -56,6 +56,16 @@
                 <label class="form-label">Opis</label>
                 <textarea name="description" class="form-control" rows="3"><?= e($competition['description'] ?? '') ?></textarea>
             </div>
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="is_public" value="1" id="isPublic"
+                           <?= !empty($competition['is_public']) ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="isPublic">
+                        <i class="bi bi-globe"></i> Opublikuj wyniki publicznie
+                        <span class="text-muted small">(bez logowania, pod adresem /pub/...)</span>
+                    </label>
+                </div>
+            </div>
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-danger">
                     <?= $mode === 'create' ? 'Utwórz zawody' : 'Zapisz zmiany' ?>

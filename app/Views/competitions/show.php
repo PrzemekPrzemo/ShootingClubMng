@@ -30,6 +30,14 @@ $sc = match($competition['status']) {
            title="Pobierz protokół PDF">
             <i class="bi bi-file-earmark-pdf"></i> PDF
         </a>
+        <?php if (!empty($competition['is_public'])): ?>
+        <a href="<?= url('pub/' . ($clubBranding['subdomain'] ?? $competition['club_id']) . '/competitions/' . $competition['id']) ?>"
+           target="_blank"
+           class="btn btn-sm btn-outline-success"
+           title="Publiczny link do wyników">
+            <i class="bi bi-globe"></i> Publiczny
+        </a>
+        <?php endif; ?>
         <a href="<?= url('competitions/' . $competition['id'] . '/scorecards') ?>" class="btn btn-sm btn-outline-dark">
             <i class="bi bi-file-person"></i> Metryczki A5
         </a>

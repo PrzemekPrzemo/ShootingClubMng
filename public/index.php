@@ -179,6 +179,11 @@ $router->get('/register/confirm', [\App\Controllers\RegistrationController::clas
 $router->get('/club-select',       [\App\Controllers\ClubSelectorController::class, 'show']);
 $router->post('/club-select/:id',  [\App\Controllers\ClubSelectorController::class, 'select']);
 
+// Public results (no login)
+$router->get('/pub',                                   [\App\Controllers\PublicController::class, 'clubList']);
+$router->get('/pub/:slug/competitions',                [\App\Controllers\PublicController::class, 'clubCompetitions']);
+$router->get('/pub/:slug/competitions/:id',            [\App\Controllers\PublicController::class, 'competitionResults']);
+
 // Admin (super admin panel)
 $router->get('/admin/dashboard',                         [\App\Controllers\AdminController::class, 'dashboard']);
 $router->get('/admin/clubs',                             [\App\Controllers\AdminController::class, 'clubs']);
