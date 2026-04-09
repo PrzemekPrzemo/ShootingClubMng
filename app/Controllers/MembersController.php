@@ -271,7 +271,9 @@ class MembersController extends BaseController
             'categories'    => $this->categoryModel->getAll(),
             'memberClasses' => $this->memberClassModel->getActive(),
             'disciplines'   => $this->disciplineModel->getActive(),
-            'instructors'   => $this->userModel->getInstructors(),
+            'instructors'   => ($clubId = \App\Helpers\ClubContext::current())
+                                ? $this->userModel->getInstructorsForClub($clubId)
+                                : $this->userModel->getInstructors(),
             'mode'          => 'create',
         ]);
     }
@@ -340,7 +342,9 @@ class MembersController extends BaseController
             'categories'    => $this->categoryModel->getAll(),
             'memberClasses' => $this->memberClassModel->getActive(),
             'disciplines'   => $this->disciplineModel->getActive(),
-            'instructors'   => $this->userModel->getInstructors(),
+            'instructors'   => ($clubId = \App\Helpers\ClubContext::current())
+                                ? $this->userModel->getInstructorsForClub($clubId)
+                                : $this->userModel->getInstructors(),
             'memberDiscs'   => $this->memberModel->getDisciplines((int)$id),
             'mode'          => 'edit',
         ]);

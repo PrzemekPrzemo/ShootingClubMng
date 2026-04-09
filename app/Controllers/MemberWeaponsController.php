@@ -43,7 +43,7 @@ class MemberWeaponsController extends BaseController
         $weapons = $this->weaponModel->getForMember((int)$memberId);
 
         $this->render('members/weapons/index', [
-            'title'   => 'Broń osobista — ' . e($member['full_name']),
+            'title'   => 'Broń osobista — ' . e($member['first_name'] . ' ' . $member['last_name']),
             'member'  => $member,
             'weapons' => $weapons,
             'types'   => MemberWeaponModel::$TYPES,
@@ -63,7 +63,7 @@ class MemberWeaponsController extends BaseController
         }
 
         $this->render('members/weapons/form', [
-            'title'    => 'Dodaj broń — ' . e($member['full_name']),
+            'title'    => 'Dodaj broń — ' . e($member['first_name'] . ' ' . $member['last_name']),
             'mode'     => 'create',
             'member'   => $member,
             'weapon'   => [],
@@ -114,7 +114,7 @@ class MemberWeaponsController extends BaseController
         }
 
         $this->render('members/weapons/form', [
-            'title'  => 'Edytuj broń — ' . e($member['full_name']),
+            'title'  => 'Edytuj broń — ' . e($member['first_name'] . ' ' . $member['last_name']),
             'mode'   => 'edit',
             'member' => $member,
             'weapon' => $weapon,

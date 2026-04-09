@@ -54,6 +54,20 @@ class UserModel extends BaseModel
         return $stmt->fetchAll();
     }
 
+    /** Instruktorzy przypisani do konkretnego klubu (rola 'instruktor' w user_clubs). */
+    public function getInstructorsForClub(int $clubId): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT DISTINCT u.id, u.full_name
+             FROM users u
+             JOIN user_clubs uc ON uc.user_id = u.id
+             WHERE uc.club_id = ? AND uc.role = 'instruktor' AND uc.is_active = 1 AND u.is_active = 1
+             ORDER BY u.full_name"
+        );
+        $stmt->execute([$clubId]);
+        return $stmt->fetchAll();
+    }
+
     // ------------------------------------------------------------------
     // Multi-club: powiązanie użytkowników z klubami
     // ------------------------------------------------------------------
