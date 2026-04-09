@@ -394,36 +394,45 @@ if [[ -f "${INSTALL_DIR}/vendor/autoload.php" ]]; then
 else
     COMPOSER_CMD=""
     COMPOSER_IS_PHAR=false
-    # Szukaj systemowego composera (binarka lub .phar)
-    for candidate in /usr/local/bin/composer /usr/bin/composer composer \
-                     "${INSTALL_DIR}/composer.phar" /usr/local/bin/composer.phar; do
-        if command -v "$candidate" &>/dev/null || [[ -x "$candidate" ]]; then
-            COMPOSER_CMD="$candidate"
-            [[ "$candidate" == *.phar ]] && COMPOSER_IS_PHAR=true
-            break
-        fi
-    done
 
-    if [[ -z "$COMPOSER_CMD" ]]; then
-        info "Pobieranie Composer…"
-        $PHP_CMD -r "copy('https://getcomposer.org/installer', '/tmp/composer-setup.php');"
-        $PHP_CMD /tmp/composer-setup.php --quiet --install-dir="${INSTALL_DIR}" --filename=composer.phar
-        rm -f /tmp/composer-setup.php
+    # Preferuj .phar — uruchamiany przez $PHP_CMD, co gwarantuje właściwą wersję PHP.
+    # Systemowy 'composer' wrapper używa PHP z PATH (może być inny niż $PHP_CMD).
+    if [[ -f "${INSTALL_DIR}/composer.phar" ]]; then
         COMPOSER_CMD="${INSTALL_DIR}/composer.phar"
         COMPOSER_IS_PHAR=true
-        success "Composer pobrany: ${COMPOSER_CMD}"
+        success "Znaleziono composer.phar w katalogu instalacji."
     else
-        success "Composer znaleziony: ${COMPOSER_CMD}"
+        info "Pobieranie composer.phar (gwarantuje użycie PHP ${PHP_VER})…"
+        if $PHP_CMD -r "copy('https://getcomposer.org/installer', '/tmp/composer-setup.php');" 2>/dev/null \
+           && $PHP_CMD /tmp/composer-setup.php --quiet --install-dir="${INSTALL_DIR}" --filename=composer.phar 2>/dev/null; then
+            rm -f /tmp/composer-setup.php
+            COMPOSER_CMD="${INSTALL_DIR}/composer.phar"
+            COMPOSER_IS_PHAR=true
+            success "Composer pobrany: ${COMPOSER_CMD}"
+        else
+            # Fallback — systemowy composer z wymuszonym PHP przez env PHP=
+            rm -f /tmp/composer-setup.php 2>/dev/null || true
+            warn "Nie udało się pobrać composer.phar. Próba z systemowym composer (PHP=${PHP_CMD})…"
+            for candidate in /usr/local/bin/composer /usr/bin/composer composer; do
+                if command -v "$candidate" &>/dev/null || [[ -x "$candidate" ]]; then
+                    COMPOSER_CMD="$candidate"
+                    break
+                fi
+            done
+            [[ -z "$COMPOSER_CMD" ]] && die "Nie znaleziono Composer. Zainstaluj go ręcznie i uruchom ponownie."
+            success "Composer (systemowy fallback): ${COMPOSER_CMD}"
+        fi
     fi
 
     info "Instalowanie zależności (bez dev, z optymalizacją autoloadera)…"
-    # Binarka systemowa: wywołaj bezpośrednio; .phar: uruchom przez PHP
     if $COMPOSER_IS_PHAR; then
-        $PHP_CMD "$COMPOSER_CMD" install \
+        # .phar — uruchamiamy przez właściwe PHP; COMPOSER_ALLOW_SUPERUSER by nie blokował root
+        COMPOSER_ALLOW_SUPERUSER=1 $PHP_CMD "$COMPOSER_CMD" install \
             --working-dir="${INSTALL_DIR}" \
             --no-dev --optimize-autoloader --no-interaction 2>&1 | grep -v "^$" | tail -20
     else
-        "$COMPOSER_CMD" install \
+        # Systemowy wrapper — wymuszamy właściwe PHP przez env PHP=
+        COMPOSER_ALLOW_SUPERUSER=1 PHP="$PHP_CMD" "$COMPOSER_CMD" install \
             --working-dir="${INSTALL_DIR}" \
             --no-dev --optimize-autoloader --no-interaction 2>&1 | grep -v "^$" | tail -20
     fi
