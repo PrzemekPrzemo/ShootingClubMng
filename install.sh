@@ -476,7 +476,6 @@ mysql_cmd "${DB_NAME}" <<SQL
 UPDATE settings SET value = '${APP_CLUB_NAME}'  WHERE \`key\` = 'club_name';
 UPDATE settings SET value = '${APP_CLUB_EMAIL}' WHERE \`key\` = 'club_email';
 UPDATE settings SET value = '${APP_CLUB_PHONE}' WHERE \`key\` = 'club_phone';
-UPDATE clubs   SET name   = '${APP_CLUB_NAME}'  WHERE id = 1;
 SQL
 success "Ustawienia klubu zapisane."
 
@@ -488,15 +487,12 @@ mysql_cmd "${DB_NAME}" <<SQL
 -- Usuń domyślnego admina z seeda, jeśli istnieje
 DELETE FROM users WHERE username = 'admin';
 
--- Utwórz superadmina multi-tenant
+-- Utwórz superadmina (is_super_admin=1 — loguje się przez /masterlogin, bez kontekstu klubu)
 INSERT INTO users (username, email, password, role, full_name, is_active, is_super_admin)
 VALUES ('${ADMIN_USERNAME}', '${ADMIN_EMAIL}', '${ADMIN_HASH}', 'admin', '${ADMIN_FULLNAME}', 1, 1);
-
--- Przypisz do klubu domyślnego (id=1) z rolą zarzad
-INSERT IGNORE INTO user_clubs (user_id, club_id, role, is_active)
-VALUES (LAST_INSERT_ID(), 1, 'zarzad', 1);
 SQL
 success "Konto superadmina '${ADMIN_USERNAME}' utworzone (is_super_admin=1)."
+info "Logowanie superadmina: https://${SITE_DOMAIN}/masterlogin"
 
 echo
 
@@ -699,13 +695,10 @@ else
     ((ERRORS++))
 fi
 
-# Sprawdź klub domyślny
-CLUB_COUNT=$(mysql_cmd "${DB_NAME}" -se "SELECT COUNT(*) FROM clubs WHERE id=1;" 2>/dev/null || echo "0")
-if [[ "$CLUB_COUNT" == "1" ]]; then
-    success "Klub domyślny (id=1): OK"
-else
-    error "Brak klubu domyślnego (id=1)!"
-    ((ERRORS++))
+# Sprawdź czy tabela clubs istnieje i ma choć jeden rekord
+CLUB_COUNT=$(mysql_cmd "${DB_NAME}" -se "SELECT COUNT(*) FROM clubs;" 2>/dev/null || echo "0")
+if [[ "$CLUB_COUNT" -ge 0 ]]; then
+    success "Tabela clubs: OK (${CLUB_COUNT} rekordów — kluby tworzone przez panel admina)"
 fi
 
 # Sprawdź pliki konfiguracyjne

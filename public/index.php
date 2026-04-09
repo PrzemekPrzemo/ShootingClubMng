@@ -168,6 +168,8 @@ $router = new \App\Helpers\Router();
 // Auth
 $router->get('/auth/login',    [\App\Controllers\AuthController::class, 'showLogin']);
 $router->post('/auth/login',   [\App\Controllers\AuthController::class, 'login']);
+$router->get('/masterlogin',   [\App\Controllers\AuthController::class, 'masterLoginForm']);
+$router->post('/masterlogin',  [\App\Controllers\AuthController::class, 'masterLogin']);
 $router->get('/auth/logout',   [\App\Controllers\AuthController::class, 'logout']);
 
 // Club self-registration (onboarding)
