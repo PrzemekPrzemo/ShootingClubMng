@@ -446,6 +446,12 @@ $router->post('/config/calendar-categories/:id/delete',  [\App\Controllers\Confi
 $router->get('/members/:id/card',                    [\App\Controllers\MembersController::class, 'memberCard']);
 $router->get('/members/:id/card.pdf',                [\App\Controllers\MembersController::class, 'memberCardPdf']);
 
+// GDPR / RODO
+$router->get('/members/:id/gdpr/consents',           [\App\Controllers\GdprController::class, 'consents']);
+$router->post('/members/:id/gdpr/consents',          [\App\Controllers\GdprController::class, 'saveConsents']);
+$router->post('/members/:id/gdpr/export',            [\App\Controllers\GdprController::class, 'exportData']);
+$router->post('/members/:id/gdpr/anonymize',         [\App\Controllers\GdprController::class, 'anonymize']);
+
 // Member photo (PhotoController — no requireLogin in ctor, handles both Auth and MemberAuth)
 $router->get('/members/:id/photo',                   [\App\Controllers\PhotoController::class, 'serve']);
 

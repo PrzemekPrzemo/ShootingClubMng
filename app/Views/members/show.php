@@ -15,6 +15,9 @@
         <a href="<?= url('members/' . $member['id'] . '/card.pdf') ?>" class="btn btn-sm btn-outline-danger" title="Pobierz legitymację PDF">
             <i class="bi bi-file-earmark-pdf"></i> PDF
         </a>
+        <a href="<?= url('members/' . $member['id'] . '/gdpr/consents') ?>" class="btn btn-sm btn-outline-secondary" title="Zarządzanie zgodami RODO">
+            <i class="bi bi-shield-check"></i> RODO
+        </a>
         <a href="<?= url('members/' . $member['id'] . '/weapons') ?>" class="btn btn-sm btn-outline-secondary" title="Rejestr broni osobistej">
             <i class="bi bi-shield-lock"></i> Broń
         </a>
