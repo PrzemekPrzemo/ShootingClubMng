@@ -3,7 +3,7 @@ namespace App\Models;
 
 use App\Helpers\Auth;
 
-class TrainingsModel extends BaseModel
+class TrainingsModel extends ClubScopedModel
 {
     protected string $table = 'trainings';
 

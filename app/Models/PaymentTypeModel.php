@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class PaymentTypeModel extends BaseModel
+class PaymentTypeModel extends ClubScopedModel
 {
     protected string $table = 'payment_types';
 

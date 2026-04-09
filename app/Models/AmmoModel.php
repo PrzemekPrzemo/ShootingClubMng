@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class AmmoModel extends BaseModel
+class AmmoModel extends ClubScopedModel
 {
     protected string $table = 'ammo_stock';
 

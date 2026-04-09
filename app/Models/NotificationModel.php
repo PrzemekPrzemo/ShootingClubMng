@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class NotificationModel extends BaseModel
+class NotificationModel extends ClubScopedModel
 {
     protected string $table = 'notifications';
 

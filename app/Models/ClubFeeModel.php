@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class ClubFeeModel extends BaseModel
+class ClubFeeModel extends ClubScopedModel
 {
     protected string $table = 'club_fees';
 

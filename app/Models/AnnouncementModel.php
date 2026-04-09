@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Helpers\Auth;
 
-class AnnouncementModel extends BaseModel
+class AnnouncementModel extends ClubScopedModel
 {
     protected string $table = 'announcements';
 

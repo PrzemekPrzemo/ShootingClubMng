@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Helpers\Database;
 
-class EmailQueueModel extends BaseModel
+class EmailQueueModel extends ClubScopedModel
 {
     protected string $table = 'email_queue';
 

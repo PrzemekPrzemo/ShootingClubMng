@@ -3,7 +3,7 @@ namespace App\Models;
 
 use App\Helpers\Auth;
 
-class ActivityLogModel extends BaseModel
+class ActivityLogModel extends ClubScopedModel
 {
     protected string $table = 'activity_log';
 

@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class WeaponModel extends BaseModel
+class WeaponModel extends ClubScopedModel
 {
     protected string $table = 'weapons';
 

@@ -8,13 +8,23 @@ class MedicalExamTypeModel extends BaseModel
 
     public function getAll(): array
     {
-        $stmt = $this->db->query("SELECT * FROM medical_exam_types ORDER BY sort_order, id");
+        $clubId = \App\Helpers\ClubContext::current();
+        if ($clubId === null) {
+            return $this->db->query("SELECT * FROM medical_exam_types ORDER BY sort_order, id")->fetchAll();
+        }
+        $stmt = $this->db->prepare("SELECT * FROM medical_exam_types WHERE club_id IS NULL OR club_id = ? ORDER BY sort_order, id");
+        $stmt->execute([$clubId]);
         return $stmt->fetchAll();
     }
 
     public function getActive(): array
     {
-        $stmt = $this->db->query("SELECT * FROM medical_exam_types WHERE is_active = 1 ORDER BY sort_order, id");
+        $clubId = \App\Helpers\ClubContext::current();
+        if ($clubId === null) {
+            return $this->db->query("SELECT * FROM medical_exam_types WHERE is_active = 1 ORDER BY sort_order, id")->fetchAll();
+        }
+        $stmt = $this->db->prepare("SELECT * FROM medical_exam_types WHERE is_active = 1 AND (club_id IS NULL OR club_id = ?) ORDER BY sort_order, id");
+        $stmt->execute([$clubId]);
         return $stmt->fetchAll();
     }
 

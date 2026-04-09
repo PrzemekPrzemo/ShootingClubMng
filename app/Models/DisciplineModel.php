@@ -6,14 +6,32 @@ class DisciplineModel extends BaseModel
 {
     protected string $table = 'disciplines';
 
+    /** Globalne + per-klub aktywne dyscypliny. */
     public function getActive(): array
     {
-        return $this->db->query("SELECT * FROM disciplines WHERE is_active = 1 ORDER BY name")->fetchAll();
+        $clubId = \App\Helpers\ClubContext::current();
+        if ($clubId === null) {
+            return $this->db->query("SELECT * FROM disciplines WHERE is_active = 1 ORDER BY name")->fetchAll();
+        }
+        $stmt = $this->db->prepare(
+            "SELECT * FROM disciplines WHERE is_active = 1 AND (club_id IS NULL OR club_id = ?) ORDER BY club_id ASC, name"
+        );
+        $stmt->execute([$clubId]);
+        return $stmt->fetchAll();
     }
 
+    /** Globalne + per-klub wszystkie dyscypliny. */
     public function getAll(): array
     {
-        return $this->db->query("SELECT * FROM disciplines ORDER BY name")->fetchAll();
+        $clubId = \App\Helpers\ClubContext::current();
+        if ($clubId === null) {
+            return $this->db->query("SELECT * FROM disciplines ORDER BY name")->fetchAll();
+        }
+        $stmt = $this->db->prepare(
+            "SELECT * FROM disciplines WHERE club_id IS NULL OR club_id = ? ORDER BY club_id ASC, name"
+        );
+        $stmt->execute([$clubId]);
+        return $stmt->fetchAll();
     }
 
     public function save(array $data): int

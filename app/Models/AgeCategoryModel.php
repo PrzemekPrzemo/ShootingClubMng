@@ -8,7 +8,13 @@ class AgeCategoryModel extends BaseModel
 
     public function getAll(): array
     {
-        return $this->db->query("SELECT * FROM member_age_categories ORDER BY sort_order, age_from")->fetchAll();
+        $clubId = \App\Helpers\ClubContext::current();
+        if ($clubId === null) {
+            return $this->db->query("SELECT * FROM member_age_categories ORDER BY sort_order, age_from")->fetchAll();
+        }
+        $stmt = $this->db->prepare("SELECT * FROM member_age_categories WHERE club_id IS NULL OR club_id = ? ORDER BY sort_order, age_from");
+        $stmt->execute([$clubId]);
+        return $stmt->fetchAll();
     }
 
     public function detectCategory(int $age): ?array
