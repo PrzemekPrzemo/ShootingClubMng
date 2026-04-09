@@ -240,50 +240,88 @@ class ConfigController extends BaseController
 
     public function createUser(): void
     {
-        $this->requireRole(['admin']);
+        $this->requireRole(['admin', 'zarzad']);
+        $clubId = ClubContext::current();
         $this->render('config/user_form', [
-            'title' => 'Dodaj użytkownika',
-            'user'  => null,
-            'mode'  => 'create',
+            'title'         => 'Dodaj użytkownika',
+            'user'          => null,
+            'mode'          => 'create',
+            'allowAdminRole' => $clubId === null,
         ]);
     }
 
     public function storeUser(): void
     {
         Csrf::verify();
-        $this->requireRole(['admin']);
+        $this->requireRole(['admin', 'zarzad']);
 
+        $clubId = ClubContext::current();
         $data   = $this->collectUserData();
+
+        // Zarząd nie może tworzyć kont admin
+        if ($clubId !== null && $data['role'] === 'admin') {
+            $data['role'] = 'zarzad';
+        }
+
         $errors = $this->validateUser($data, true);
         if ($errors) {
             Session::flash('error', implode('<br>', $errors));
             $this->redirect('config/users/create');
         }
 
-        $this->userModel->createUser($data);
+        $newId = $this->userModel->createUser($data);
+
+        // Automatycznie przypisz nowego użytkownika do bieżącego klubu
+        if ($clubId !== null && $newId) {
+            $this->userModel->assignToClub($newId, $clubId, $data['role']);
+        }
+
         Session::flash('success', 'Użytkownik został dodany.');
         $this->redirect('config/users');
     }
 
     public function editUser(string $id): void
     {
-        $this->requireRole(['admin']);
-        $user = $this->userModel->findById((int)$id);
+        $this->requireRole(['admin', 'zarzad']);
+
+        $clubId = ClubContext::current();
+        $user   = $this->userModel->findById((int)$id);
+
+        if (!$user) {
+            Session::flash('error', 'Użytkownik nie istnieje.');
+            $this->redirect('config/users');
+        }
+
+        // Zarząd może edytować tylko użytkowników swojego klubu
+        if ($clubId !== null && $this->userModel->getRoleInClub((int)$id, $clubId) === null) {
+            Session::flash('error', 'Nie możesz edytować użytkownika spoza Twojego klubu.');
+            $this->redirect('config/users');
+        }
+
         $this->render('config/user_form', [
-            'title' => 'Edytuj użytkownika',
-            'user'  => $user,
-            'mode'  => 'edit',
+            'title'          => 'Edytuj użytkownika',
+            'user'           => $user,
+            'mode'           => 'edit',
+            'allowAdminRole' => $clubId === null,
         ]);
     }
 
     public function updateUser(string $id): void
     {
         Csrf::verify();
-        $this->requireRole(['admin']);
+        $this->requireRole(['admin', 'zarzad']);
 
+        $clubId = ClubContext::current();
         $target = $this->userModel->findById((int)$id);
+
         if (!$target) {
             Session::flash('error', 'Użytkownik nie istnieje.');
+            $this->redirect('config/users');
+        }
+
+        // Zarząd może aktualizować tylko użytkowników swojego klubu
+        if ($clubId !== null && $this->userModel->getRoleInClub((int)$id, $clubId) === null) {
+            Session::flash('error', 'Nie możesz edytować użytkownika spoza Twojego klubu.');
             $this->redirect('config/users');
         }
 
@@ -294,12 +332,22 @@ class ConfigController extends BaseController
             $this->redirect("config/users/{$id}/edit");
         }
 
-        // Protect admin accounts: cannot change role away from admin
-        if (($target['role'] ?? '') === 'admin') {
-            $data['role'] = 'admin';
+        // Chroń konta admin: nie można zmienić roli z admin
+        if (!empty($target['is_super_admin']) || ($target['role'] ?? '') === 'admin') {
+            $data['role'] = $target['role'];
+        }
+        // Zarząd nie może awansować nikogo na admina
+        if ($clubId !== null && $data['role'] === 'admin') {
+            $data['role'] = 'zarzad';
         }
 
         $this->userModel->updateUser((int)$id, $data);
+
+        // Zaktualizuj rolę w user_clubs jeśli zmieniła się
+        if ($clubId !== null) {
+            $this->userModel->assignToClub((int)$id, $clubId, $data['role']);
+        }
+
         Session::flash('success', 'Użytkownik zaktualizowany.');
         $this->redirect('config/users');
     }
@@ -307,11 +355,19 @@ class ConfigController extends BaseController
     public function deleteUser(string $id): void
     {
         Csrf::verify();
-        $this->requireRole(['admin']);
+        $this->requireRole(['admin', 'zarzad']);
 
+        $clubId = ClubContext::current();
         $target = $this->userModel->findById((int)$id);
-        if (!$target || ($target['role'] ?? '') === 'admin') {
-            Session::flash('error', 'Nie można dezaktywować konta administratora.');
+
+        if (!$target || !empty($target['is_super_admin'])) {
+            Session::flash('error', 'Nie można dezaktywować tego konta.');
+            $this->redirect('config/users');
+        }
+
+        // Zarząd może dezaktywować tylko użytkowników swojego klubu
+        if ($clubId !== null && $this->userModel->getRoleInClub((int)$id, $clubId) === null) {
+            Session::flash('error', 'Nie możesz dezaktywować użytkownika spoza Twojego klubu.');
             $this->redirect('config/users');
         }
 

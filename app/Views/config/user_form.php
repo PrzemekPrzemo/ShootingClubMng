@@ -26,7 +26,7 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Rola</label>
-                <?php if (($user['role'] ?? '') === 'admin'): ?>
+                <?php if (($user['role'] ?? '') === 'admin' || !empty($user['is_super_admin'])): ?>
                     <input type="hidden" name="role" value="admin">
                     <div class="form-control bg-light text-muted" style="cursor:not-allowed">
                         <i class="bi bi-shield-lock me-1 text-danger"></i> Administrator
@@ -35,7 +35,10 @@
                 <?php else: ?>
                 <select name="role" class="form-select">
                     <?php
-                    $roleLabels = ['instruktor' => 'Instruktor', 'sędzia' => 'Sędzia', 'zarzad' => 'Zarząd', 'admin' => 'Administrator'];
+                    $roleLabels = ['instruktor' => 'Instruktor', 'sędzia' => 'Sędzia', 'zarzad' => 'Zarząd'];
+                    if ($allowAdminRole ?? false) {
+                        $roleLabels['admin'] = 'Administrator';
+                    }
                     foreach ($roleLabels as $r => $rl):
                     ?>
                         <option value="<?= $r ?>" <?= ($user['role'] ?? 'instruktor') === $r ? 'selected':'' ?>><?= $rl ?></option>
