@@ -342,7 +342,7 @@ class AdminController extends BaseController
 
         $clubs = $this->userModel->getClubsForUser((int)$userId);
         if (empty($clubs)) {
-            Session::flash('error', "Użytkownik „{$user['full_name']}" nie jest przypisany do żadnego klubu.");
+            Session::flash('error', "Użytkownik {$user['full_name']} nie jest przypisany do zadnego klubu.");
             $this->redirect('admin/users');
         }
 
