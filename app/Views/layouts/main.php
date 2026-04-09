@@ -270,6 +270,8 @@ $__brandText       = $__hasClubCtx
         $__adminNav = [
             ['icon' => 'speedometer2',        'label' => 'Dashboard',      'url' => 'admin/dashboard',            'match' => '/admin/dashboard'],
             ['icon' => 'building',             'label' => 'Kluby',          'url' => 'admin/clubs',                'match' => '/admin/clubs'],
+            ['icon' => 'people',               'label' => 'Użytkownicy',    'url' => 'admin/users',                'match' => '/admin/users'],
+            ['icon' => 'book',                 'label' => 'Słowniki',       'url' => 'config/disciplines',         'match' => '/config/'],
             ['icon' => 'joystick',             'label' => 'Demo',           'url' => 'admin/demos',                'match' => '/admin/demos'],
             ['icon' => 'credit-card-2-front',  'label' => 'Subskrypcje',   'url' => 'admin/subscriptions',        'match' => '/admin/subscriptions'],
             ['icon' => 'bar-chart-line',       'label' => 'Analityka',      'url' => 'admin/analytics',            'match' => '/admin/analytics'],

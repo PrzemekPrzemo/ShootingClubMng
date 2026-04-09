@@ -321,6 +321,147 @@ class AdminController extends BaseController
         $this->redirect('admin/dashboard');
     }
 
+    // ── User management (global) ─────────────────────────────────────────────
+
+    /** GET /admin/users */
+    public function users(): void
+    {
+        $users = $this->userModel->getAllUsers();
+        // Dołącz przypisania klubów dla każdego użytkownika
+        foreach ($users as &$u) {
+            $u['clubs'] = $this->userModel->getClubsForUser($u['id']);
+        }
+        unset($u);
+
+        $this->render('admin/users', [
+            'title' => 'Użytkownicy systemu',
+            'users' => $users,
+        ]);
+    }
+
+    /** GET /admin/users/create */
+    public function createUser(): void
+    {
+        $clubs = $this->clubModel->findAll('name');
+        $this->render('admin/user_form', [
+            'title'  => 'Nowy użytkownik',
+            'user'   => null,
+            'clubs'  => $clubs,
+        ]);
+    }
+
+    /** POST /admin/users/create */
+    public function storeUser(): void
+    {
+        Csrf::verify();
+
+        $password = trim($_POST['password'] ?? '');
+        if (strlen($password) < 8) {
+            Session::flash('error', 'Hasło musi mieć co najmniej 8 znaków.');
+            $this->redirect('admin/users/create');
+        }
+
+        $data = [
+            'username'  => trim($_POST['username'] ?? ''),
+            'email'     => trim($_POST['email'] ?? ''),
+            'full_name' => trim($_POST['full_name'] ?? ''),
+            'role'      => $_POST['role'] ?? 'instruktor',
+            'is_active' => isset($_POST['is_active']) ? 1 : 0,
+            'password'  => $password,
+        ];
+
+        if (empty($data['username']) || empty($data['email'])) {
+            Session::flash('error', 'Login i e-mail są wymagane.');
+            $this->redirect('admin/users/create');
+        }
+
+        $userId = $this->userModel->createUser($data);
+
+        // Opcjonalne przypisanie do klubu
+        $clubId = (int)($_POST['club_id'] ?? 0);
+        $role   = $_POST['club_role'] ?? 'instruktor';
+        if ($clubId > 0) {
+            $this->userModel->assignToClub($userId, $clubId, $role);
+        }
+
+        Session::flash('success', "Użytkownik \"{$data['username']}\" utworzony.");
+        $this->redirect('admin/users');
+    }
+
+    /** GET /admin/users/:id/edit */
+    public function editUser(string $id): void
+    {
+        $user = $this->userModel->findById((int)$id);
+        if (!$user) {
+            Session::flash('error', 'Użytkownik nie istnieje.');
+            $this->redirect('admin/users');
+        }
+
+        $clubs     = $this->clubModel->findAll('name');
+        $userClubs = $this->userModel->getClubsForUser((int)$id);
+
+        $this->render('admin/user_form', [
+            'title'     => 'Edycja: ' . $user['full_name'],
+            'user'      => $user,
+            'clubs'     => $clubs,
+            'userClubs' => $userClubs,
+        ]);
+    }
+
+    /** POST /admin/users/:id/edit */
+    public function updateUser(string $id): void
+    {
+        Csrf::verify();
+
+        $user = $this->userModel->findById((int)$id);
+        if (!$user) {
+            $this->redirect('admin/users');
+        }
+
+        $data = [
+            'username'  => trim($_POST['username'] ?? ''),
+            'email'     => trim($_POST['email'] ?? ''),
+            'full_name' => trim($_POST['full_name'] ?? ''),
+            'role'      => $_POST['role'] ?? $user['role'],
+            'is_active' => isset($_POST['is_active']) ? 1 : 0,
+        ];
+        $pw = trim($_POST['password'] ?? '');
+        if ($pw !== '') {
+            $data['password'] = $pw;
+        }
+
+        $this->userModel->updateUser((int)$id, $data);
+
+        // Dodaj nowe przypisanie do klubu jeśli wybrane
+        $clubId = (int)($_POST['club_id'] ?? 0);
+        if ($clubId > 0) {
+            $this->userModel->assignToClub((int)$id, $clubId, $_POST['club_role'] ?? 'instruktor');
+        }
+
+        Session::flash('success', 'Zapisano zmiany.');
+        $this->redirect("admin/users/{$id}/edit");
+    }
+
+    /** POST /admin/users/:id/delete */
+    public function deleteUser(string $id): void
+    {
+        Csrf::verify();
+        $user = $this->userModel->findById((int)$id);
+        if ($user && !$user['is_super_admin']) {
+            $this->userModel->update((int)$id, ['is_active' => 0]);
+            Session::flash('success', 'Użytkownik dezaktywowany.');
+        }
+        $this->redirect('admin/users');
+    }
+
+    /** POST /admin/users/:userId/clubs/:clubId/remove */
+    public function removeUserFromClub(string $userId, string $clubId): void
+    {
+        $this->userModel->removeFromClub((int)$userId, (int)$clubId);
+        Session::flash('success', 'Usunięto przypisanie do klubu.');
+        $this->redirect("admin/users/{$userId}/edit");
+    }
+
     private function logImpersonation(int $targetId, string $targetType, int $clubId): void
     {
         try {

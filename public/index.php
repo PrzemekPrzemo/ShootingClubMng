@@ -202,6 +202,13 @@ $router->get('/admin/switch-club/:id',                   [\App\Controllers\Admin
 $router->get('/admin/impersonate/club/:clubId/user/:userId', [\App\Controllers\AdminController::class, 'impersonateClubUser']);
 $router->get('/admin/impersonate/member/:memberId',          [\App\Controllers\AdminController::class, 'impersonateMember']);
 $router->get('/admin/stop-impersonation',                    [\App\Controllers\AdminController::class, 'stopImpersonation']);
+$router->get('/admin/users',                                 [\App\Controllers\AdminController::class, 'users']);
+$router->get('/admin/users/create',                          [\App\Controllers\AdminController::class, 'createUser']);
+$router->post('/admin/users/create',                         [\App\Controllers\AdminController::class, 'storeUser']);
+$router->get('/admin/users/:id/edit',                        [\App\Controllers\AdminController::class, 'editUser']);
+$router->post('/admin/users/:id/edit',                       [\App\Controllers\AdminController::class, 'updateUser']);
+$router->post('/admin/users/:id/delete',                     [\App\Controllers\AdminController::class, 'deleteUser']);
+$router->post('/admin/users/:userId/clubs/:clubId/remove',   [\App\Controllers\AdminController::class, 'removeUserFromClub']);
 
 // Subscriptions
 $router->get('/admin/subscriptions',                   [\App\Controllers\SubscriptionController::class, 'adminIndex']);
