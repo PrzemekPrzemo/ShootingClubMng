@@ -149,11 +149,23 @@ class ConfigController extends BaseController
     public function users(): void
     {
         $permModel = new RolePermissionModel();
-        // Ukryj konta superadmina — zarządzane wyłącznie przez panel /admin/users
-        $users = array_values(array_filter(
-            $this->userModel->getAllUsers(),
-            fn($u) => empty($u['is_super_admin'])
-        ));
+        $clubId    = \App\Helpers\ClubContext::current();
+
+        if ($clubId !== null) {
+            // Tylko użytkownicy przypisani do tego klubu; rola = najwyższa rola w klubie
+            $raw   = $this->userModel->getUsersForClub($clubId);
+            $users = array_map(function ($u) {
+                $roles     = $u['club_roles'] ? explode(',', $u['club_roles']) : [];
+                $u['role'] = $roles ? \App\Models\UserModel::highestRole($roles) : 'zawodnik';
+                return $u;
+            }, $raw);
+        } else {
+            // Superadmin bez kontekstu — wszyscy (bez superadminów)
+            $users = array_values(array_filter(
+                $this->userModel->getAllUsers(),
+                fn($u) => empty($u['is_super_admin'])
+            ));
+        }
 
         $this->render('config/users', [
             'title'      => 'Użytkownicy systemu',
