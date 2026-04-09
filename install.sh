@@ -68,7 +68,7 @@ separator() { echo -e "${CYAN}━━━━━━━━━━━━━━━━�
 clear
 separator
 echo -e "  ${BOLD}${RED}🎯  Klub Strzelecki — System zarządzania${NC}"
-echo -e "  Instalator v1.0"
+echo -e "  Instalator v2.0 (multi-tenant)"
 separator
 echo
 
@@ -168,14 +168,21 @@ else
     die "Klient MySQL/MariaDB nie jest zainstalowany."
 fi
 
-# PHP rozszerzenia
-for ext in pdo pdo_mysql mbstring json; do
+# PHP rozszerzenia wymagane
+for ext in pdo pdo_mysql mbstring json curl openssl fileinfo; do
     if $PHP_CMD -m | grep -qi "^${ext}$"; then
         success "Rozszerzenie PHP: ${ext}"
     else
-        die "Brakuje rozszerzenia PHP: ${ext}. Zainstaluj i spróbuj ponownie."
+        die "Brakuje rozszerzenia PHP: ${ext}. Włącz w Plesk: PHP → Rozszerzenia → ${ext}"
     fi
 done
+# GD (wymagane przez mPDF do generowania PDF)
+if $PHP_CMD -m | grep -qi "^gd$"; then
+    success "Rozszerzenie PHP: gd"
+else
+    warn "Brak rozszerzenia PHP: gd — generowanie PDF (mPDF) może nie działać."
+    warn "Włącz w Plesk: PHP → Rozszerzenia → gd"
+fi
 
 echo
 
@@ -375,6 +382,47 @@ return [
 PHP
 success "config/app.local.php"
 
+# =============================================================================
+# 4b. Composer — instalacja zależności PHP
+# =============================================================================
+separator
+echo -e "  ${BOLD}KROK 4b — Instalacja zależności (Composer)${NC}"
+separator
+
+if [[ -f "${INSTALL_DIR}/vendor/autoload.php" ]]; then
+    success "vendor/autoload.php już istnieje — pomijam Composer."
+else
+    COMPOSER_CMD=""
+    # Szukaj systemowego composera
+    for candidate in composer composer.phar /usr/local/bin/composer /usr/bin/composer; do
+        if command -v "$candidate" &>/dev/null || [[ -x "$candidate" ]]; then
+            COMPOSER_CMD="$candidate"
+            break
+        fi
+    done
+
+    if [[ -z "$COMPOSER_CMD" ]]; then
+        info "Pobieranie Composer…"
+        $PHP_CMD -r "copy('https://getcomposer.org/installer', '/tmp/composer-setup.php');"
+        $PHP_CMD /tmp/composer-setup.php --quiet --install-dir="${INSTALL_DIR}" --filename=composer.phar
+        rm -f /tmp/composer-setup.php
+        COMPOSER_CMD="${INSTALL_DIR}/composer.phar"
+        success "Composer pobrany: ${COMPOSER_CMD}"
+    else
+        success "Composer znaleziony: ${COMPOSER_CMD}"
+    fi
+
+    info "Instalowanie zależności (bez dev, z optymalizacją autoloadera)…"
+    $PHP_CMD "$COMPOSER_CMD" install \
+        --working-dir="${INSTALL_DIR}" \
+        --no-dev \
+        --optimize-autoloader \
+        --no-interaction 2>&1 | grep -v "^$" | tail -20
+    success "Zależności zainstalowane."
+fi
+
+echo
+
 echo
 
 # =============================================================================
@@ -388,12 +436,29 @@ info "Importowanie ${INSTALL_DIR}/database/schema.sql…"
 mysql_cmd "${DB_NAME}" < "${INSTALL_DIR}/database/schema.sql"
 success "Schemat bazy danych zaimportowany."
 
+# ── Migracje v2–v28 ──
+info "Uruchamianie migracji bazy danych…"
+MIGRATION_OK=0
+MIGRATION_FAIL=0
+for MIG_FILE in $(ls "${INSTALL_DIR}/database/migration_v"*.sql | sort -V); do
+    MIG_NAME="$(basename "${MIG_FILE}")"
+    if mysql_cmd "${DB_NAME}" < "${MIG_FILE}" 2>/dev/null; then
+        success "Migracja: ${MIG_NAME}"
+        (( MIGRATION_OK++ )) || true
+    else
+        warn "Migracja z ostrzeżeniem (może być OK przy reinstalacji): ${MIG_NAME}"
+        (( MIGRATION_FAIL++ )) || true
+    fi
+done
+info "Migracje: ${MIGRATION_OK} OK, ${MIGRATION_FAIL} z ostrzeżeniami."
+
 # Aktualizacja nazwy klubu i e-maila w settings
 info "Aktualizacja ustawień klubu w bazie danych…"
 mysql_cmd "${DB_NAME}" <<SQL
 UPDATE settings SET value = '${APP_CLUB_NAME}'  WHERE \`key\` = 'club_name';
 UPDATE settings SET value = '${APP_CLUB_EMAIL}' WHERE \`key\` = 'club_email';
 UPDATE settings SET value = '${APP_CLUB_PHONE}' WHERE \`key\` = 'club_phone';
+UPDATE clubs   SET name   = '${APP_CLUB_NAME}'  WHERE id = 1;
 SQL
 success "Ustawienia klubu zapisane."
 
@@ -405,11 +470,15 @@ mysql_cmd "${DB_NAME}" <<SQL
 -- Usuń domyślnego admina z seeda, jeśli istnieje
 DELETE FROM users WHERE username = 'admin';
 
--- Utwórz właściwe konto admina
-INSERT INTO users (username, email, password, role, full_name, is_active)
-VALUES ('${ADMIN_USERNAME}', '${ADMIN_EMAIL}', '${ADMIN_HASH}', 'admin', '${ADMIN_FULLNAME}', 1);
+-- Utwórz superadmina multi-tenant
+INSERT INTO users (username, email, password, role, full_name, is_active, is_super_admin)
+VALUES ('${ADMIN_USERNAME}', '${ADMIN_EMAIL}', '${ADMIN_HASH}', 'admin', '${ADMIN_FULLNAME}', 1, 1);
+
+-- Przypisz do klubu domyślnego (id=1) z rolą zarzad
+INSERT IGNORE INTO user_clubs (user_id, club_id, role, is_active)
+VALUES (LAST_INSERT_ID(), 1, 'zarzad', 1);
 SQL
-success "Konto administratora '${ADMIN_USERNAME}' utworzone."
+success "Konto superadmina '${ADMIN_USERNAME}' utworzone (is_super_admin=1)."
 
 echo
 
@@ -421,9 +490,12 @@ echo -e "  ${BOLD}KROK 6 — Uprawnienia plików i katalogów${NC}"
 separator
 
 # Katalogi do zapisu
-info "Tworzenie katalogów na pliki tymczasowe…"
+info "Tworzenie katalogów wymaganych przez aplikację…"
 mkdir -p "${INSTALL_DIR}/logs"
 mkdir -p "${INSTALL_DIR}/public/uploads"
+mkdir -p "${INSTALL_DIR}/storage/medical"
+mkdir -p "${INSTALL_DIR}/storage/photos"
+mkdir -p "${INSTALL_DIR}/storage/backups"
 
 info "Ustawianie uprawnień katalogów…"
 
@@ -446,7 +518,10 @@ success "Katalogi: 755 (rwxr-xr-x)"
 # Katalogi wymagające zapisu przez serwer WWW
 chmod 775 "${INSTALL_DIR}/logs"
 chmod 775 "${INSTALL_DIR}/public/uploads"
-success "logs/ i public/uploads/: 775 (rwxrwxr-x)"
+chmod 775 "${INSTALL_DIR}/storage/medical"
+chmod 775 "${INSTALL_DIR}/storage/photos"
+chmod 775 "${INSTALL_DIR}/storage/backups"
+success "logs/, public/uploads/, storage/*: 775 (rwxrwxr-x)"
 
 # Pliki z danymi wrażliwymi — bardziej restrykcyjne
 chmod 600 "${INSTALL_DIR}/config/database.local.php"
@@ -467,11 +542,13 @@ done
 
 if [[ -n "$WWW_USER" ]]; then
     info "Wykryto użytkownika serwera WWW: ${WWW_USER}"
-    if ask_yn "Ustawić właściciela logs/ i uploads/ na ${WWW_USER}?" "y"; then
-        chown -R "${WWW_USER}:${WWW_USER}" "${INSTALL_DIR}/logs" \
-            "${INSTALL_DIR}/public/uploads" 2>/dev/null || \
+    if ask_yn "Ustawić właściciela katalogów zapisu na ${WWW_USER}?" "y"; then
+        chown -R "${WWW_USER}:${WWW_USER}" \
+            "${INSTALL_DIR}/logs" \
+            "${INSTALL_DIR}/public/uploads" \
+            "${INSTALL_DIR}/storage" 2>/dev/null || \
             warn "Brak uprawnień do zmiany właściciela (uruchom jako root)."
-        success "Właściciel logs/ i uploads/ → ${WWW_USER}"
+        success "Właściciel logs/, uploads/, storage/ → ${WWW_USER}"
     fi
 
     # Pliki konfiguracyjne — właściciel root, grupa www-user, chmod 640
@@ -583,7 +660,7 @@ ERRORS=0
 
 # Sprawdź tabele
 info "Sprawdzanie struktury bazy danych…"
-EXPECTED_TABLES="users members member_age_categories member_disciplines member_medical_exams licenses payments payment_types disciplines competitions competition_entries competition_results competition_groups settings activity_log"
+EXPECTED_TABLES="users members member_age_categories member_disciplines member_medical_exams licenses payments payment_types disciplines competitions competition_entries competition_results competition_groups settings activity_log clubs user_clubs club_settings club_customization club_subscriptions sms_queue email_templates"
 for tbl in $EXPECTED_TABLES; do
     COUNT=$(mysql_cmd "${DB_NAME}" -se "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='${DB_NAME}' AND TABLE_NAME='${tbl}';" 2>/dev/null)
     if [[ "$COUNT" == "1" ]]; then
@@ -594,13 +671,22 @@ for tbl in $EXPECTED_TABLES; do
     fi
 done
 
-# Sprawdź konto admina
+# Sprawdź konto admina (is_super_admin=1 po migracji v25)
 info "Sprawdzanie konta administratora…"
-ADMIN_COUNT=$(mysql_cmd "${DB_NAME}" -se "SELECT COUNT(*) FROM users WHERE username='${ADMIN_USERNAME}' AND role='admin';" 2>/dev/null)
+ADMIN_COUNT=$(mysql_cmd "${DB_NAME}" -se "SELECT COUNT(*) FROM users WHERE username='${ADMIN_USERNAME}' AND is_super_admin=1;" 2>/dev/null)
 if [[ "$ADMIN_COUNT" == "1" ]]; then
-    success "Konto administratora: ${ADMIN_USERNAME}"
+    success "Konto superadmina: ${ADMIN_USERNAME}"
 else
-    error "Brak konta administratora!"
+    error "Brak konta superadmina!"
+    ((ERRORS++))
+fi
+
+# Sprawdź klub domyślny
+CLUB_COUNT=$(mysql_cmd "${DB_NAME}" -se "SELECT COUNT(*) FROM clubs WHERE id=1;" 2>/dev/null || echo "0")
+if [[ "$CLUB_COUNT" == "1" ]]; then
+    success "Klub domyślny (id=1): OK"
+else
+    error "Brak klubu domyślnego (id=1)!"
     ((ERRORS++))
 fi
 
@@ -631,26 +717,23 @@ echo -e "  ${BOLD}Dane logowania:${NC}"
 echo -e "    Login:  ${CYAN}${ADMIN_USERNAME}${NC}"
 echo -e "    Hasło:  ${CYAN}(podane podczas instalacji)${NC}"
 echo
-echo -e "  ${BOLD}Konfiguracja serwera WWW:${NC}"
+echo -e "  ${BOLD}Konfiguracja serwera WWW (jeśli nie ustawiono wcześniej):${NC}"
 echo -e "    Document Root → ${CYAN}${INSTALL_DIR}/public/${NC}"
 echo
 echo -e "  ${BOLD}Następne kroki:${NC}"
-echo -e "    1. Ustaw Document Root serwera na: ${CYAN}${INSTALL_DIR}/public${NC}"
-echo -e "       Plesk: Strony → wksfg.pl → Ustawienia hostingu → Katalog główny dokumentów"
-echo -e "    2. Ustaw PHP >= 8.1 dla domeny:"
-echo -e "       Plesk: Strony → wksfg.pl → PHP → wybierz ${CYAN}8.3${NC} → OK"
-echo -e "    3. Włącz mod_rewrite / Apache handlers"
-echo -e "    4. Otwórz aplikację i zaloguj się"
-echo -e "    5. Uzupełnij dane klubu w: ${CYAN}Konfiguracja → Ustawienia${NC}"
+echo -e "    1. Sprawdź Document Root w Plesk:"
+echo -e "       Strony → ${SITE_DOMAIN:-DOMENA} → Ustawienia hostingu"
+echo -e "       Ustaw: ${CYAN}${INSTALL_DIR}/public${NC}"
+echo -e "    2. PHP 8.3 dla domeny (Plesk → PHP → 8.3)"
+echo -e "    3. Zaloguj się: ${CYAN}https://${SITE_DOMAIN:-DOMENA}/auth/login${NC}"
+echo -e "       Login: ${CYAN}${ADMIN_USERNAME}${NC} | Hasło: (podane podczas instalacji)"
+echo -e "    4. Panel superadmina: ${CYAN}https://${SITE_DOMAIN:-DOMENA}/admin/dashboard${NC}"
 echo
-echo -e "  ${BOLD}Narzędzie diagnostyczne (jeśli coś nie działa):${NC}"
-
-# Wygeneruj token dla diagnose.php
-if [[ -f "${INSTALL_DIR}/config/database.local.php" ]]; then
-    DIAG_TOKEN=$(php -r "echo md5(filemtime('${INSTALL_DIR}/config/database.local.php'));")
-    echo -e "    ${CYAN}https://wksfg.pl/diagnose.php?token=${DIAG_TOKEN}${NC}"
-    echo -e "    (sprawdza PHP, bazę, uprawnienia, error log — usuń po diagnozie!)"
-fi
+echo -e "  ${BOLD}Crony (dodaj w Plesk → Zaplanowane zadania):${NC}"
+echo -e "    ${CYAN}* * * * *   ${PHP_CMD} ${INSTALL_DIR}/cli/process_queue.php${NC}"
+echo -e "    ${CYAN}0 6 * * *   ${PHP_CMD} ${INSTALL_DIR}/cli/queue_reminders.php${NC}"
+echo -e "    ${CYAN}*/5 * * * * ${PHP_CMD} ${INSTALL_DIR}/cli/process_sms_queue.php${NC}"
+echo -e "    ${CYAN}0 * * * *   ${PHP_CMD} ${INSTALL_DIR}/cli/cleanup_demos.php${NC}"
 echo
 if [[ "$APP_DEBUG" == "true" ]]; then
     warn "Tryb DEBUG jest włączony — błędy PHP wyświetlane w przeglądarce."
