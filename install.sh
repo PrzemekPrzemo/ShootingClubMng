@@ -537,47 +537,93 @@ chmod 775 "${INSTALL_DIR}/storage/photos"
 chmod 775 "${INSTALL_DIR}/storage/backups"
 success "logs/, public/uploads/, storage/*: 775 (rwxrwxr-x)"
 
-# Pliki z danymi wrażliwymi — bardziej restrykcyjne
+# Pliki z danymi wrażliwymi — tymczasowo 600, właściwa grupa poniżej
 chmod 600 "${INSTALL_DIR}/config/database.local.php"
 chmod 600 "${INSTALL_DIR}/config/app.local.php"
-success "config/*.local.php: 600 (rw-------)"
 
 # Skrypt instalacyjny — tylko odczyt po instalacji
 chmod 644 "${INSTALL_DIR}/install.sh"
 
-# Sprawdź czy istnieje użytkownik www-data / apache / nginx
+# ── Wykryj użytkownika PHP-FPM dla tej domeny (Plesk) ────────────────────────
+# Kolejność prób:
+#  1. Plesk per-domain FPM config: /var/www/vhosts/system/DOMAIN/etc/php-fpm.conf
+#  2. Plesk shared FPM pools:      /opt/plesk/php/X.Y/etc/php-fpm.d/DOMAIN.conf
+#  3. Klasyczny www-data/apache/nginx
+
 WWW_USER=""
-for candidate in www-data apache nginx http; do
-    if id "$candidate" &>/dev/null; then
-        WWW_USER="$candidate"
-        break
+DOMAIN_NAME="$(basename "$(dirname "${INSTALL_DIR}")")"  # np. portal.shootero.pl
+
+info "Wykrywanie użytkownika PHP-FPM dla domeny '${DOMAIN_NAME}'…"
+
+# Metoda 1 — Plesk per-domain config
+PLESK_FPM_CONF="/var/www/vhosts/system/${DOMAIN_NAME}/etc/php-fpm.conf"
+if [[ -f "$PLESK_FPM_CONF" ]]; then
+    _u=$(grep -E "^user\s*=" "$PLESK_FPM_CONF" 2>/dev/null | awk -F'=' '{print $2}' | tr -d ' ')
+    if [[ -n "$_u" ]] && id "$_u" &>/dev/null; then
+        WWW_USER="$_u"
+        success "PHP-FPM user (Plesk per-domain): ${WWW_USER}"
     fi
-done
+fi
+
+# Metoda 2 — Plesk shared FPM pools dla PHP 8.x
+if [[ -z "$WWW_USER" ]]; then
+    for _phpver in 8.3 8.2 8.1 8.0 7.4; do
+        _pool_dir="/opt/plesk/php/${_phpver}/etc/php-fpm.d"
+        if [[ -d "$_pool_dir" ]]; then
+            _conf=$(grep -rl "${DOMAIN_NAME}" "$_pool_dir" 2>/dev/null | head -1)
+            if [[ -n "$_conf" ]]; then
+                _u=$(grep -E "^user\s*=" "$_conf" 2>/dev/null | awk -F'=' '{print $2}' | tr -d ' ')
+                if [[ -n "$_u" ]] && id "$_u" &>/dev/null; then
+                    WWW_USER="$_u"
+                    success "PHP-FPM user (Plesk pool ${_phpver}): ${WWW_USER}"
+                    break
+                fi
+            fi
+        fi
+    done
+fi
+
+# Metoda 3 — klasyczny użytkownik WWW
+if [[ -z "$WWW_USER" ]]; then
+    for candidate in www-data apache nginx http; do
+        if id "$candidate" &>/dev/null; then
+            WWW_USER="$candidate"
+            success "PHP-FPM user (klasyczny): ${WWW_USER}"
+            break
+        fi
+    done
+fi
+
+# Metoda 4 — zapytaj użytkownika
+if [[ -z "$WWW_USER" ]]; then
+    warn "Nie udało się automatycznie wykryć użytkownika PHP-FPM."
+    warn "Sprawdź: grep -rE '^user' /var/www/vhosts/system/${DOMAIN_NAME}/etc/"
+    WWW_USER=$(ask "Podaj użytkownika PHP-FPM ręcznie (lub Enter, by pominąć)" "")
+fi
 
 if [[ -n "$WWW_USER" ]]; then
-    info "Wykryto użytkownika serwera WWW: ${WWW_USER}"
-    if ask_yn "Ustawić właściciela katalogów zapisu na ${WWW_USER}?" "y"; then
-        chown -R "${WWW_USER}:${WWW_USER}" \
-            "${INSTALL_DIR}/logs" \
-            "${INSTALL_DIR}/public/uploads" \
-            "${INSTALL_DIR}/storage" 2>/dev/null || \
-            warn "Brak uprawnień do zmiany właściciela (uruchom jako root)."
-        success "Właściciel logs/, uploads/, storage/ → ${WWW_USER}"
-    fi
+    # Katalogi zapisu — właściciel = FPM user
+    chown -R "${WWW_USER}:${WWW_USER}" \
+        "${INSTALL_DIR}/logs" \
+        "${INSTALL_DIR}/public/uploads" \
+        "${INSTALL_DIR}/storage" 2>/dev/null || \
+        warn "Brak uprawnień do zmiany właściciela — uruchom jako root."
+    success "Właściciel logs/, uploads/, storage/ → ${WWW_USER}"
 
-    # Pliki konfiguracyjne — właściciel root, grupa www-user, chmod 640
-    # Dzięki temu serwer WWW może odczytać hasła DB, a inni użytkownicy nie
-    chown "root:${WWW_USER}" "${INSTALL_DIR}/config/database.local.php" \
-                              "${INSTALL_DIR}/config/app.local.php" 2>/dev/null || true
-    chmod 640 "${INSTALL_DIR}/config/database.local.php" \
-              "${INSTALL_DIR}/config/app.local.php"
-    success "config/*.local.php: 640 (root:${WWW_USER}) — tylko serwer WWW może odczytać"
+    # Pliki konfiguracyjne — root:FPM_USER 640
+    # FPM może odczytać hasła DB, inni użytkownicy nie
+    chown "root:${WWW_USER}" \
+        "${INSTALL_DIR}/config/database.local.php" \
+        "${INSTALL_DIR}/config/app.local.php" 2>/dev/null || true
+    chmod 640 \
+        "${INSTALL_DIR}/config/database.local.php" \
+        "${INSTALL_DIR}/config/app.local.php"
+    success "config/*.local.php: 640 (root:${WWW_USER})"
 else
-    warn "Nie wykryto użytkownika serwera WWW (www-data/apache/nginx)."
-    warn "Ustaw ręcznie:"
-    warn "  chown root:<www-user> ${INSTALL_DIR}/config/*.local.php"
-    warn "  chmod 640 ${INSTALL_DIR}/config/*.local.php"
-    warn "  chown -R <www-user>: ${INSTALL_DIR}/logs ${INSTALL_DIR}/public/uploads"
+    warn "Pominięto zmianę właściciela. Wykonaj ręcznie:"
+    warn "  FPM_USER=\$(grep -E '^user' /var/www/vhosts/system/${DOMAIN_NAME}/etc/php-fpm.conf | awk -F= '{print \$2}' | tr -d ' ')"
+    warn "  chown root:\$FPM_USER ${INSTALL_DIR}/config/*.local.php && chmod 640 ${INSTALL_DIR}/config/*.local.php"
+    warn "  chown -R \$FPM_USER: ${INSTALL_DIR}/logs ${INSTALL_DIR}/storage"
 fi
 
 echo
