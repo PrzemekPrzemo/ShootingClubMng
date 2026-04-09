@@ -371,11 +371,17 @@ class AdminController extends BaseController
             $this->redirect('admin/users/create');
         }
 
+        // System role is derived from club roles; default to 'instruktor'
+        $clubRoles = array_filter((array)($_POST['club_roles'] ?? []));
+        $sysRole   = $clubRoles
+            ? \App\Models\UserModel::highestRole($clubRoles)
+            : 'instruktor';
+
         $data = [
             'username'  => trim($_POST['username'] ?? ''),
             'email'     => trim($_POST['email'] ?? ''),
             'full_name' => trim($_POST['full_name'] ?? ''),
-            'role'      => $_POST['role'] ?? 'instruktor',
+            'role'      => $sysRole,
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
             'password'  => $password,
         ];
@@ -387,11 +393,10 @@ class AdminController extends BaseController
 
         $userId = $this->userModel->createUser($data);
 
-        // Opcjonalne przypisanie do klubu
+        // Assign to club with selected roles
         $clubId = (int)($_POST['club_id'] ?? 0);
-        $role   = $_POST['club_role'] ?? 'instruktor';
-        if ($clubId > 0) {
-            $this->userModel->assignToClub($userId, $clubId, $role);
+        if ($clubId > 0 && !empty($clubRoles)) {
+            $this->userModel->setRolesInClub($userId, $clubId, $clubRoles);
         }
 
         Session::flash('success', "Użytkownik \"{$data['username']}\" utworzony.");
@@ -428,11 +433,17 @@ class AdminController extends BaseController
             $this->redirect('admin/users');
         }
 
+        // Derive system role from club roles if provided
+        $clubRoles = array_filter((array)($_POST['club_roles'] ?? []));
+        $sysRole   = $clubRoles
+            ? \App\Models\UserModel::highestRole($clubRoles)
+            : ($user['role'] ?? 'instruktor');
+
         $data = [
             'username'  => trim($_POST['username'] ?? ''),
             'email'     => trim($_POST['email'] ?? ''),
             'full_name' => trim($_POST['full_name'] ?? ''),
-            'role'      => $_POST['role'] ?? $user['role'],
+            'role'      => $sysRole,
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
         ];
         $pw = trim($_POST['password'] ?? '');
@@ -442,10 +453,10 @@ class AdminController extends BaseController
 
         $this->userModel->updateUser((int)$id, $data);
 
-        // Dodaj nowe przypisanie do klubu jeśli wybrane
+        // Update club roles if a club was selected
         $clubId = (int)($_POST['club_id'] ?? 0);
-        if ($clubId > 0) {
-            $this->userModel->assignToClub((int)$id, $clubId, $_POST['club_role'] ?? 'instruktor');
+        if ($clubId > 0 && !empty($clubRoles)) {
+            $this->userModel->setRolesInClub((int)$id, $clubId, $clubRoles);
         }
 
         Session::flash('success', 'Zapisano zmiany.');

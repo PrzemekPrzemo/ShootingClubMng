@@ -58,7 +58,34 @@ class UserModel extends BaseModel
     // Multi-club: powiązanie użytkowników z klubami
     // ------------------------------------------------------------------
 
-    /** Pobierz listę klubów przypisanych do użytkownika (z rolą). */
+    /**
+     * Role priority — higher value = more permissions.
+     * Used to compute the effective (highest) role for a user.
+     */
+    public const ROLE_PRIORITY = [
+        'admin'     => 5,
+        'zarzad'    => 4,
+        'sędzia'    => 3,
+        'instruktor'=> 2,
+        'zawodnik'  => 1,
+    ];
+
+    /** Returns the highest-priority role from a list. */
+    public static function highestRole(array $roles): string
+    {
+        $best = 'zawodnik';
+        foreach ($roles as $r) {
+            if ((self::ROLE_PRIORITY[$r] ?? 0) > (self::ROLE_PRIORITY[$best] ?? 0)) {
+                $best = $r;
+            }
+        }
+        return $best;
+    }
+
+    /**
+     * Pobierz listę klubów przypisanych do użytkownika.
+     * Każdy klub zwraca roles[] (tablica ról) + highest_role (najwyższa).
+     */
     public function getClubsForUser(int $userId): array
     {
         $stmt = $this->db->prepare(
@@ -66,41 +93,99 @@ class UserModel extends BaseModel
              FROM user_clubs uc
              JOIN clubs c ON c.id = uc.club_id
              WHERE uc.user_id = ? AND uc.is_active = 1 AND c.is_active = 1
-             ORDER BY c.name"
+             ORDER BY c.name, FIELD(uc.role,'admin','zarzad','sędzia','instruktor','zawodnik')"
         );
         $stmt->execute([$userId]);
-        return $stmt->fetchAll();
+        $rows = $stmt->fetchAll();
+
+        // Group by club_id so each club has a roles[] array
+        $grouped = [];
+        foreach ($rows as $row) {
+            $cid = $row['club_id'];
+            if (!isset($grouped[$cid])) {
+                $grouped[$cid] = [
+                    'club_id'      => $cid,
+                    'club_name'    => $row['club_name'],
+                    'short_name'   => $row['short_name'],
+                    'is_active'    => $row['is_active'],
+                    'roles'        => [],
+                    'highest_role' => 'zawodnik',
+                    // keep legacy 'role' key for backward compat
+                    'role'         => 'zawodnik',
+                ];
+            }
+            $grouped[$cid]['roles'][]       = $row['role'];
+            $grouped[$cid]['highest_role']  = self::highestRole($grouped[$cid]['roles']);
+            $grouped[$cid]['role']          = $grouped[$cid]['highest_role'];
+        }
+        return array_values($grouped);
     }
 
-    /** Zwróć rolę użytkownika w danym klubie (lub null). */
+    /**
+     * Zwróć najwyższą rolę użytkownika w danym klubie (lub null).
+     */
     public function getRoleInClub(int $userId, int $clubId): ?string
     {
         $stmt = $this->db->prepare(
-            "SELECT role FROM user_clubs WHERE user_id = ? AND club_id = ? AND is_active = 1 LIMIT 1"
+            "SELECT role FROM user_clubs WHERE user_id = ? AND club_id = ? AND is_active = 1"
         );
         $stmt->execute([$userId, $clubId]);
-        $row = $stmt->fetch();
-        return $row ? $row['role'] : null;
+        $roles = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+        return $roles ? self::highestRole($roles) : null;
     }
 
-    /** Przypisz użytkownika do klubu z rolą. */
-    public function assignToClub(int $userId, int $clubId, string $role): void
+    /**
+     * Zwróć wszystkie role użytkownika w danym klubie.
+     */
+    public function getRolesInClub(int $userId, int $clubId): array
     {
         $stmt = $this->db->prepare(
+            "SELECT role FROM user_clubs WHERE user_id = ? AND club_id = ? AND is_active = 1"
+        );
+        $stmt->execute([$userId, $clubId]);
+        return $stmt->fetchAll(\PDO::FETCH_COLUMN);
+    }
+
+    /**
+     * Ustaw role użytkownika w klubie (zastępuje wszystkie poprzednie).
+     * Deaktywuje nieobecne role, dodaje nowe.
+     */
+    public function setRolesInClub(int $userId, int $clubId, array $roles): void
+    {
+        // Soft-delete all current roles
+        $this->db->prepare(
+            "UPDATE user_clubs SET is_active = 0 WHERE user_id = ? AND club_id = ?"
+        )->execute([$userId, $clubId]);
+
+        // Re-insert/activate each selected role
+        $ins = $this->db->prepare(
             "INSERT INTO user_clubs (user_id, club_id, role, is_active)
              VALUES (?, ?, ?, 1)
-             ON DUPLICATE KEY UPDATE role = VALUES(role), is_active = 1"
+             ON DUPLICATE KEY UPDATE is_active = 1"
         );
-        $stmt->execute([$userId, $clubId, $role]);
+        foreach (array_unique($roles) as $role) {
+            if (isset(self::ROLE_PRIORITY[$role])) {
+                $ins->execute([$userId, $clubId, $role]);
+            }
+        }
+    }
+
+    /** Przypisz użytkownika do klubu z pojedynczą rolą (backward compat). */
+    public function assignToClub(int $userId, int $clubId, string $role): void
+    {
+        $this->db->prepare(
+            "INSERT INTO user_clubs (user_id, club_id, role, is_active)
+             VALUES (?, ?, ?, 1)
+             ON DUPLICATE KEY UPDATE is_active = 1"
+        )->execute([$userId, $clubId, $role]);
     }
 
     /** Usuń użytkownika z klubu (soft — is_active = 0). */
     public function removeFromClub(int $userId, int $clubId): void
     {
-        $stmt = $this->db->prepare(
+        $this->db->prepare(
             "UPDATE user_clubs SET is_active = 0 WHERE user_id = ? AND club_id = ?"
-        );
-        $stmt->execute([$userId, $clubId]);
+        )->execute([$userId, $clubId]);
     }
 
     /** Pobierz użytkowników przypisanych do danego klubu. */
@@ -108,10 +193,11 @@ class UserModel extends BaseModel
     {
         $stmt = $this->db->prepare(
             "SELECT u.id, u.username, u.email, u.full_name, u.is_active, u.last_login,
-                    uc.role AS club_role
+                    GROUP_CONCAT(uc.role ORDER BY FIELD(uc.role,'admin','zarzad','sędzia','instruktor','zawodnik') SEPARATOR ',') AS club_roles
              FROM user_clubs uc
              JOIN users u ON u.id = uc.user_id
              WHERE uc.club_id = ? AND uc.is_active = 1
+             GROUP BY u.id, u.username, u.email, u.full_name, u.is_active, u.last_login
              ORDER BY u.full_name"
         );
         $stmt->execute([$clubId]);
