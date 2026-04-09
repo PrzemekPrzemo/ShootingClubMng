@@ -2,8 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Helpers\ClubContext;
 use App\Helpers\Csrf;
-use App\Helpers\Mailer;
+use App\Helpers\EmailService;
 use App\Helpers\Session;
 use App\Models\EmailQueueModel;
 use App\Models\SettingModel;
@@ -72,20 +73,21 @@ class NotificationsController extends BaseController
         $failed  = 0;
 
         foreach ($pending as $item) {
-            $ok = Mailer::send(
+            // Multi-club: użyj EmailService z routingiem SMTP per klub
+            $clubId = $item['club_id'] ?? (ClubContext::current() ?? 1);
+            $ok = EmailService::send(
+                (int)$clubId,
                 $item['to_email'],
                 $item['to_name'],
                 $item['subject'],
-                $item['body_html'],
-                $fromEmail,
-                $fromName
+                $item['body_html']
             );
 
             if ($ok) {
                 $this->queueModel->markSent($item['id']);
                 $sent++;
             } else {
-                $this->queueModel->markFailed($item['id'], 'mail() zwrócił false');
+                $this->queueModel->markFailed($item['id'], 'EmailService::send() failed');
                 $failed++;
             }
         }
