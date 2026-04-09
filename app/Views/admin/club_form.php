@@ -54,6 +54,64 @@
             </div>
             <?php endif; ?>
 
+            <hr class="my-4">
+            <h6 class="text-uppercase text-muted small mb-3"><i class="bi bi-credit-card-2-front"></i> Subskrypcja / Limity</h6>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Plan</label>
+                    <select class="form-select" name="plan">
+                        <option value="">— Brak —</option>
+                        <?php foreach (['trial' => 'Trial (próbny)', 'basic' => 'Basic', 'standard' => 'Standard', 'premium' => 'Premium'] as $planKey => $planLabel): ?>
+                        <option value="<?= $planKey ?>" <?= ($subscription['plan'] ?? '') === $planKey ? 'selected' : '' ?>>
+                            <?= $planLabel ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Ważny do</label>
+                    <input type="date" class="form-control" name="valid_until"
+                           value="<?= e($subscription['valid_until'] ?? '') ?>">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" name="sub_status">
+                        <option value="active"    <?= ($subscription['status'] ?? 'active') === 'active'    ? 'selected' : '' ?>>Aktywny</option>
+                        <option value="expired"   <?= ($subscription['status'] ?? '')        === 'expired'   ? 'selected' : '' ?>>Wygasły</option>
+                        <option value="cancelled" <?= ($subscription['status'] ?? '')        === 'cancelled' ? 'selected' : '' ?>>Anulowany</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Maksymalna liczba zawodników</label>
+                <input type="number" class="form-control" name="max_members" min="1" style="max-width:200px"
+                       value="<?= e($subscription['max_members'] ?? '') ?>"
+                       placeholder="bez limitu">
+                <div class="form-text">Pozostaw puste = bez limitu.</div>
+            </div>
+
+            <hr class="my-4">
+            <h6 class="text-uppercase text-muted small mb-1"><i class="bi bi-toggles"></i> Aktywne moduły</h6>
+            <p class="text-muted small mb-3">Odznaczone moduły nie będą widoczne w menu bocznym użytkowników tego klubu.</p>
+
+            <div class="row g-2 mb-4">
+                <?php foreach (\App\Models\RolePermissionModel::MODULES as $mod => $cfg):
+                    if ($mod === 'dashboard') continue; ?>
+                <div class="col-md-4 col-lg-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="modules[]"
+                               value="<?= $mod ?>" id="mod_<?= $mod ?>"
+                               <?= ($clubModules[$mod] ?? true) ? 'checked' : '' ?>>
+                        <label class="form-check-label small" for="mod_<?= $mod ?>">
+                            <i class="bi bi-<?= $cfg['icon'] ?>"></i> <?= e($cfg['label']) ?>
+                        </label>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check-lg"></i> <?= $isEdit ? 'Zapisz' : 'Utwórz' ?>

@@ -4,7 +4,7 @@
 // ============================================================
 
 return [
-    'app_name'    => 'Klub Strzelecki',
+    'app_name'    => 'Shootero',
     'app_version' => '1.0.0',
     'debug'       => false,   // set true locally, false on production
     'timezone'    => 'Europe/Warsaw',

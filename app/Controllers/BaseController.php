@@ -26,9 +26,25 @@ abstract class BaseController
         $data['flashSuccess']  = Session::getFlash('success');
         $data['flashError']    = Session::getFlash('error');
         $data['flashWarning']  = Session::getFlash('warning');
+        // App name from config
+        $appCfg = require ROOT_PATH . '/config/app.php';
+        $data['appName']       = $appCfg['app_name'] ?? 'Shootero';
         // Pass nav modules so the sidebar can hide inaccessible sections
         $role = Auth::role() ?? '';
         $data['navModules']    = RolePermissionModel::modulesForRole($role);
+        // Per-club module filter — hide modules disabled by club admin
+        $clubId = ClubContext::current();
+        if ($clubId) {
+            try {
+                $mods = (new \App\Models\ClubSettingsModel())->getModules($clubId);
+                if (!empty($mods)) {
+                    $data['navModules'] = array_values(array_filter(
+                        $data['navModules'],
+                        fn($mod) => $mods[$mod] ?? true
+                    ));
+                }
+            } catch (\Throwable) {}
+        }
         // Club branding for layout
         $data['clubBranding']  = ClubCustomizationModel::getForCurrentClub();
         $data['isSuperAdmin']  = Auth::isSuperAdmin();

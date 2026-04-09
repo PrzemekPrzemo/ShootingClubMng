@@ -12,6 +12,7 @@ use App\Models\ClubCustomizationModel;
 use App\Models\ClubSettingsModel;
 use App\Models\UserModel;
 use App\Models\SettingModel;
+use App\Models\SubscriptionModel;
 
 /**
  * Panel super admina — zarządzanie klubami, ustawienia globalne.
@@ -48,9 +49,11 @@ class AdminController extends BaseController
 
     public function clubs(): void
     {
-        $clubs = $this->clubModel->findAll('name');
+        $clubs   = $this->clubModel->findAll('name');
+        $subModel = new SubscriptionModel();
         foreach ($clubs as &$club) {
             $club['stats'] = $this->clubModel->getStats($club['id']);
+            $club['sub']   = $subModel->getForClub($club['id']);
         }
         unset($club);
 
@@ -63,8 +66,10 @@ class AdminController extends BaseController
     public function createClub(): void
     {
         $this->render('admin/club_form', [
-            'title' => 'Nowy klub',
-            'club'  => null,
+            'title'        => 'Nowy klub',
+            'club'         => null,
+            'subscription' => null,
+            'clubModules'  => [],
         ]);
     }
 
@@ -93,6 +98,20 @@ class AdminController extends BaseController
         $settings = new ClubSettingsModel();
         $settings->set($clubId, 'smtp_enabled', '0', 'Własny SMTP', 'boolean');
 
+        // Subskrypcja
+        $plan = trim($_POST['plan'] ?? '');
+        if ($plan !== '') {
+            $maxMembers = trim($_POST['max_members'] ?? '');
+            (new SubscriptionModel())->upsert($clubId, [
+                'plan'        => $plan,
+                'valid_until' => $_POST['valid_until'] ?: null,
+                'status'      => $_POST['sub_status'] ?? 'active',
+                'max_members' => $maxMembers !== '' ? (int)$maxMembers : null,
+            ]);
+        }
+
+        // Moduły (domyślnie wszystkie włączone — nie zapisujemy nic, getModules() zwróci puste = domyślnie true)
+
         Session::flash('success', "Klub \"{$data['name']}\" zostal utworzony.");
         $this->redirect('admin/clubs');
     }
@@ -105,9 +124,15 @@ class AdminController extends BaseController
             $this->redirect('admin/clubs');
         }
 
+        $settings     = new ClubSettingsModel();
+        $subscription = (new SubscriptionModel())->getForClub((int)$id);
+        $clubModules  = $settings->getModules((int)$id);
+
         $this->render('admin/club_form', [
-            'title' => 'Edycja klubu — ' . $club['name'],
-            'club'  => $club,
+            'title'        => 'Edycja klubu — ' . $club['name'],
+            'club'         => $club,
+            'subscription' => $subscription,
+            'clubModules'  => $clubModules,
         ]);
     }
 
@@ -136,6 +161,23 @@ class AdminController extends BaseController
         }
 
         $this->clubModel->updateClub((int)$id, $data);
+
+        // Subskrypcja
+        $plan = trim($_POST['plan'] ?? '');
+        if ($plan !== '') {
+            $maxMembers = trim($_POST['max_members'] ?? '');
+            (new SubscriptionModel())->upsert((int)$id, [
+                'plan'        => $plan,
+                'valid_until' => $_POST['valid_until'] ?: null,
+                'status'      => $_POST['sub_status'] ?? 'active',
+                'max_members' => $maxMembers !== '' ? (int)$maxMembers : null,
+            ]);
+        }
+
+        // Moduły
+        $settings = new ClubSettingsModel();
+        $settings->setModules((int)$id, $_POST['modules'] ?? []);
+
         Session::flash('success', 'Zapisano zmiany.');
         $this->redirect('admin/clubs');
     }

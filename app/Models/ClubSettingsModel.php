@@ -87,6 +87,40 @@ class ClubSettingsModel
         }
     }
 
+    /**
+     * Zwraca stan włączenia modułów dla klubu.
+     * Wynik: ['members' => true, 'calendar' => false, ...]
+     * Moduł bez wpisu w club_settings = domyślnie włączony (true).
+     */
+    public function getModules(int $clubId): array
+    {
+        $all = $this->getAll($clubId);
+        $modules = [];
+        foreach ($all as $key => $value) {
+            if (str_starts_with($key, 'module_')) {
+                $modules[substr($key, 7)] = (bool)$value;
+            }
+        }
+        return $modules;
+    }
+
+    /**
+     * Zapisuje włączone moduły dla klubu.
+     * $enabled: tablica kluczy modułów, które mają być włączone.
+     * Moduły z RolePermissionModel::MODULES spoza $enabled są wyłączane.
+     * 'dashboard' jest zawsze włączony.
+     */
+    public function setModules(int $clubId, array $enabled): void
+    {
+        foreach (\App\Models\RolePermissionModel::MODULES as $mod => $cfg) {
+            if ($mod === 'dashboard') {
+                continue; // dashboard zawsze aktywny
+            }
+            $isEnabled = in_array($mod, $enabled, true) ? '1' : '0';
+            $this->set($clubId, "module_{$mod}", $isEnabled, $cfg['label'], 'boolean');
+        }
+    }
+
     /** Usun wszystkie ustawienia per-klub. */
     public function deleteAll(int $clubId): void
     {

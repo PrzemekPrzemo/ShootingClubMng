@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= e($title ?? 'Klub Strzelecki') ?> &mdash; Klub Strzelecki</title>
+    <title><?= e($title ?? 'Shootero') ?> &mdash; <?= e($appName ?? 'Shootero') ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="<?= url('css/app.css') ?>">
@@ -243,17 +243,64 @@ function isActive(string $mod, string $uri): bool {
 <div id="layout-wrap">
 
 <!-- ── Sidebar ──────────────────────────────────────────────────────── -->
+<?php
+$__isSuperAdminNav = !empty($isSuperAdmin);
+$__hasClubCtx      = \App\Helpers\ClubContext::current() !== null;
+$__brandHref       = ($__isSuperAdminNav && !$__hasClubCtx) ? url('admin/dashboard') : url('dashboard');
+$__brandText       = $__hasClubCtx
+    ? e($clubBranding['club_name'] ?? ($appName ?? 'Shootero'))
+    : e($appName ?? 'Shootero');
+?>
 <nav id="sidebar">
-    <a href="<?= url('dashboard') ?>" class="sb-brand">
-        <?php if (!empty($clubBranding['logo_path'])): ?>
+    <a href="<?= $__brandHref ?>" class="sb-brand">
+        <?php if (!empty($clubBranding['logo_path']) && $__hasClubCtx): ?>
             <img src="<?= url('club/logo') ?>" alt="" style="height:26px;width:auto;flex-shrink:0">
+        <?php elseif ($__isSuperAdminNav && !$__hasClubCtx): ?>
+            <i class="bi bi-shield-lock-fill" style="color:#dc3545"></i>
         <?php else: ?>
             <i class="bi bi-bullseye"></i>
         <?php endif; ?>
-        <span class="sb-brand-text"><?= e($clubBranding['club_name'] ?? 'Klub Strzelecki') ?></span>
+        <span class="sb-brand-text"><?= $__brandText ?></span>
     </a>
 
+    <?php if ($__isSuperAdminNav && !$__hasClubCtx): ?>
+    <!-- ── Admin nav (superadmin bez kontekstu klubu) ── -->
     <ul class="sb-nav">
+        <?php
+        $__adminNav = [
+            ['icon' => 'speedometer2',        'label' => 'Dashboard',      'url' => 'admin/dashboard',            'match' => '/admin/dashboard'],
+            ['icon' => 'building',             'label' => 'Kluby',          'url' => 'admin/clubs',                'match' => '/admin/clubs'],
+            ['icon' => 'joystick',             'label' => 'Demo',           'url' => 'admin/demos',                'match' => '/admin/demos'],
+            ['icon' => 'credit-card-2-front',  'label' => 'Subskrypcje',   'url' => 'admin/subscriptions',        'match' => '/admin/subscriptions'],
+            ['icon' => 'bar-chart-line',       'label' => 'Analityka',      'url' => 'admin/analytics',            'match' => '/admin/analytics'],
+            ['icon' => 'megaphone',            'label' => 'Reklamy',        'url' => 'admin/ads',                  'match' => '/admin/ads'],
+            ['icon' => 'gear',                 'label' => 'Ustawienia',     'url' => 'admin/settings',             'match' => '/admin/settings'],
+            ['icon' => 'shield-check',         'label' => 'Bezpieczeństwo', 'url' => 'admin/security',             'match' => '/admin/security'],
+        ];
+        foreach ($__adminNav as $__item):
+            $__aActive = str_contains($uri, $__item['match']);
+        ?>
+        <li>
+            <a href="<?= url($__item['url']) ?>" class="sb-link <?= $__aActive ? 'active' : '' ?>">
+                <i class="bi bi-<?= $__item['icon'] ?>"></i>
+                <span><?= $__item['label'] ?></span>
+            </a>
+        </li>
+        <?php endforeach; ?>
+    </ul>
+
+    <?php else: ?>
+    <!-- ── Club nav ── -->
+    <ul class="sb-nav">
+        <?php if ($__isSuperAdminNav && $__hasClubCtx): ?>
+        <li>
+            <a href="<?= url('admin/dashboard') ?>" class="sb-link" style="color:#ff8c8c">
+                <i class="bi bi-arrow-left-circle"></i>
+                <span>Panel admina</span>
+            </a>
+        </li>
+        <li><hr style="border-color:rgba(255,255,255,.1);margin:.3rem .75rem"></li>
+        <?php endif; ?>
         <?php foreach ($allModules as $mod => $cfg):
             if (!in_array($mod, $navModules, true)) continue;
             $active = isActive($mod, $uri);
@@ -267,6 +314,7 @@ function isActive(string $mod, string $uri): bool {
         </li>
         <?php endforeach; ?>
     </ul>
+    <?php endif; ?>
 
     <div class="sb-footer">
         <div class="sb-user">

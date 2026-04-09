@@ -20,6 +20,8 @@
                     <th>E-mail</th>
                     <th>NIP</th>
                     <th>Zawodnicy</th>
+                    <th>Limit</th>
+                    <th>Plan</th>
                     <th>Kadra</th>
                     <th>Status</th>
                     <th class="text-end">Akcje</th>
@@ -34,6 +36,8 @@
                     <td><?= e($club['email'] ?? '—') ?></td>
                     <td><?= e($club['nip'] ?? '—') ?></td>
                     <td class="text-center"><?= (int)($club['stats']['active_members'] ?? 0) ?></td>
+                    <td class="text-center text-muted small"><?= $club['sub']['max_members'] ?? '∞' ?></td>
+                    <td class="text-center"><span class="badge bg-secondary"><?= e($club['sub']['plan'] ?? '—') ?></span></td>
                     <td class="text-center"><?= (int)($club['stats']['staff'] ?? 0) ?></td>
                     <td>
                         <?= $club['is_active']
