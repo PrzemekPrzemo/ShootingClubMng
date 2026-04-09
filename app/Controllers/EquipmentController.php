@@ -3,26 +3,30 @@
 namespace App\Controllers;
 
 use App\Helpers\Auth;
+use App\Helpers\ClubContext;
 use App\Helpers\Csrf;
 use App\Helpers\Session;
 use App\Models\AmmoModel;
 use App\Models\MemberModel;
+use App\Models\MemberWeaponModel;
 use App\Models\WeaponModel;
 
 class EquipmentController extends BaseController
 {
-    private WeaponModel $weaponModel;
-    private AmmoModel   $ammoModel;
-    private MemberModel $memberModel;
+    private WeaponModel       $weaponModel;
+    private AmmoModel         $ammoModel;
+    private MemberModel       $memberModel;
+    private MemberWeaponModel $memberWeaponModel;
 
     public function __construct()
     {
         parent::__construct();
         $this->requireLogin();
         $this->requireRole(['admin', 'zarzad', 'instruktor']);
-        $this->weaponModel = new WeaponModel();
-        $this->ammoModel   = new AmmoModel();
-        $this->memberModel = new MemberModel();
+        $this->weaponModel       = new WeaponModel();
+        $this->ammoModel         = new AmmoModel();
+        $this->memberModel       = new MemberModel();
+        $this->memberWeaponModel = new MemberWeaponModel();
     }
 
     // ── Weapons list + overview ──────────────────────────────────────
@@ -39,11 +43,15 @@ class EquipmentController extends BaseController
         $result = $this->weaponModel->getAll($filters, $page);
         $ammoSummary = $this->ammoModel->getSummaryByCaliber();
 
+        $clubId         = ClubContext::current();
+        $memberWeapons  = $clubId !== null ? $this->memberWeaponModel->getActiveForClub($clubId) : [];
+
         $this->render('equipment/index', [
-            'title'       => 'Sprzęt',
-            'result'      => $result,
-            'filters'     => $filters,
-            'ammoSummary' => $ammoSummary,
+            'title'         => 'Sprzęt',
+            'result'        => $result,
+            'filters'       => $filters,
+            'ammoSummary'   => $ammoSummary,
+            'memberWeapons' => $memberWeapons,
         ]);
     }
 

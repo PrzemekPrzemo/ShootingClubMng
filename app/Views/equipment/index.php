@@ -16,6 +16,90 @@ $conditionColors = ['dobry'=>'success','wymaga_obslugi'=>'warning','uszkodzona'=
     </div>
 </div>
 
+<!-- Nav tabs -->
+<ul class="nav nav-tabs mb-3" id="equipmentTabs">
+    <li class="nav-item">
+        <a class="nav-link <?= (($_GET['tab'] ?? 'club') === 'club') ? 'active' : '' ?>"
+           href="<?= url('equipment') ?>?tab=club">
+            <i class="bi bi-building"></i> Broń klubu
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link <?= (($_GET['tab'] ?? '') === 'members') ? 'active' : '' ?>"
+           href="<?= url('equipment') ?>?tab=members">
+            <i class="bi bi-shield-lock"></i> Broń zawodników
+            <?php if (!empty($memberWeapons)): ?>
+            <span class="badge bg-secondary ms-1"><?= count($memberWeapons) ?></span>
+            <?php endif; ?>
+        </a>
+    </li>
+</ul>
+
+<?php $activeTab = $_GET['tab'] ?? 'club'; ?>
+
+<?php if ($activeTab === 'members'): ?>
+<!-- Member weapons tab -->
+<div class="card">
+    <div class="card-body p-0">
+        <?php if (empty($memberWeapons)): ?>
+            <p class="text-muted p-3 mb-0">Brak broni osobistej zarejestrowanej przez zawodników.</p>
+        <?php else: ?>
+        <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Zawodnik</th>
+                    <th>Nazwa / model</th>
+                    <th>Typ</th>
+                    <th>Kaliber</th>
+                    <th>Nr seryjny</th>
+                    <th>Nr pozwolenia</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php
+            $typeLabelsM = ['pistolet'=>'Pistolet','rewolwer'=>'Rewolwer','karabin'=>'Karabin','strzelba'=>'Strzelba','inne'=>'Inne'];
+            foreach ($memberWeapons as $mw): ?>
+                <tr>
+                    <td class="small">
+                        <a href="<?= url('members/' . (int)$mw['member_id'] . '/weapons') ?>">
+                            <?= e($mw['last_name']) ?> <?= e($mw['first_name']) ?>
+                        </a>
+                        <?php if ($mw['member_number']): ?>
+                        <span class="text-muted">#<?= e($mw['member_number']) ?></span>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <span class="fw-semibold"><?= e($mw['name']) ?></span>
+                        <?php if (!empty($mw['manufacturer'])): ?>
+                        <div class="small text-muted"><?= e($mw['manufacturer']) ?></div>
+                        <?php endif; ?>
+                    </td>
+                    <td class="small"><?= $typeLabelsM[$mw['type']] ?? e($mw['type']) ?></td>
+                    <td class="small"><?= $mw['caliber'] ? e($mw['caliber']) : '<span class="text-muted">—</span>' ?></td>
+                    <td class="small">
+                        <?= !empty($mw['serial_number']) ? '<code>' . e($mw['serial_number']) . '</code>' : '<span class="text-muted">—</span>' ?>
+                    </td>
+                    <td class="small">
+                        <?= !empty($mw['permit_number']) ? e($mw['permit_number']) : '<span class="text-muted">—</span>' ?>
+                    </td>
+                    <td class="text-end" style="white-space:nowrap">
+                        <a href="<?= url('members/' . (int)$mw['member_id'] . '/weapons/' . (int)$mw['id'] . '/edit') ?>"
+                           class="btn btn-xs btn-outline-secondary py-0 px-2" title="Edytuj">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
+<?php else: ?>
+
 <!-- Ammo summary ribbon -->
 <?php if (!empty($ammoSummary)): ?>
 <div class="d-flex flex-wrap gap-2 mb-3">
@@ -143,3 +227,4 @@ $conditionColors = ['dobry'=>'success','wymaga_obslugi'=>'warning','uszkodzona'=
         <?php endif; ?>
     </div>
 </div>
+<?php endif; // end club/members tab ?>

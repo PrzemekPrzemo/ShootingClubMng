@@ -11,6 +11,12 @@ class WeaponModel extends ClubScopedModel
         $where  = ['1=1'];
         $params = [];
 
+        $clubId = $this->clubId();
+        if ($clubId !== null) {
+            $where[]  = "w.club_id = ?";
+            $params[] = $clubId;
+        }
+
         if (!empty($filters['q'])) {
             $where[]  = "(w.name LIKE ? OR w.serial_number LIKE ? OR w.caliber LIKE ?)";
             $params[] = '%' . $filters['q'] . '%';
@@ -47,20 +53,35 @@ class WeaponModel extends ClubScopedModel
 
     public function getActive(): array
     {
-        return $this->db->query(
-            "SELECT * FROM weapons WHERE is_active = 1 ORDER BY type, name"
-        )->fetchAll();
+        $params = [1];
+        $sql    = "SELECT * FROM weapons WHERE is_active = ?";
+        $clubId = $this->clubId();
+        if ($clubId !== null) {
+            $sql    .= " AND club_id = ?";
+            $params[] = $clubId;
+        }
+        $sql .= " ORDER BY type, name";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
     }
 
     public function getNeedingService(): array
     {
+        $params = [];
+        $extra  = '';
+        $clubId = $this->clubId();
+        if ($clubId !== null) {
+            $extra    = " AND club_id = ?";
+            $params[] = $clubId;
+        }
         $stmt = $this->db->prepare(
             "SELECT * FROM weapons
              WHERE `condition` IN ('wymaga_obslugi','uszkodzona')
-               AND is_active = 1
+               AND is_active = 1{$extra}
              ORDER BY `condition` DESC, name"
         );
-        $stmt->execute();
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 
@@ -116,10 +137,7 @@ class WeaponModel extends ClubScopedModel
 
     public function createWeapon(array $data): int
     {
-        $cols  = implode('`, `', array_keys($data));
-        $holds = implode(', ', array_fill(0, count($data), '?'));
-        $this->db->prepare("INSERT INTO `weapons` (`{$cols}`) VALUES ({$holds})")->execute(array_values($data));
-        return (int)$this->db->lastInsertId();
+        return $this->insert($data);
     }
 
     public function updateWeapon(int $id, array $data): void

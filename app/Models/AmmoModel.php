@@ -11,6 +11,12 @@ class AmmoModel extends ClubScopedModel
         $where  = ['1=1'];
         $params = [];
 
+        $clubId = $this->clubId();
+        if ($clubId !== null) {
+            $where[]  = "a.club_id = ?";
+            $params[] = $clubId;
+        }
+
         if (!empty($filters['caliber'])) {
             $where[]  = "a.caliber = ?";
             $params[] = $filters['caliber'];
@@ -36,28 +42,42 @@ class AmmoModel extends ClubScopedModel
 
     public function recordMovement(array $data): int
     {
-        $cols  = implode('`, `', array_keys($data));
-        $holds = implode(', ', array_fill(0, count($data), '?'));
-        $this->db->prepare("INSERT INTO `ammo_stock` (`{$cols}`) VALUES ({$holds})")->execute(array_values($data));
-        return (int)$this->db->lastInsertId();
+        return $this->insert($data);
     }
 
     public function getSummaryByCaliber(): array
     {
-        $stmt = $this->db->query(
+        $params = [];
+        $where  = '1=1';
+        $clubId = $this->clubId();
+        if ($clubId !== null) {
+            $where    = 'club_id = ?';
+            $params[] = $clubId;
+        }
+        $stmt = $this->db->prepare(
             "SELECT caliber, SUM(quantity) AS balance
              FROM ammo_stock
+             WHERE {$where}
              GROUP BY caliber
              ORDER BY caliber"
         );
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 
     public function getCaliberList(): array
     {
-        $stmt = $this->db->query(
-            "SELECT DISTINCT caliber FROM ammo_stock ORDER BY caliber"
+        $params = [];
+        $where  = '1=1';
+        $clubId = $this->clubId();
+        if ($clubId !== null) {
+            $where    = 'club_id = ?';
+            $params[] = $clubId;
+        }
+        $stmt = $this->db->prepare(
+            "SELECT DISTINCT caliber FROM ammo_stock WHERE {$where} ORDER BY caliber"
         );
+        $stmt->execute($params);
         return array_column($stmt->fetchAll(), 'caliber');
     }
 }

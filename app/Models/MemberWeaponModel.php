@@ -67,6 +67,26 @@ class MemberWeaponModel extends BaseModel
         }
     }
 
+    /** All active weapons owned by members of a given club (for club equipment report) */
+    public function getActiveForClub(int $clubId): array
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT mw.*,
+                       m.first_name, m.last_name, m.member_number,
+                       CONCAT(m.first_name, ' ', m.last_name) AS member_name
+                FROM member_weapons mw
+                JOIN members m ON m.id = mw.member_id
+                WHERE m.club_id = ? AND mw.is_active = 1
+                ORDER BY m.last_name, m.first_name, mw.name
+            ");
+            $stmt->execute([$clubId]);
+            return $stmt->fetchAll();
+        } catch (\PDOException) {
+            return [];
+        }
+    }
+
     /** Count weapons per member, used in stats */
     public function countForMember(int $memberId): int
     {
