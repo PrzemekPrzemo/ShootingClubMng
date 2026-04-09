@@ -1,8 +1,13 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="h4 mb-0"><i class="bi bi-people"></i> Zawodnicy</h2>
-    <a href="<?= url('members/create') ?>" class="btn btn-danger btn-sm">
-        <i class="bi bi-plus-lg"></i> Dodaj zawodnika
-    </a>
+    <div class="d-flex gap-2">
+        <a href="<?= url('members/import') ?>" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-upload"></i> Import CSV
+        </a>
+        <a href="<?= url('members/create') ?>" class="btn btn-danger btn-sm">
+            <i class="bi bi-plus-lg"></i> Dodaj zawodnika
+        </a>
+    </div>
 </div>
 
 <!-- Filters -->

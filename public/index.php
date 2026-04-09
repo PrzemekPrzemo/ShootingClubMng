@@ -205,6 +205,9 @@ $router->get('/dashboard',     [\App\Controllers\DashboardController::class, 'in
 $router->get('/members',                [\App\Controllers\MembersController::class, 'index']);
 $router->get('/members/create',         [\App\Controllers\MembersController::class, 'create']);
 $router->post('/members/create',        [\App\Controllers\MembersController::class, 'store']);
+$router->get('/members/import',         [\App\Controllers\MembersController::class, 'importForm']);
+$router->get('/members/import/template',[\App\Controllers\MembersController::class, 'importTemplate']);
+$router->post('/members/import',        [\App\Controllers\MembersController::class, 'importProcess']);
 $router->get('/members/:id',            [\App\Controllers\MembersController::class, 'show']);
 $router->get('/members/:id/edit',       [\App\Controllers\MembersController::class, 'edit']);
 $router->post('/members/:id/edit',      [\App\Controllers\MembersController::class, 'update']);

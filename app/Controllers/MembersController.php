@@ -38,6 +38,212 @@ class MembersController extends BaseController
         $this->activityLog      = new ActivityLogModel();
     }
 
+    // ----------------------------------------------------------------
+    // Import CSV
+    // ----------------------------------------------------------------
+
+    public function importForm(): void
+    {
+        $this->requireRole(['admin', 'zarzad']);
+        $this->render('members/import', ['title' => 'Import zawodników z CSV']);
+    }
+
+    public function importTemplate(): void
+    {
+        $this->requireRole(['admin', 'zarzad']);
+        $bom = "\xEF\xBB\xBF";
+        $header = ['last_name','first_name','pesel','birth_date','gender','email','phone',
+                   'member_type','join_date','status','address_street','address_city',
+                   'address_postal','notes'];
+        $example = ['Kowalski','Jan','85010112345','1985-01-01','M','jan@przyklad.pl','500123456',
+                    'wyczynowy','2020-01-15','aktywny','ul. Sportowa 1','Warszawa','00-001',''];
+
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="szablon_import_zawodnikow.csv"');
+        $out = fopen('php://output', 'w');
+        fwrite($out, $bom);
+        fputcsv($out, $header, ';');
+        fputcsv($out, $example, ';');
+        fclose($out);
+        exit;
+    }
+
+    public function importProcess(): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad']);
+
+        $action  = $_POST['action'] ?? 'preview';
+        $hasHdr  = !empty($_POST['has_header']);
+        $defType = in_array($_POST['default_type'] ?? '', ['rekreacyjny','wyczynowy'])
+                    ? $_POST['default_type'] : 'rekreacyjny';
+
+        $file = $_FILES['csv_file'] ?? null;
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+            Session::flash('error', 'Błąd przesyłania pliku.');
+            $this->redirect('members/import');
+        }
+
+        $rawDelim = $_POST['delimiter'] ?? 'auto';
+        $rows     = $this->parseCsv($file['tmp_name'], $rawDelim, $hasHdr);
+
+        if (empty($rows)) {
+            Session::flash('error', 'Plik CSV jest pusty lub nie można go odczytać.');
+            $this->redirect('members/import');
+        }
+
+        $preview      = [];
+        $imported     = 0;
+        $skipped      = 0;
+        $importResult = null;
+
+        foreach ($rows as $row) {
+            $entry = $this->mapCsvRow($row, $defType);
+            $errors = [];
+            if (empty($entry['first_name'])) $errors[] = 'brak imienia';
+            if (empty($entry['last_name']))  $errors[] = 'brak nazwiska';
+            $entry['_error'] = $errors ? implode(', ', $errors) : '';
+
+            if ($action === 'import' && !$entry['_error']) {
+                try {
+                    $newId = $this->memberModel->createMember([
+                        'first_name'     => $entry['first_name'],
+                        'last_name'      => $entry['last_name'],
+                        'pesel'          => $entry['pesel'] ?: null,
+                        'birth_date'     => $entry['birth_date'] ?: null,
+                        'gender'         => $entry['gender'] ?: null,
+                        'email'          => $entry['email'] ?: null,
+                        'phone'          => $entry['phone'] ?: null,
+                        'member_type'    => $entry['member_type'],
+                        'join_date'      => $entry['join_date'] ?: date('Y-m-d'),
+                        'status'         => in_array($entry['status'] ?? '', ['aktywny','zawieszony','wykreslony'])
+                                            ? $entry['status'] : 'aktywny',
+                        'address_street' => $entry['address_street'] ?: null,
+                        'address_city'   => $entry['address_city'] ?: null,
+                        'address_postal' => $entry['address_postal'] ?: null,
+                        'notes'          => $entry['notes'] ?: null,
+                        'created_by'     => Auth::id(),
+                    ]);
+                    $imported++;
+                    $entry['_imported'] = true;
+                    $newMember = $this->memberModel->findById($newId);
+                    $entry['member_number'] = $newMember['member_number'] ?? '';
+                } catch (\Throwable $e) {
+                    $entry['_error'] = 'Błąd DB: ' . $e->getMessage();
+                    $skipped++;
+                }
+            } elseif ($entry['_error']) {
+                $skipped++;
+            }
+
+            $preview[] = $entry;
+        }
+
+        if ($action === 'import') {
+            $importResult = ['imported' => $imported, 'skipped' => $skipped];
+            if ($imported > 0) {
+                Session::flash('success', "Zaimportowano {$imported} zawodników."
+                    . ($skipped > 0 ? " Pominięto: {$skipped}." : ''));
+            }
+        }
+
+        $this->render('members/import', [
+            'title'        => 'Import zawodników z CSV',
+            'preview'      => $preview,
+            'importResult' => $importResult,
+        ]);
+    }
+
+    private function parseCsv(string $filePath, string $delimiterHint, bool $hasHeader): array
+    {
+        // Detect encoding and convert to UTF-8 if needed
+        $raw = file_get_contents($filePath);
+        if ($raw === false) return [];
+
+        // Strip UTF-8 BOM
+        if (str_starts_with($raw, "\xEF\xBB\xBF")) {
+            $raw = substr($raw, 3);
+        }
+
+        // Try to detect encoding (Windows-1250 is common in Polish Excel files)
+        if (!mb_check_encoding($raw, 'UTF-8')) {
+            $raw = mb_convert_encoding($raw, 'UTF-8', 'Windows-1250');
+        }
+
+        // Auto-detect delimiter
+        if ($delimiterHint === 'auto') {
+            $firstLine = strtok($raw, "\n");
+            $delimiterHint = substr_count($firstLine, ';') >= substr_count($firstLine, ',') ? ';' : ',';
+        }
+        $delimiter = $delimiterHint === '\t' ? "\t" : $delimiterHint;
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'csv_import_');
+        file_put_contents($tmpFile, $raw);
+
+        $handle = fopen($tmpFile, 'r');
+        if (!$handle) {
+            @unlink($tmpFile);
+            return [];
+        }
+
+        $headers = null;
+        $rows    = [];
+
+        while (($line = fgetcsv($handle, 4096, $delimiter)) !== false) {
+            if ($hasHeader && $headers === null) {
+                // Normalize headers: lowercase, trim
+                $headers = array_map(fn($h) => strtolower(trim($h)), $line);
+                continue;
+            }
+            if ($headers === null) {
+                // No header row — use numeric indices
+                $rows[] = $line;
+            } else {
+                $assoc = [];
+                foreach ($headers as $i => $key) {
+                    $assoc[$key] = $line[$i] ?? '';
+                }
+                $rows[] = $assoc;
+            }
+        }
+
+        fclose($handle);
+        @unlink($tmpFile);
+        return $rows;
+    }
+
+    private function mapCsvRow(array $row, string $defaultType): array
+    {
+        $get = function (array $r, array $keys): string {
+            foreach ($keys as $k) {
+                if (isset($r[$k]) && trim($r[$k]) !== '') return trim($r[$k]);
+            }
+            return '';
+        };
+
+        $type = $get($row, ['member_type','typ','type']);
+        if (!in_array($type, ['rekreacyjny','wyczynowy'])) $type = $defaultType;
+
+        return [
+            'last_name'      => $get($row, ['last_name','nazwisko','surname']),
+            'first_name'     => $get($row, ['first_name','imie','imię','name']),
+            'pesel'          => $get($row, ['pesel']),
+            'birth_date'     => $get($row, ['birth_date','data_urodzenia','birthdate']),
+            'gender'         => strtoupper($get($row, ['gender','plec','płeć'])) ?: null,
+            'email'          => $get($row, ['email','e-mail','mail']),
+            'phone'          => $get($row, ['phone','telefon','tel']),
+            'member_type'    => $type,
+            'join_date'      => $get($row, ['join_date','data_wstapienia','joined']),
+            'status'         => $get($row, ['status']) ?: 'aktywny',
+            'address_street' => $get($row, ['address_street','ulica','street']),
+            'address_city'   => $get($row, ['address_city','miasto','city']),
+            'address_postal' => $get($row, ['address_postal','kod_pocztowy','postal']),
+            'notes'          => $get($row, ['notes','uwagi']),
+        ];
+    }
+
+    // ----------------------------------------------------------------
+
     public function index(): void
     {
         $filters = [
