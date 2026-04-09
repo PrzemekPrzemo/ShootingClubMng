@@ -32,4 +32,9 @@ $primaryColor    = $clubBranding['primary_color'] ?? '#dc3545';
         </form>
     </div>
 </div>
-<p class="text-center text-muted small mt-3">&copy; <?= date('Y') ?> <?= e($clubBranding['club_name'] ?? 'Klub Strzelecki') ?></p>
+<?php if (empty($clubBranding['club_name']) || ($clubBranding['club_name'] ?? '') === 'Klub Strzelecki'): ?>
+<div class="text-center mt-3 small text-muted">
+    Nowy klub? <a href="<?= url('register') ?>">Zarejestruj się bezpłatnie</a>
+</div>
+<?php endif; ?>
+<p class="text-center text-muted small mt-2">&copy; <?= date('Y') ?> <?= e($clubBranding['club_name'] ?? 'Klub Strzelecki') ?></p>

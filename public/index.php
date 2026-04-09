@@ -170,6 +170,11 @@ $router->get('/auth/login',    [\App\Controllers\AuthController::class, 'showLog
 $router->post('/auth/login',   [\App\Controllers\AuthController::class, 'login']);
 $router->get('/auth/logout',   [\App\Controllers\AuthController::class, 'logout']);
 
+// Club self-registration (onboarding)
+$router->get('/register',         [\App\Controllers\RegistrationController::class, 'show']);
+$router->post('/register',        [\App\Controllers\RegistrationController::class, 'store']);
+$router->get('/register/confirm', [\App\Controllers\RegistrationController::class, 'confirm']);
+
 // Club selector (multi-club)
 $router->get('/club-select',       [\App\Controllers\ClubSelectorController::class, 'show']);
 $router->post('/club-select/:id',  [\App\Controllers\ClubSelectorController::class, 'select']);

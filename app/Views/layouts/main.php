@@ -329,6 +329,39 @@ function isActive(string $mod, string $uri): bool {
         </div>
     </div>
 
+    <!-- Trial period banner -->
+    <?php
+    try {
+        $__clubId = \App\Helpers\ClubContext::current();
+        if ($__clubId) {
+            $__sub = \App\Helpers\Database::pdo()
+                ->prepare("SELECT plan, valid_until, status FROM club_subscriptions WHERE club_id = ? LIMIT 1");
+            $__sub->execute([$__clubId]);
+            $__subscription = $__sub->fetch();
+            if ($__subscription && $__subscription['plan'] === 'trial' && $__subscription['valid_until']) {
+                $__daysLeft = (int)ceil((strtotime($__subscription['valid_until']) - time()) / 86400);
+                if ($__daysLeft >= 0):
+    ?>
+    <div class="alert alert-warning alert-dismissible rounded-0 mb-0 py-2 px-3 small"
+         style="border-left:4px solid #ffc107;border-radius:0!important">
+        <i class="bi bi-clock"></i>
+        <strong>Okres próbny:</strong> pozostało <?= $__daysLeft ?> dni.
+        Skontaktuj się z administratorem systemu, aby wybrać plan.
+        <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+    </div>
+    <?php
+                elseif ($__daysLeft < 0 && $__subscription['status'] === 'active'):
+    ?>
+    <div class="alert alert-danger rounded-0 mb-0 py-2 px-3 small"
+         style="border-left:4px solid #dc3545;border-radius:0!important">
+        <i class="bi bi-exclamation-triangle"></i>
+        <strong>Okres próbny wygasł.</strong> Skontaktuj się z administratorem systemu, aby przedłużyć dostęp.
+    </div>
+    <?php       endif;
+        }
+    } catch (\Throwable) { /* table may not exist before migration */ }
+    ?>
+
     <!-- Flash messages -->
     <div style="padding: .75rem 1.5rem 0">
         <?php if (!empty($flashSuccess)): ?>
