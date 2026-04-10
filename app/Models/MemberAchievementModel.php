@@ -61,9 +61,9 @@ class MemberAchievementModel extends BaseModel
         return $row ?: null;
     }
 
-    public function delete(int $id): void
+    public function delete(int $id): bool
     {
-        $this->db->prepare("DELETE FROM member_achievements WHERE id = ?")
-                 ->execute([$id]);
+        return (bool)$this->db->prepare("DELETE FROM member_achievements WHERE id = ?")
+                              ->execute([$id]);
     }
 }

@@ -139,7 +139,14 @@ class MemberAuthController
 
     public function logout(): void
     {
+        $isBridged = \App\Helpers\Auth::check(); // staff session exists (zawodnik bridge)
         MemberAuth::logout();
+        if ($isBridged) {
+            // Destroy staff session too — prevents DashboardController from re-bridging
+            \App\Helpers\Auth::logout();
+            header('Location: ' . url('auth/login'));
+            exit;
+        }
         Session::flash('success', 'Wylogowano z portalu zawodnika.');
         $this->redirectTo('portal/login');
     }

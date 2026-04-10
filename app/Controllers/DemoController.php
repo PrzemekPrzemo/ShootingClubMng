@@ -60,7 +60,7 @@ class DemoController extends BaseController
         // Fetch portal member (Anna Kowalska — has portal_password set)
         $portalStmt = $db->prepare(
             "SELECT first_name, last_name, email FROM members
-             WHERE club_id = ? AND portal_password IS NOT NULL LIMIT 1"
+             WHERE club_id = ? AND password_hash IS NOT NULL AND must_change_password = 0 LIMIT 1"
         );
         $portalStmt->execute([$demo['id']]);
         $portalMember = $portalStmt->fetch();

@@ -106,7 +106,7 @@ class DemoSeeder
 
         // Give Anna Kowalska a portal account
         $hash = password_hash(self::DEMO_PASSWORD, PASSWORD_DEFAULT);
-        $db->prepare("UPDATE members SET portal_password = ? WHERE id = ? LIMIT 1")
+        $db->prepare("UPDATE members SET password_hash = ?, must_change_password = 0 WHERE id = ? LIMIT 1")
            ->execute([$hash, $ids[0]]);
 
         return $ids;
