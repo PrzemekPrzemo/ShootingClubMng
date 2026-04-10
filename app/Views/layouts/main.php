@@ -34,8 +34,9 @@
         }
 
         /* ── Layout ── */
-        html, body { height: 100%; margin: 0; padding: 0; }
+        html, body { margin: 0; padding: 0; }
         body {
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             background: var(--sht-900);
