@@ -99,6 +99,78 @@
             </div>
         </div>
 
+        <!-- Osiągnięcia -->
+        <?php
+        $canManageAchievements = in_array($authUser['role'] ?? '', ['admin', 'zarzad', 'instruktor']);
+        $canDeleteAchievement  = in_array($authUser['role'] ?? '', ['admin', 'zarzad']);
+        ?>
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong><i class="bi bi-trophy me-1 text-warning"></i>Osiągnięcia sportowe</strong>
+                <?php if ($canManageAchievements): ?>
+                <a href="<?= url('members/' . $member['id'] . '/achievements/create') ?>"
+                   class="btn btn-sm btn-outline-warning py-0">
+                    <i class="bi bi-plus"></i> Dodaj
+                </a>
+                <?php endif; ?>
+            </div>
+            <?php if (!empty($achievements)): ?>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Rodzaj</th>
+                            <th class="text-center">Miejsce</th>
+                            <th class="text-center">Rok</th>
+                            <th>Zawody</th>
+                            <?php if ($canDeleteAchievement): ?><th></th><?php endif; ?>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php
+                    $achievementTypes = \App\Models\MemberAchievementModel::TYPES;
+                    $placeClass = \App\Models\MemberAchievementModel::PLACE_CLASS;
+                    foreach ($achievements as $ach):
+                        $placeNum = $ach['place'] !== null ? (int)$ach['place'] : null;
+                    ?>
+                        <tr>
+                            <td class="small"><?= e($achievementTypes[$ach['achievement_type']] ?? $ach['achievement_type']) ?></td>
+                            <td class="text-center">
+                                <?php if ($placeNum !== null): ?>
+                                    <span class="badge bg-<?= $placeClass[$placeNum] ?? 'secondary' ?>">
+                                        <?= $placeNum ?>. m.
+                                    </span>
+                                <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-center"><?= (int)$ach['year'] ?></td>
+                            <td class="small text-muted"><?= e($ach['competition_name'] ?? '') ?></td>
+                            <?php if ($canDeleteAchievement): ?>
+                            <td class="text-end pe-2">
+                                <form method="post"
+                                      action="<?= url('members/' . $member['id'] . '/achievements/' . $ach['id'] . '/delete') ?>"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Usunąć to osiągnięcie?')">
+                                    <?= csrf_field() ?>
+                                    <button class="btn btn-xs btn-outline-danger py-0 px-1">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php else: ?>
+            <div class="card-body">
+                <p class="text-muted small mb-0">Brak zarejestrowanych osiągnięć sportowych.</p>
+            </div>
+            <?php endif; ?>
+        </div>
+
         <?php if ($member['notes']): ?>
         <div class="card mb-3">
             <div class="card-header"><strong>Uwagi</strong></div>

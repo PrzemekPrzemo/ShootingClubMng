@@ -551,6 +551,11 @@ $router->get('/members/:id/photo',                   [\App\Controllers\PhotoCont
 // Member change history
 $router->get('/members/:id/history',                 [\App\Controllers\MembersController::class, 'history']);
 
+// Member achievements
+$router->get('/members/:member_id/achievements/create',         [\App\Controllers\MemberAchievementsController::class, 'create']);
+$router->post('/members/:member_id/achievements',               [\App\Controllers\MemberAchievementsController::class, 'store']);
+$router->post('/members/:member_id/achievements/:id/delete',    [\App\Controllers\MemberAchievementsController::class, 'destroy']);
+
 // Member personal weapons
 $router->get('/members/:id/weapons',                        [\App\Controllers\MemberWeaponsController::class, 'index']);
 $router->get('/members/:id/weapons/create',                 [\App\Controllers\MemberWeaponsController::class, 'create']);

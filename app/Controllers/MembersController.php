@@ -16,6 +16,7 @@ use App\Models\MedicalExamModel;
 use App\Models\UserModel;
 use App\Models\DisciplineClassModel;
 use App\Models\MemberTypeModel;
+use App\Models\MemberAchievementModel;
 
 class MembersController extends BaseController
 {
@@ -322,13 +323,14 @@ class MembersController extends BaseController
         }
 
         $this->render('members/show', [
-            'title'       => $member['first_name'] . ' ' . $member['last_name'],
-            'member'      => $member,
-            'disciplines' => $this->memberModel->getDisciplines((int)$id),
-            'medical'     => $this->memberModel->getLatestMedical((int)$id),
-            'examMatrix'  => $this->examModel->getExamMatrix((int)$id),
-            'license'     => $this->memberModel->getLatestLicense((int)$id),
-            'payment'     => $this->memberModel->getPaymentStatus((int)$id, (int)date('Y')),
+            'title'        => $member['first_name'] . ' ' . $member['last_name'],
+            'member'       => $member,
+            'disciplines'  => $this->memberModel->getDisciplines((int)$id),
+            'medical'      => $this->memberModel->getLatestMedical((int)$id),
+            'examMatrix'   => $this->examModel->getExamMatrix((int)$id),
+            'license'      => $this->memberModel->getLatestLicense((int)$id),
+            'payment'      => $this->memberModel->getPaymentStatus((int)$id, (int)date('Y')),
+            'achievements' => (new MemberAchievementModel())->getForMember((int)$id),
         ]);
     }
 
