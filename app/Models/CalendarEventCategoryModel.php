@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class CalendarEventCategoryModel extends ClubScopedModel
+class CalendarEventCategoryModel extends BaseModel
 {
     protected string $table = 'calendar_event_categories';
 

@@ -39,4 +39,14 @@ class MemberTypeModel extends BaseModel
         $stmt->execute([$clubId]);
         return $stmt->fetchAll();
     }
+
+    public function save(array $data): int
+    {
+        return $this->insert($data);
+    }
+
+    public function saveUpdate(int $id, array $data): bool
+    {
+        return $this->update($id, $data);
+    }
 }

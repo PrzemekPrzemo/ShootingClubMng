@@ -1078,7 +1078,7 @@ class ConfigController extends BaseController
 
         if ($id === 0) {
             $data['club_id'] = $clubId;
-            $model->insert($data);
+            $model->save($data);
             Session::flash('success', 'Klasa dodana.');
         } else {
             if ($clubId !== null) {
@@ -1088,7 +1088,7 @@ class ConfigController extends BaseController
                     $this->redirect('config/discipline-classes');
                 }
             }
-            $model->update($id, $data);
+            $model->saveUpdate($id, $data);
             Session::flash('success', 'Klasa zaktualizowana.');
         }
         $this->redirect('config/discipline-classes');
@@ -1151,7 +1151,7 @@ class ConfigController extends BaseController
 
         if ($id === 0) {
             $data['club_id'] = $clubId;
-            $model->insert($data);
+            $model->save($data);
             Session::flash('success', 'Typ członkostwa dodany.');
         } else {
             if ($clubId !== null) {
@@ -1161,7 +1161,7 @@ class ConfigController extends BaseController
                     $this->redirect('config/member-types');
                 }
             }
-            $model->update($id, $data);
+            $model->saveUpdate($id, $data);
             Session::flash('success', 'Typ zaktualizowany.');
         }
         $this->redirect('config/member-types');
