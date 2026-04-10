@@ -261,7 +261,7 @@ $isAdminRole   = in_array($role, ['admin','zarzad','instruktor','sędzia']);
                 <a href="<?= url('competitions/create') ?>" class="btn btn-outline-warning">
                     <i class="bi bi-trophy"></i> Utwórz zawody
                 </a>
-                <a href="<?= url('judges/create') ?>" class="btn btn-outline-dark">
+                <a href="<?= url('judges/create') ?>" class="btn btn-outline-info">
                     <i class="bi bi-person-badge"></i> Dodaj sędziego
                 </a>
                 <?php if ($isFinanceRole): ?>

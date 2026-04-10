@@ -18,6 +18,8 @@ use App\Models\DisciplineClassModel;
 use App\Models\MemberTypeModel;
 use App\Models\MemberAchievementModel;
 use App\Models\ClubFeeConfigModel;
+use App\Models\JudgeLicenseModel;
+use App\Models\LicenseModel;
 
 class MembersController extends BaseController
 {
@@ -349,6 +351,9 @@ class MembersController extends BaseController
             $this->redirect('members');
         }
 
+        $judgeModel  = new JudgeLicenseModel();
+        $judgeAll    = $judgeModel->getForMember((int)$id);
+
         $this->render('members/form', [
             'title'         => 'Edytuj zawodnika',
             'member'        => $member,
@@ -361,6 +366,8 @@ class MembersController extends BaseController
             'disciplineClasses' => (new DisciplineClassModel())->getActive(),
             'memberTypes'       => (new MemberTypeModel())->getActive(),
             'memberDiscs'       => $this->memberModel->getDisciplines((int)$id),
+            'license'           => $this->memberModel->getLatestLicense((int)$id),
+            'judgeLicense'      => $judgeAll[0] ?? null,
             'mode'          => 'edit',
         ]);
     }

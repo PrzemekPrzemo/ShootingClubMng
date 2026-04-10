@@ -42,9 +42,10 @@ class JudgesController extends BaseController
     public function create(): void
     {
         $this->requireRole(['admin', 'zarzad']);
+        $preselectedId = (int)($_GET['member_id'] ?? 0);
         $this->render('judges/form', [
             'title'       => 'Dodaj licencję sędziowską',
-            'license'     => null,
+            'license'     => $preselectedId ? ['member_id' => $preselectedId] : null,
             'mode'        => 'create',
             'members'     => $this->memberModel->getAllActive(),
             'disciplines' => $this->disciplineModel->getActive(),

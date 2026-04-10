@@ -56,18 +56,13 @@
             background: var(--club-navbar, var(--sht-800));
             display: flex;
             flex-direction: column;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            overflow-y: auto;
             flex-shrink: 0;
             z-index: 100;
             transition: width .22s ease, min-width .22s ease;
             border-right: 1px solid rgba(255,255,255,.05);
+            align-self: stretch;
         }
         #sidebar.collapsed { width: 62px; min-width: 62px; }
-        #sidebar::-webkit-scrollbar { width: 3px; }
-        #sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
 
         /* Brand */
         .sb-brand {
@@ -101,9 +96,7 @@
         }
 
         /* Nav */
-        .sb-nav { list-style: none; padding: .5rem .5rem; margin: 0; flex: 1; overflow-y: auto; overflow-x: hidden; }
-        .sb-nav::-webkit-scrollbar { width: 3px; }
-        .sb-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+        .sb-nav { list-style: none; padding: .5rem .5rem; margin: 0; flex: 1; overflow-x: hidden; }
 
         .sb-link {
             display: flex;

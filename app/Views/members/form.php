@@ -261,6 +261,85 @@
                 </div>
             </div>
 
+            <!-- Licencja zawodnicza -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong><i class="bi bi-card-checklist me-1 text-primary"></i>Licencja zawodnicza</strong>
+                    <?php if ($mode === 'edit'): ?>
+                    <a href="<?= url('licenses/create?member_id=' . (int)$member['id']) ?>"
+                       class="btn btn-sm btn-outline-primary py-0" title="Dodaj licencję zawodniczą">
+                        <i class="bi bi-plus"></i>
+                    </a>
+                    <?php endif; ?>
+                </div>
+                <div class="card-body py-2">
+                    <?php if ($mode === 'create'): ?>
+                        <p class="text-muted small mb-0">Dostępne po zapisaniu zawodnika.</p>
+                    <?php elseif (!empty($license)): ?>
+                        <?php $daysLic = isset($license['valid_until']) ? (int)((strtotime($license['valid_until']) - time()) / 86400) : null; ?>
+                        <p class="mb-1 small">Nr: <code><?= e($license['license_number']) ?></code></p>
+                        <p class="mb-1 small">
+                            Ważna do: <?= e($license['valid_until'] ?? '—') ?>
+                            <span class="badge bg-<?= $daysLic === null ? 'secondary' : ($daysLic < 0 ? 'danger' : ($daysLic < 60 ? 'warning' : 'success')) ?>">
+                                <?= $daysLic === null ? 'bezterminowa' : ($daysLic >= 0 ? "za {$daysLic} dni" : 'WYGASŁA') ?>
+                            </span>
+                        </p>
+                        <a href="<?= url('licenses/create?member_id=' . (int)$member['id']) ?>" class="small">
+                            <i class="bi bi-plus-circle"></i> Dodaj kolejną
+                        </a>
+                    <?php else: ?>
+                        <p class="text-muted small mb-1">Brak licencji zawodniczej.</p>
+                        <a href="<?= url('licenses/create?member_id=' . (int)$member['id']) ?>" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-plus"></i> Dodaj licencję
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Licencja sędziowska -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong><i class="bi bi-person-badge me-1 text-info"></i>Licencja sędziowska</strong>
+                    <?php if ($mode === 'edit'): ?>
+                    <a href="<?= url('judges/create?member_id=' . (int)$member['id']) ?>"
+                       class="btn btn-sm btn-outline-info py-0" title="Dodaj licencję sędziowską">
+                        <i class="bi bi-plus"></i>
+                    </a>
+                    <?php endif; ?>
+                </div>
+                <div class="card-body py-2">
+                    <?php if ($mode === 'create'): ?>
+                        <p class="text-muted small mb-0">Dostępne po zapisaniu zawodnika.</p>
+                    <?php elseif (!empty($judgeLicense)): ?>
+                        <?php $daysJl = isset($judgeLicense['valid_until']) ? (int)((strtotime($judgeLicense['valid_until']) - time()) / 86400) : null; ?>
+                        <p class="mb-1 small">
+                            Klasa: <strong><?= e($judgeLicense['judge_class']) ?></strong>
+                            <?php if (!empty($judgeLicense['license_number'])): ?>
+                            &nbsp;| Nr: <code><?= e($judgeLicense['license_number']) ?></code>
+                            <?php endif; ?>
+                        </p>
+                        <p class="mb-1 small">
+                            Ważna do: <?= e($judgeLicense['valid_until'] ?? '—') ?>
+                            <span class="badge bg-<?= $daysJl === null ? 'secondary' : ($daysJl < 0 ? 'danger' : ($daysJl < 60 ? 'warning' : 'success')) ?>">
+                                <?= $daysJl === null ? 'bezterminowa' : ($daysJl >= 0 ? "za {$daysJl} dni" : 'WYGASŁA') ?>
+                            </span>
+                        </p>
+                        <a href="<?= url('judges/' . (int)$judgeLicense['id'] . '/edit') ?>" class="small">
+                            <i class="bi bi-pencil"></i> Edytuj
+                        </a>
+                        &nbsp;|&nbsp;
+                        <a href="<?= url('judges/create?member_id=' . (int)$member['id']) ?>" class="small">
+                            <i class="bi bi-plus-circle"></i> Dodaj kolejną
+                        </a>
+                    <?php else: ?>
+                        <p class="text-muted small mb-1">Brak licencji sędziowskiej.</p>
+                        <a href="<?= url('judges/create?member_id=' . (int)$member['id']) ?>" class="btn btn-sm btn-outline-info w-100">
+                            <i class="bi bi-plus"></i> Dodaj licencję sędziowską
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </div>
+
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-danger">
                     <i class="bi bi-check-lg"></i>
