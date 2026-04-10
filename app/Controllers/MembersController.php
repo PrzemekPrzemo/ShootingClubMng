@@ -288,6 +288,11 @@ class MembersController extends BaseController
     {
         Csrf::verify();
 
+        if ($this->isOverMemberLimit()) {
+            Session::flash('error', 'Osiągnięto limit zawodników dla aktualnego planu subskrypcji. Skontaktuj się z administratorem systemu.');
+            $this->redirect('members/create');
+        }
+
         $data = $this->collectFormData();
         $errors = $this->validate($data);
 

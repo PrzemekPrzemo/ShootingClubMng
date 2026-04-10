@@ -131,6 +131,7 @@ abstract class BaseController
             Session::flash('warning', 'Wybierz klub, aby kontynuować.');
             $this->redirect('club-select');
         }
+        $this->checkSubscription();
     }
 
     /** Zwraca aktywny club_id (skrót do ClubContext::require()). */
