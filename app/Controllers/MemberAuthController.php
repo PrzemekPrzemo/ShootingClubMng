@@ -37,7 +37,7 @@ class MemberAuthController
         if (\App\Helpers\Auth::check()) {
             $this->redirectTo('dashboard');
         }
-        $this->renderAuth('portal/login', ['title' => 'Logowanie — Klub Strzelecki']);
+        $this->renderAuth('portal/login', ['title' => 'Logowanie']);
     }
 
     public function login(): void
@@ -258,6 +258,16 @@ class MemberAuthController
         $data['flashSuccess'] = Session::getFlash('success');
         $data['flashError']   = Session::getFlash('error');
         $data['flashWarning'] = Session::getFlash('warning');
+
+        // Load system branding (same as AuthController::showLogin)
+        $systemBranding = ['name' => 'Shootero', 'logo' => ''];
+        try {
+            $sm = new \App\Models\SettingModel();
+            $systemBranding['name'] = $sm->get('system_name', 'Shootero');
+            $systemBranding['logo'] = $sm->get('system_logo', '');
+        } catch (\Throwable) {}
+        $data['systemBranding'] = $systemBranding;
+
         $this->view->setLayout('auth');
         $this->view->render($template, $data);
     }
