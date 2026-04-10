@@ -247,6 +247,21 @@ class AuthController extends BaseController
         $this->redirect('auth/login');
     }
 
+    // ── Stop impersonation ───────────────────────────────────────────────────
+    // This must live in AuthController (not AdminController) because during
+    // impersonation Auth::isSuperAdmin() returns false, so AdminController's
+    // requireSuperAdmin() would block access before the method runs.
+
+    public function stopImpersonation(): void
+    {
+        if (!Auth::isImpersonating()) {
+            $this->redirect('dashboard');
+        }
+        Auth::stopImpersonation();
+        Session::flash('success', 'Zakończono impersonację. Wróciłeś do konta superadmina.');
+        $this->redirect('admin/dashboard');
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private function redirectAfterLogin(): void
