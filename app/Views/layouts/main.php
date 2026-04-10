@@ -7,7 +7,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- Bootstrap & Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -22,14 +22,15 @@
         :root {
             --club-primary: <?= htmlspecialchars($__primaryColor, ENT_QUOTES) ?>;
             --club-navbar:  <?= htmlspecialchars($__navbarBg, ENT_QUOTES) ?>;
-            /* Shootero palette */
-            --sht-900: #0B1220;
-            --sht-800: #0F172A;
-            --sht-700: #1E293B;
-            --sht-gold: #D4A373;
-            --sht-gold-bright: #E6C200;
-            --sht-muted: #94A3B8;
-            --sht-dim: #475569;
+            /* Shootero palette — full brand spec */
+            --sht-900: #0B1220;        /* Navy 900 */
+            --sht-800: #0F172A;        /* Navy 800 */
+            --sht-700: #1E293B;        /* Navy 700 */
+            --sht-gold: #D4A373;       /* Gold 500 */
+            --sht-gold-bright: #E6C200;/* Gold 400 */
+            --sht-gold-soft: #F3E9DC;  /* Gold Soft */
+            --sht-muted: #94A3B8;      /* Gray 400 */
+            --sht-dim: #475569;        /* Gray 600 */
         }
 
         /* ── Layout ── */
@@ -83,9 +84,10 @@
         }
         .sb-brand-text {
             font-family: 'Poppins', sans-serif;
-            font-weight: 700;
-            font-size: .98rem;
-            letter-spacing: .5px;
+            font-weight: 800;
+            font-size: .95rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
             transition: opacity .2s;
             color: #fff;
         }
@@ -372,19 +374,26 @@ function isActive(string $mod, string $uri): bool {
     };
 }
 
-// Shootero crosshair SVG logo
+// Shootero brand icon SVG: S-bolt blades (upper-left + lower-right) + metallic crosshair target
 $shooteroIcon = '<svg class="sb-shootero-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="20" cy="20" r="13" stroke="rgba(148,163,184,.55)" stroke-width="1.2"/>
-  <circle cx="20" cy="20" r="7" stroke="#D4A373" stroke-width="1.3"/>
-  <circle cx="20" cy="20" r="2.5" fill="#E6C200"/>
-  <line x1="20" y1="3" x2="20" y2="12" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round"/>
-  <line x1="20" y1="28" x2="20" y2="37" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round"/>
-  <line x1="3" y1="20" x2="12" y2="20" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round"/>
-  <line x1="28" y1="20" x2="37" y2="20" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round"/>
-  <path d="M7 8 L12 14" stroke="#D4A373" stroke-width="2" stroke-linecap="round"/>
-  <path d="M33 32 L28 26" stroke="#D4A373" stroke-width="2" stroke-linecap="round"/>
-  <path d="M7 32 L12 26" stroke="#E6C200" stroke-width="1.6" stroke-linecap="round"/>
-  <path d="M33 8 L28 14" stroke="#E6C200" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- Upper-left S-bolt blade -->
+  <path d="M15 2 L2 6 L6 14 L21 9 Z" fill="#D4A373"/>
+  <!-- Lower-right S-bolt blade -->
+  <path d="M25 38 L38 34 L34 26 L19 31 Z" fill="#D4A373"/>
+  <!-- Outer metallic ring -->
+  <circle cx="20" cy="20" r="12" stroke="rgba(226,232,240,.45)" stroke-width="1.4" fill="none"/>
+  <!-- Outer ring highlight arc (upper-right) -->
+  <path d="M28.5 11.5 A12 12 0 0 1 31.5 20" stroke="rgba(226,232,240,.8)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <!-- Inner bright ring -->
+  <circle cx="20" cy="20" r="7.5" stroke="rgba(226,232,240,.85)" stroke-width="1.8" fill="none"/>
+  <!-- Crosshair tick marks (between rings) -->
+  <line x1="20" y1="8"    x2="20" y2="12.5"  stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="20" y1="27.5" x2="20" y2="32"    stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="8"  y1="20"   x2="12.5" y2="20"  stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="27.5" y1="20" x2="32"  y2="20"   stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- Center dot -->
+  <circle cx="20" cy="20" r="3.5" fill="#D4A373"/>
+  <circle cx="20" cy="20" r="1.8" fill="#E6C200"/>
 </svg>';
 ?>
 
@@ -630,8 +639,10 @@ $__brandText       = $__hasClubCtx
     </main>
 
     <footer class="main-foot">
-        &copy; <?= date('Y') ?> <?= e($clubBranding['club_name'] ?? 'Shootero') ?>
-        &mdash; <span style="color:#D4A373">Shootero</span> — Zarządzaj klubem. Wspieraj ludzi.
+        <span style="font-family:'Poppins',sans-serif;font-weight:800;letter-spacing:2px;color:#D4A373;font-size:.78rem">SHOOTERO</span>
+        <span style="color:#334155;margin:0 .4rem">&mdash;</span>
+        <span style="font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:1px;font-size:.7rem;color:#475569;text-transform:uppercase">Zarządzaj&nbsp;klubem&nbsp;•&nbsp;Wspieraj&nbsp;ludzi</span>
+        <span style="color:#1e293b;margin-left:.5rem;font-size:.7rem">&copy; <?= date('Y') ?></span>
     </footer>
 
 </div><!-- /page-area -->

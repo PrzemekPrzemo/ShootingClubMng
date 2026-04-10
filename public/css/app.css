@@ -1,7 +1,10 @@
 /* ============================================================
    Shootero — Design System CSS
-   Brand: Navy #0B1220 / #0F172A / #1E293B + Gold #D4A373 / #E6C200
-   Fonts: Poppins (headings) + Inter (body)
+   Palette: Navy 900 #0B1220 | Navy 800 #0F172A | Navy 700 #1E293B
+            Gold 500 #D4A373 | Gold 400 #E6C200 | Gold Soft #F3E9DC
+            Gray 400 #94A3B8 | Gray 600 #475569
+            Error #DC2626 | Success #16A34A
+   Fonts: Poppins 400–900 (brand/headings) · Inter 400–600 (body)
    ============================================================ */
 
 /* ── Typography ─────────────────────────────────────────────── */

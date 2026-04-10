@@ -7,7 +7,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- Bootstrap & Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -135,14 +135,26 @@
 <body>
 
 <?php
-$__portalIcon = '<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px">
-  <circle cx="16" cy="16" r="10.5" stroke="rgba(148,163,184,.45)" stroke-width="1.2"/>
-  <circle cx="16" cy="16" r="5.5" stroke="#D4A373" stroke-width="1.4"/>
-  <circle cx="16" cy="16" r="2.2" fill="#E6C200"/>
-  <line x1="16" y1="2" x2="16" y2="9" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round"/>
-  <line x1="16" y1="23" x2="16" y2="30" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round"/>
-  <line x1="2" y1="16" x2="9" y2="16" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round"/>
-  <line x1="23" y1="16" x2="30" y2="16" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round"/>
+// Shootero brand icon: S-bolt + crosshair (same 40x40 viewBox, rendered at 26px)
+$__portalIcon = '<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:26px;height:26px;flex-shrink:0">
+  <!-- Upper-left S-bolt blade -->
+  <path d="M15 2 L2 6 L6 14 L21 9 Z" fill="#D4A373"/>
+  <!-- Lower-right S-bolt blade -->
+  <path d="M25 38 L38 34 L34 26 L19 31 Z" fill="#D4A373"/>
+  <!-- Outer metallic ring -->
+  <circle cx="20" cy="20" r="12" stroke="rgba(226,232,240,.4)" stroke-width="1.4" fill="none"/>
+  <!-- Outer ring highlight arc -->
+  <path d="M28.5 11.5 A12 12 0 0 1 31.5 20" stroke="rgba(226,232,240,.8)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <!-- Inner bright ring -->
+  <circle cx="20" cy="20" r="7.5" stroke="rgba(226,232,240,.85)" stroke-width="1.8" fill="none"/>
+  <!-- Crosshair ticks -->
+  <line x1="20" y1="8"    x2="20" y2="12.5"  stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="20" y1="27.5" x2="20" y2="32"    stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="8"  y1="20"   x2="12.5" y2="20"  stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="27.5" y1="20" x2="32"  y2="20"   stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- Center dot -->
+  <circle cx="20" cy="20" r="3.5" fill="#D4A373"/>
+  <circle cx="20" cy="20" r="1.8" fill="#E6C200"/>
 </svg>';
 $__uri = $_SERVER['REQUEST_URI'] ?? '';
 ?>
@@ -151,7 +163,7 @@ $__uri = $_SERVER['REQUEST_URI'] ?? '';
     <div class="container-fluid px-3">
         <a class="navbar-brand" href="<?= url('portal') ?>">
             <?= $__portalIcon ?>
-            <span>Shootero</span>
+            <span style="font-weight:800;letter-spacing:2px;font-size:.92rem">SHOOTERO</span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#portalNav" aria-controls="portalNav" aria-expanded="false">
             <span class="navbar-toggler-icon"></span>
@@ -258,18 +270,18 @@ $__uri = $_SERVER['REQUEST_URI'] ?? '';
 
 <footer class="portal-foot">
     <div class="portal-foot-brand">
-        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px">
-            <circle cx="10" cy="10" r="6.5" stroke="rgba(148,163,184,.4)" stroke-width="1"/>
-            <circle cx="10" cy="10" r="3.5" stroke="#D4A373" stroke-width="1.2"/>
-            <circle cx="10" cy="10" r="1.5" fill="#E6C200"/>
-            <line x1="10" y1="1" x2="10" y2="5.5" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
-            <line x1="10" y1="14.5" x2="10" y2="19" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
-            <line x1="1" y1="10" x2="5.5" y2="10" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
-            <line x1="14.5" y1="10" x2="19" y2="10" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
+        <!-- mini S-bolt icon -->
+        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px">
+            <path d="M15 2 L2 6 L6 14 L21 9 Z" fill="#D4A373"/>
+            <path d="M25 38 L38 34 L34 26 L19 31 Z" fill="#D4A373"/>
+            <circle cx="20" cy="20" r="12" stroke="rgba(226,232,240,.35)" stroke-width="1.4" fill="none"/>
+            <circle cx="20" cy="20" r="7.5" stroke="rgba(226,232,240,.75)" stroke-width="1.8" fill="none"/>
+            <circle cx="20" cy="20" r="3.5" fill="#D4A373"/>
+            <circle cx="20" cy="20" r="1.8" fill="#E6C200"/>
         </svg>
         SHOOTERO
     </div>
-    <span class="portal-foot-tagline">Zarządzaj klubem. Wspieraj ludzi.</span>
+    <span class="portal-foot-tagline" style="font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:1.5px;text-transform:uppercase">Zarządzaj&nbsp;klubem&nbsp;&bull;&nbsp;Wspieraj&nbsp;ludzi</span>
     <span class="portal-foot-copy">&copy; <?= date('Y') ?> Shootero &mdash; Portal Zawodnika</span>
 </footer>
 

@@ -1,17 +1,24 @@
 <?php
-// Large Shootero crosshair SVG for login screen
-$loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:60px;height:60px;display:block;margin:0 auto">
-  <circle cx="30" cy="30" r="20" stroke="rgba(148,163,184,.35)" stroke-width="1.4"/>
-  <circle cx="30" cy="30" r="11" stroke="#D4A373" stroke-width="1.8"/>
-  <circle cx="30" cy="30" r="3.5" fill="#E6C200"/>
-  <line x1="30" y1="4" x2="30" y2="17" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
-  <line x1="30" y1="43" x2="30" y2="56" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
-  <line x1="4"  y1="30" x2="17" y2="30" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
-  <line x1="43" y1="30" x2="56" y2="30" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
-  <path d="M9 11 L17 20"  stroke="#D4A373" stroke-width="2.2" stroke-linecap="round"/>
-  <path d="M51 49 L43 40" stroke="#D4A373" stroke-width="2.2" stroke-linecap="round"/>
-  <path d="M9 49  L17 40" stroke="#E6C200" stroke-width="1.8" stroke-linecap="round"/>
-  <path d="M51 11 L43 20" stroke="#E6C200" stroke-width="1.8" stroke-linecap="round"/>
+// Shootero brand icon: S-bolt blades + metallic crosshair (large 64px version)
+$loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:68px;height:68px;display:block;margin:0 auto;filter:drop-shadow(0 4px 16px rgba(212,163,115,.3))">
+  <!-- Upper-left S-bolt blade -->
+  <path d="M22 3 L3 8 L8 20 L30 12 Z" fill="#D4A373"/>
+  <!-- Lower-right S-bolt blade -->
+  <path d="M38 57 L57 52 L52 40 L30 48 Z" fill="#D4A373"/>
+  <!-- Outer metallic ring -->
+  <circle cx="30" cy="30" r="18" stroke="rgba(226,232,240,.4)" stroke-width="2" fill="none"/>
+  <!-- Outer ring highlight arc -->
+  <path d="M42.7 17.3 A18 18 0 0 1 47.3 30" stroke="rgba(226,232,240,.75)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <!-- Inner bright ring -->
+  <circle cx="30" cy="30" r="11" stroke="rgba(226,232,240,.88)" stroke-width="2.4" fill="none"/>
+  <!-- Crosshair tick marks (between rings) -->
+  <line x1="30" y1="12" x2="30" y2="19"  stroke="rgba(226,232,240,.9)" stroke-width="2.2" stroke-linecap="round"/>
+  <line x1="30" y1="41" x2="30" y2="48"  stroke="rgba(226,232,240,.9)" stroke-width="2.2" stroke-linecap="round"/>
+  <line x1="12" y1="30" x2="19" y2="30"  stroke="rgba(226,232,240,.9)" stroke-width="2.2" stroke-linecap="round"/>
+  <line x1="41" y1="30" x2="48" y2="30"  stroke="rgba(226,232,240,.9)" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- Center dot -->
+  <circle cx="30" cy="30" r="5" fill="#D4A373"/>
+  <circle cx="30" cy="30" r="2.5" fill="#E6C200"/>
 </svg>';
 ?>
 <div class="text-center mb-4">
@@ -41,11 +48,11 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
             <?= e($systemBranding['name'] ?? 'SHOOTERO') ?> — System zarządzania klubem
         </p>
     <?php else: ?>
-        <h4 class="mt-3 mb-0 fw-bold" style="font-family:'Poppins',sans-serif;font-size:1.4rem;letter-spacing:1px;color:#fff">
-            <?= e(strtoupper($systemBranding['name'] ?? 'SHOOTERO')) ?>
+        <h4 class="mt-3 mb-0" style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.65rem;letter-spacing:4px;text-transform:uppercase;color:#fff;line-height:1.1">
+            <?= e($systemBranding['name'] ?? 'SHOOTERO') ?>
         </h4>
-        <p class="small mt-1 mb-0" style="color:#D4A373;font-family:'Poppins',sans-serif;letter-spacing:.5px;font-size:.78rem">
-            ZARZĄDZAJ KLUBEM &bull; WSPIERAJ LUDZI
+        <p class="mt-2 mb-0" style="color:#D4A373;font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:2px;font-size:.7rem;text-transform:uppercase">
+            Zarządzaj klubem&nbsp;&nbsp;•&nbsp;&nbsp;Wspieraj ludzi
         </p>
     <?php endif; ?>
 </div>
