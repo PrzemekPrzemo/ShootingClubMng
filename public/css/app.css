@@ -57,13 +57,21 @@ h1, h2, h3, h4, h5, h6,
     box-shadow: 0 4px 16px rgba(0,0,0,.35);
 }
 .card-header {
-    background: rgba(255,255,255,.03) !important;
-    border-bottom: 1px solid rgba(255,255,255,.07) !important;
+    background: #0F172A !important;
+    border-bottom: 1px solid rgba(255,255,255,.09) !important;
     font-size: .9rem;
     padding: .75rem 1rem;
     color: #e2e8f0;
 }
-.card-header .text-muted { color: #475569 !important; }
+.card-header h1,.card-header h2,.card-header h3,
+.card-header h4,.card-header h5,.card-header h6,
+.card-header strong:first-child {
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    margin-bottom: 0;
+}
+.card-header .text-muted { color: #64748b !important; }
 .card-body { color: #e2e8f0; }
 .card-footer {
     background: rgba(255,255,255,.02) !important;
