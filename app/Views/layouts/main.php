@@ -256,9 +256,17 @@ $__brandText       = $__hasClubCtx
         <?php if (!empty($clubBranding['logo_path']) && $__hasClubCtx): ?>
             <img src="<?= url('club/logo') ?>" alt="" style="height:26px;width:auto;flex-shrink:0">
         <?php elseif ($__isSuperAdminNav && !$__hasClubCtx): ?>
-            <i class="bi bi-shield-lock-fill" style="color:#dc3545"></i>
+            <?php if (!empty($systemBranding['logo'])): ?>
+                <img src="<?= url('admin/system-logo') ?>" alt="" style="height:26px;max-width:80px;object-fit:contain;flex-shrink:0">
+            <?php else: ?>
+                <i class="bi bi-shield-lock-fill" style="color:#dc3545"></i>
+            <?php endif; ?>
         <?php else: ?>
-            <i class="bi bi-bullseye"></i>
+            <?php if (!empty($systemBranding['logo'])): ?>
+                <img src="<?= url('admin/system-logo') ?>" alt="" style="height:26px;max-width:80px;object-fit:contain;flex-shrink:0">
+            <?php else: ?>
+                <i class="bi bi-bullseye"></i>
+            <?php endif; ?>
         <?php endif; ?>
         <span class="sb-brand-text"><?= $__brandText ?></span>
     </a>

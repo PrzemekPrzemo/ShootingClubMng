@@ -48,6 +48,16 @@ abstract class BaseController
         // Club branding for layout
         $data['clubBranding']  = ClubCustomizationModel::getForCurrentClub();
         $data['isSuperAdmin']  = Auth::isSuperAdmin();
+        // System branding (name + logo) from global settings
+        try {
+            $sm = new \App\Models\SettingModel();
+            $data['systemBranding'] = [
+                'name' => $sm->get('system_name', $data['appName']) ?: $data['appName'],
+                'logo' => $sm->get('system_logo', '') ?: '',
+            ];
+        } catch (\Throwable) {
+            $data['systemBranding'] = ['name' => $data['appName'], 'logo' => ''];
+        }
         $this->view->render($template, $data);
     }
 

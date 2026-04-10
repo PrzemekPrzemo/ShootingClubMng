@@ -4,8 +4,32 @@
     <i class="bi bi-arrow-left"></i> Panel admina
 </a>
 
-<form method="post" action="<?= url('admin/settings') ?>">
+<form method="post" action="<?= url('admin/settings') ?>" enctype="multipart/form-data">
     <?= csrf_field() ?>
+
+    <div class="card mb-4" style="max-width:700px">
+        <div class="card-header"><h5 class="mb-0"><i class="bi bi-palette"></i> Branding systemowy</h5></div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="system_name" class="form-label">Nazwa systemu</label>
+                <input type="text" class="form-control" id="system_name" name="system_name"
+                       value="<?= e($settings['system_name'] ?? 'Shootero') ?>" placeholder="Shootero">
+                <div class="form-text">Wyświetlana na ekranie logowania i w pasku bocznym.</div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Logo systemu</label>
+                <?php if (!empty($settings['system_logo'])): ?>
+                <div class="mb-2 p-2 bg-dark d-inline-block rounded">
+                    <img src="<?= url('admin/system-logo') ?>" alt="Logo systemu"
+                         style="height:48px; max-width:200px; object-fit:contain">
+                </div>
+                <div class="small text-muted mb-2">Prześlij nowy plik, aby zastąpić aktualne logo.</div>
+                <?php endif; ?>
+                <input type="file" class="form-control" name="system_logo" accept=".png,.jpg,.jpeg,.svg,.webp">
+                <div class="form-text">PNG / JPG / SVG / WebP — rekomendowana wysokość 48px, preferowane jasne logo na ciemnym tle.</div>
+            </div>
+        </div>
+    </div>
 
     <div class="card mb-4" style="max-width:700px">
         <div class="card-header"><h5 class="mb-0">System</h5></div>

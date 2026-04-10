@@ -8,6 +8,9 @@ use App\Helpers\Csrf;
 use App\Helpers\Database;
 use App\Helpers\RateLimiter;
 use App\Helpers\Session;
+use App\Models\ClubCustomizationModel;
+use App\Models\ClubModel;
+use App\Models\SettingModel;
 use App\Models\UserModel;
 
 class AuthController extends BaseController
@@ -29,10 +32,35 @@ class AuthController extends BaseController
             $this->redirect('dashboard');
         }
 
+        // Load system branding from settings
+        $systemBranding = ['name' => 'Shootero', 'logo' => ''];
+        try {
+            $sm = new SettingModel();
+            $systemBranding['name'] = $sm->get('system_name', 'Shootero') ?: 'Shootero';
+            $systemBranding['logo'] = $sm->get('system_logo', '') ?: '';
+        } catch (\Throwable) {}
+
+        // Detect if coming via club subdomain
+        $subdomainClubId = ClubContext::current();
+        $subdomainClub   = null;
+        if ($subdomainClubId !== null) {
+            try {
+                $clubModel = new ClubModel();
+                $club = $clubModel->findById($subdomainClubId);
+                $branding = ClubCustomizationModel::getForCurrentClub();
+                $subdomainClub = [
+                    'id'        => $subdomainClubId,
+                    'name'      => $club['name'] ?? '',
+                    'logo_path' => $branding['logo_path'] ?? '',
+                ];
+            } catch (\Throwable) {}
+        }
+
         $this->render('auth/login', [
-            'title'        => 'Logowanie',
-            'clubs'        => $this->getActiveClubs(),
-            'clubBranding' => [],
+            'title'          => 'Logowanie',
+            'clubs'          => $subdomainClub ? [] : $this->getActiveClubs(),
+            'systemBranding' => $systemBranding,
+            'subdomainClub'  => $subdomainClub,
         ]);
     }
 
@@ -89,15 +117,71 @@ class AuthController extends BaseController
         Auth::login($user);
         $this->logActivity($user['id'], 'login', 'users', $user['id'], 'Zalogowanie do systemu');
 
-        // Verify club membership
-        $role = $this->userModel->getRoleInClub($user['id'], $clubId);
-        if ($role === null) {
+        // Verify club membership — get ALL roles
+        $roles = $this->userModel->getRolesInClub($user['id'], $clubId);
+        if (empty($roles)) {
             Session::flash('error', 'Nie masz dostępu do wybranego klubu.');
             Auth::logout();
             $this->redirect('auth/login');
         }
 
-        Auth::setClub($clubId, $role);
+        // Multiple roles → role selection screen
+        if (count($roles) > 1) {
+            Session::set('pending_role_select', [
+                'user_id' => $user['id'],
+                'club_id' => $clubId,
+                'roles'   => $roles,
+            ]);
+            $this->redirect('auth/role-select');
+        }
+
+        // Single role — log in immediately
+        Auth::setClub($clubId, $roles[0]);
+        $this->redirectAfterLogin();
+    }
+
+    // ── Role selection after login ─────────────────────────────────────────────
+
+    public function showRoleSelect(): void
+    {
+        $pending = Session::get('pending_role_select');
+        if (!$pending || !Auth::check()) {
+            $this->redirect('auth/login');
+        }
+
+        // Load system branding
+        $systemBranding = ['name' => 'Shootero', 'logo' => ''];
+        try {
+            $sm = new SettingModel();
+            $systemBranding['name'] = $sm->get('system_name', 'Shootero') ?: 'Shootero';
+            $systemBranding['logo'] = $sm->get('system_logo', '') ?: '';
+        } catch (\Throwable) {}
+
+        $this->render('auth/role_select', [
+            'title'          => 'Wybierz rolę',
+            'roles'          => $pending['roles'],
+            'clubId'         => $pending['club_id'],
+            'systemBranding' => $systemBranding,
+        ]);
+    }
+
+    public function processRoleSelect(): void
+    {
+        $pending = Session::get('pending_role_select');
+        if (!$pending || !Auth::check()) {
+            $this->redirect('auth/login');
+        }
+
+        Csrf::verify();
+
+        $selectedRole = trim($_POST['role'] ?? '');
+        if (!in_array($selectedRole, $pending['roles'], true)) {
+            Session::flash('error', 'Nieprawidłowa rola.');
+            $this->redirect('auth/role-select');
+        }
+
+        Session::remove('pending_role_select');
+        Auth::setClub($pending['club_id'], $selectedRole);
         $this->redirectAfterLogin();
     }
 

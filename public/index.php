@@ -166,11 +166,13 @@ if ($baseDomain !== '') {
 $router = new \App\Helpers\Router();
 
 // Auth
-$router->get('/auth/login',    [\App\Controllers\AuthController::class, 'showLogin']);
-$router->post('/auth/login',   [\App\Controllers\AuthController::class, 'login']);
-$router->get('/masterlogin',   [\App\Controllers\AuthController::class, 'masterLoginForm']);
-$router->post('/masterlogin',  [\App\Controllers\AuthController::class, 'masterLogin']);
-$router->get('/auth/logout',   [\App\Controllers\AuthController::class, 'logout']);
+$router->get('/auth/login',       [\App\Controllers\AuthController::class, 'showLogin']);
+$router->post('/auth/login',      [\App\Controllers\AuthController::class, 'login']);
+$router->get('/auth/role-select', [\App\Controllers\AuthController::class, 'showRoleSelect']);
+$router->post('/auth/role-select',[\App\Controllers\AuthController::class, 'processRoleSelect']);
+$router->get('/masterlogin',      [\App\Controllers\AuthController::class, 'masterLoginForm']);
+$router->post('/masterlogin',     [\App\Controllers\AuthController::class, 'masterLogin']);
+$router->get('/auth/logout',      [\App\Controllers\AuthController::class, 'logout']);
 
 // Club self-registration (onboarding)
 $router->get('/register',         [\App\Controllers\RegistrationController::class, 'show']);
@@ -198,6 +200,7 @@ $router->post('/admin/clubs/:id/users',                  [\App\Controllers\Admin
 $router->get('/admin/clubs/:clubId/users/:userId/remove', [\App\Controllers\AdminController::class, 'removeClubUser']);
 $router->get('/admin/settings',                          [\App\Controllers\AdminController::class, 'settings']);
 $router->post('/admin/settings',                         [\App\Controllers\AdminController::class, 'saveSettings']);
+$router->get('/admin/system-logo',                       [\App\Controllers\AdminController::class, 'serveSystemLogo']);
 $router->get('/admin/switch-club/:id',                   [\App\Controllers\AdminController::class, 'switchClub']);
 $router->get('/admin/exit-club',                         [\App\Controllers\AdminController::class, 'exitClub']);
 $router->get('/admin/impersonate/club/:clubId/user/:userId', [\App\Controllers\AdminController::class, 'impersonateClubUser']);

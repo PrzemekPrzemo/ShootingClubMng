@@ -267,7 +267,7 @@ class AdminController extends BaseController
     {
         $settingModel = new SettingModel();
         $settings = [];
-        foreach (['base_domain', 'allow_club_smtp', 'smtp_host', 'smtp_port', 'smtp_secure', 'smtp_user', 'smtp_pass_enc'] as $key) {
+        foreach (['base_domain', 'allow_club_smtp', 'smtp_host', 'smtp_port', 'smtp_secure', 'smtp_user', 'smtp_pass_enc', 'system_name', 'system_logo'] as $key) {
             $settings[$key] = $settingModel->get($key);
         }
 
@@ -289,8 +289,52 @@ class AdminController extends BaseController
             }
         }
 
+        // System branding
+        if (isset($_POST['system_name'])) {
+            $settingModel->upsert('system_name', trim($_POST['system_name']), 'Nazwa systemu', 'text');
+        }
+
+        // System logo upload
+        if (!empty($_FILES['system_logo']['tmp_name']) && $_FILES['system_logo']['error'] === UPLOAD_ERR_OK) {
+            $ext = strtolower(pathinfo($_FILES['system_logo']['name'], PATHINFO_EXTENSION));
+            if (in_array($ext, ['png', 'jpg', 'jpeg', 'svg', 'webp'], true)) {
+                $logoDir = ROOT_PATH . '/storage/system/';
+                if (!is_dir($logoDir)) {
+                    mkdir($logoDir, 0775, true);
+                }
+                // Remove old logo files
+                foreach (glob($logoDir . 'logo.*') ?: [] as $f) {
+                    unlink($f);
+                }
+                $dest = $logoDir . 'logo.' . $ext;
+                if (move_uploaded_file($_FILES['system_logo']['tmp_name'], $dest)) {
+                    $settingModel->upsert('system_logo', 'logo.' . $ext, 'Logo systemu', 'text');
+                }
+            }
+        }
+
         Session::flash('success', 'Zapisano ustawienia globalne.');
         $this->redirect('admin/settings');
+    }
+
+    /** GET /admin/system-logo — serwuje logo systemu z storage */
+    public function serveSystemLogo(): void
+    {
+        $settingModel = new SettingModel();
+        $fileName = $settingModel->get('system_logo', '');
+        if ($fileName !== '' && $fileName !== null) {
+            $path = ROOT_PATH . '/storage/system/' . basename((string)$fileName);
+            if (file_exists($path)) {
+                $ext  = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                $mime = ['png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'svg' => 'image/svg+xml', 'webp' => 'image/webp'][$ext] ?? 'image/png';
+                header('Content-Type: ' . $mime);
+                header('Cache-Control: public, max-age=86400');
+                readfile($path);
+                exit;
+            }
+        }
+        http_response_code(404);
+        exit;
     }
 
     // ── Switch club ──────────────────────────────────────────────────────────
