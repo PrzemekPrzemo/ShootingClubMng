@@ -229,6 +229,12 @@ $router->get('/subscription',                          [\App\Controllers\Subscri
 // Security audit (superadmin)
 $router->get('/admin/security',  [\App\Controllers\AdminSecurityController::class, 'index']);
 
+// Backups (superadmin)
+$router->get('/admin/backups',              [\App\Controllers\BackupController::class, 'index']);
+$router->post('/admin/backups/run',         [\App\Controllers\BackupController::class, 'run']);
+$router->get('/admin/backups/download',     [\App\Controllers\BackupController::class, 'download']);
+$router->post('/admin/backups/delete',      [\App\Controllers\BackupController::class, 'delete']);
+
 // Analytics (superadmin)
 $router->get('/admin/analytics',          [\App\Controllers\AdminAnalyticsController::class, 'index']);
 $router->get('/admin/analytics/revenue',  [\App\Controllers\AdminAnalyticsController::class, 'revenue']);
