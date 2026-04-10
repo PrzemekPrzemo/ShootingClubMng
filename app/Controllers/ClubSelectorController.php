@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Helpers\Auth;
+use App\Helpers\Csrf;
 use App\Helpers\Session;
 
 class ClubSelectorController extends BaseController
@@ -33,6 +34,8 @@ class ClubSelectorController extends BaseController
     /** POST — wybierz klub i ustaw kontekst. */
     public function select(string $clubId): void
     {
+        Csrf::verify();
+
         if (!Auth::check()) {
             $this->redirect('auth/login');
         }

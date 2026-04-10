@@ -81,6 +81,7 @@ class AdsController extends BaseController
 
     public function toggle(string $id): void
     {
+        Csrf::verify();
         $this->model->toggle((int)$id);
         $this->redirect('admin/ads');
     }

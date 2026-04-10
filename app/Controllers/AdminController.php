@@ -584,6 +584,7 @@ class AdminController extends BaseController
     /** POST /admin/users/:userId/clubs/:clubId/remove */
     public function removeUserFromClub(string $userId, string $clubId): void
     {
+        Csrf::verify();
         $this->userModel->removeFromClub((int)$userId, (int)$clubId);
         Session::flash('success', 'Usunięto przypisanie do klubu.');
         $this->redirect("admin/users/{$userId}/edit");

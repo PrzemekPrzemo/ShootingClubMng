@@ -2,9 +2,7 @@
 
 namespace App\Controllers;
 
-use App\Helpers\ClubContext;
 use App\Helpers\Database;
-use App\Models\ClubModel;
 use App\Models\ClubSettingsModel;
 
 /**

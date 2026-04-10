@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Helpers\Auth;
+use App\Helpers\Csrf;
 use App\Models\MemberModel;
 use App\Models\LicenseModel;
 use App\Models\MedicalExamModel;
@@ -23,6 +24,7 @@ class DashboardController extends BaseController
 
     public function markNotificationsRead(): void
     {
+        Csrf::verify();
         $role = Auth::role() ?? '';
         if (in_array($role, ['admin', 'zarzad'])) {
             (new NotificationModel())->markAllRead([$role]);

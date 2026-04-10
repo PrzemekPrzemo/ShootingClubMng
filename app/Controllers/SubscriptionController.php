@@ -194,6 +194,7 @@ class SubscriptionController extends BaseController
 
     public function adminMarkInvoicePaid(string $id): void
     {
+        Csrf::verify();
         $this->requireSuperAdmin();
         Database::getInstance()->prepare(
             "UPDATE billing_invoices SET status='paid', paid_at=NOW() WHERE id=?"

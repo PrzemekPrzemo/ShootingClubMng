@@ -185,8 +185,15 @@ class MemberPortalController
             $this->redirectTo('portal/exams');
         }
 
-        $examDate  = $_POST['exam_date']  ?? date('Y-m-d');
-        $validUntil = !empty($_POST['valid_until']) ? $_POST['valid_until'] : null;
+        // Validate and sanitize dates (prevent invalid dates reaching DB)
+        $examDateRaw  = trim($_POST['exam_date'] ?? '');
+        $examDate     = ($examDateRaw && preg_match('/^\d{4}-\d{2}-\d{2}$/', $examDateRaw) && strtotime($examDateRaw))
+            ? $examDateRaw
+            : date('Y-m-d');
+        $validUntilRaw = trim($_POST['valid_until'] ?? '');
+        $validUntil    = ($validUntilRaw && preg_match('/^\d{4}-\d{2}-\d{2}$/', $validUntilRaw) && strtotime($validUntilRaw))
+            ? $validUntilRaw
+            : null;
         $typeId    = !empty($_POST['exam_type_id']) ? (int)$_POST['exam_type_id'] : null;
 
         // If valid_until not provided, try to auto-calculate from exam type
@@ -493,6 +500,7 @@ class MemberPortalController
         $data['flashSuccess'] = Session::getFlash('success');
         $data['flashError']   = Session::getFlash('error');
         $data['flashWarning'] = Session::getFlash('warning');
+        $data['flashInfo']    = Session::getFlash('info');
         $this->view->setLayout('portal');
         $this->view->render($template, $data);
     }
