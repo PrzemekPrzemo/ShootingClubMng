@@ -306,6 +306,7 @@
                 position: fixed;
                 top: 0; left: 0;
                 height: 100vh;
+                overflow-y: auto;
                 transform: translateX(-100%);
                 transition: transform .25s ease;
                 width: 240px !important;
