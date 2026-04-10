@@ -70,6 +70,46 @@
     </button>
 </form>
 
+<div class="card mt-4" style="max-width:700px">
+    <div class="card-header"><h5 class="mb-0"><i class="bi bi-code-slash me-2"></i>API — klucz dostępu</h5></div>
+    <div class="card-body">
+        <p class="text-muted small mb-3">
+            Klucz API umożliwia odczyt danych klubu przez aplikacje zewnętrzne (np. mobilne)
+            przez endpointy <code>/api/v1/</code>. Trzymaj klucz w tajemnicy.
+        </p>
+        <?php
+        $apiKey = $settings['api_key'] ?? '';
+        ?>
+        <?php if ($apiKey): ?>
+        <div class="mb-3">
+            <label class="form-label small fw-semibold text-muted text-uppercase">Aktualny klucz</label>
+            <div class="input-group">
+                <input type="text" class="form-control font-monospace small" id="apiKeyVal"
+                       value="<?= e($apiKey) ?>" readonly>
+                <button class="btn btn-outline-secondary btn-sm"
+                        onclick="navigator.clipboard.writeText(document.getElementById('apiKeyVal').value)">
+                    <i class="bi bi-clipboard"></i>
+                </button>
+            </div>
+        </div>
+        <?php endif; ?>
+        <form method="post" action="<?= url('club/settings/regenerate-api-key') ?>">
+            <?= csrf_field() ?>
+            <button type="submit" class="btn btn-outline-warning btn-sm"
+                    onclick="return confirm('Wygenerować nowy klucz API? Stary klucz przestanie działać.')">
+                <i class="bi bi-arrow-repeat me-1"></i><?= $apiKey ? 'Wygeneruj nowy klucz' : 'Wygeneruj klucz API' ?>
+            </button>
+        </form>
+        <?php if ($apiKey): ?>
+        <div class="mt-3">
+            <p class="text-muted small mb-1">Przykładowe wywołanie:</p>
+            <pre class="p-2 rounded small" style="background:rgba(0,0,0,.3);color:#94A3B8;font-size:.75rem">GET /api/v1/clubs/<?= e($club['short_name'] ?? 'klub') ?>/competitions
+X-API-Key: <?= e($apiKey) ?></pre>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
+
 <div class="mt-4 d-flex flex-wrap gap-2">
     <a href="<?= url('club/customization') ?>" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-palette"></i> Wygląd i branding

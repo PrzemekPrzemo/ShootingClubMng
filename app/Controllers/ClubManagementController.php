@@ -222,4 +222,18 @@ class ClubManagementController extends BaseController
         readfile($fullPath);
         exit;
     }
+
+    // ── API key ───────────────────────────────────────────────────────────────
+
+    public function regenerateApiKey(): void
+    {
+        Csrf::verify();
+        $clubId = $this->currentClub();
+
+        $newKey = bin2hex(random_bytes(24)); // 48-char hex key
+        $this->settingsModel->set($clubId, 'api_key', $newKey, 'Klucz API', 'text');
+
+        Session::flash('success', 'Nowy klucz API został wygenerowany.');
+        $this->redirect('club/settings');
+    }
 }

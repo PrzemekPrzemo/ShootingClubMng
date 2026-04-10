@@ -273,8 +273,9 @@ $router->get('/club/settings',       [\App\Controllers\ClubManagementController:
 $router->post('/club/settings',      [\App\Controllers\ClubManagementController::class, 'saveSettings']);
 $router->get('/club/customization',  [\App\Controllers\ClubManagementController::class, 'customization']);
 $router->post('/club/customization', [\App\Controllers\ClubManagementController::class, 'saveCustomization']);
-$router->get('/club/smtp',           [\App\Controllers\ClubManagementController::class, 'smtp']);
-$router->post('/club/smtp',          [\App\Controllers\ClubManagementController::class, 'saveSmtp']);
+$router->get('/club/smtp',                      [\App\Controllers\ClubManagementController::class, 'smtp']);
+$router->post('/club/smtp',                     [\App\Controllers\ClubManagementController::class, 'saveSmtp']);
+$router->post('/club/settings/regenerate-api-key', [\App\Controllers\ClubManagementController::class, 'regenerateApiKey']);
 $router->get('/club/users',          [\App\Controllers\ClubManagementController::class, 'users']);
 $router->get('/club/logo',           [\App\Controllers\ClubManagementController::class, 'serveLogo']);
 $router->get('/club/email-templates',            [\App\Controllers\EmailTemplatesController::class, 'index']);
@@ -456,6 +457,11 @@ $router->post('/config/fee-rates/type/:id/delete',      [\App\Controllers\FeeCon
 $router->post('/config/fee-rates/save',                 [\App\Controllers\FeeConfigController::class, 'saveRates']);
 // AJAX: suggested fee amount
 $router->get('/api/fee-rate',                           [\App\Controllers\FeeConfigController::class, 'getRate']);
+
+// JSON API v1 (read-only, API-key authenticated)
+$router->get('/api/v1/clubs/:slug/competitions',        [\App\Controllers\ApiController::class, 'clubCompetitions']);
+$router->get('/api/v1/clubs/:slug/members/count',       [\App\Controllers\ApiController::class, 'clubMemberCount']);
+$router->get('/api/v1/competitions/:id/results',        [\App\Controllers\ApiController::class, 'competitionResults']);
 $router->get('/config/users',           [\App\Controllers\ConfigController::class, 'users']);
 $router->get('/config/users/create',    [\App\Controllers\ConfigController::class, 'createUser']);
 $router->post('/config/users/create',   [\App\Controllers\ConfigController::class, 'storeUser']);
