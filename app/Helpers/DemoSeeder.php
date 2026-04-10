@@ -30,6 +30,7 @@ class DemoSeeder
         self::createAnnouncements();
         self::createCalendarEvents();
         self::createClubFees($memberIds);
+        self::createPortalData($memberIds);
 
         return $users;
     }
@@ -213,7 +214,7 @@ class DemoSeeder
 
             foreach ($participants as $memberId) {
                 $db->prepare(
-                    "INSERT IGNORE INTO training_entries (training_id, member_id, attended)
+                    "INSERT IGNORE INTO training_attendees (training_id, member_id, attended)
                      VALUES (?, ?, ?)"
                 )->execute([$trainingId, $memberId, $status === 'zakończony' ? 1 : 0]);
             }
@@ -310,6 +311,114 @@ class DemoSeeder
                  VALUES (?, ?, ?, 200.00, ?, ?)"
             )->execute([$cid, $memberId, $year, $paid ? 1 : 0, $paid ? date('Y-m-d', strtotime('-' . (30 + $i * 5) . ' days')) : null]);
         }
+    }
+
+    // ── Portal demo data (rich profile for Anna Kowalska) ─────────────────────
+
+    private static function createPortalData(array $memberIds): void
+    {
+        $db   = self::$db;
+        $cid  = self::$clubId;
+        $anna = $memberIds[0]; // Anna Kowalska — portal demo user
+        $year = (int)date('Y');
+
+        // Get a user_id for created_by fields
+        $stmt = $db->prepare("SELECT user_id FROM user_clubs WHERE club_id = ? ORDER BY id ASC LIMIT 1");
+        $stmt->execute([$cid]);
+        $adminUserId = (int)$stmt->fetchColumn();
+        if (!$adminUserId) {
+            return;
+        }
+
+        // 1. Enrich Anna's profile with address and member_type
+        $db->prepare(
+            "UPDATE members SET address_street = ?, address_city = ?, address_postal = ?,
+             member_type = 'wyczynowy', notes = ? WHERE id = ? LIMIT 1"
+        )->execute([
+            'ul. Strzelecka 12/3', 'Warszawa', '00-123',
+            'Zawodniczka z 5-letnim stażem. Specjalizacja: pistolet sportowy.',
+            $anna,
+        ]);
+
+        // 2. Medical exams (one valid, one expired)
+        $db->prepare(
+            "INSERT INTO member_medical_exams (member_id, exam_date, valid_until, notes, created_by)
+             VALUES (?, ?, ?, ?, ?)"
+        )->execute([
+            $anna,
+            date('Y-m-d', strtotime('-5 months')),
+            date('Y-m-d', strtotime('+7 months')),
+            'Badanie profilaktyczne — zdolna do uprawiania sportu strzeleckiego bez ograniczeń.',
+            $adminUserId,
+        ]);
+        $db->prepare(
+            "INSERT INTO member_medical_exams (member_id, exam_date, valid_until, notes, created_by)
+             VALUES (?, ?, ?, ?, ?)"
+        )->execute([
+            $anna,
+            date('Y-m-d', strtotime('-17 months')),
+            date('Y-m-d', strtotime('-5 months')),
+            'Badanie poprzednie — wygasło.',
+            $adminUserId,
+        ]);
+
+        // 3. Personal weapons
+        $weapons = [
+            ['Walther PPQ M2', 'pistolet', '9mm', 'Walther', 'WPQ2-2021-DEMO', 'POZ/WA/1234/2021'],
+            ['CZ 75 SP-01 Shadow', 'pistolet', '9mm', 'Česká zbrojovka', 'CZ75SP-2022-DEMO', 'POZ/WA/5678/2022'],
+        ];
+        foreach ($weapons as [$name, $type, $caliber, $mfr, $serial, $permit]) {
+            $db->prepare(
+                "INSERT INTO member_weapons
+                    (member_id, name, type, caliber, manufacturer, serial_number, permit_number, is_active, created_by)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)"
+            )->execute([$anna, $name, $type, $caliber, $mfr, $serial, $permit, $adminUserId]);
+        }
+
+        // 4. Payment types for this demo club
+        $db->prepare(
+            "INSERT INTO payment_types (club_id, name, amount, is_active) VALUES (?, 'Składka roczna', 240.00, 1)"
+        )->execute([$cid]);
+        $ptAnnual = (int)$db->lastInsertId();
+
+        $db->prepare(
+            "INSERT INTO payment_types (club_id, name, amount, is_active) VALUES (?, 'Wpisowe na zawody', 35.00, 1)"
+        )->execute([$cid]);
+        $ptComp = (int)$db->lastInsertId();
+
+        // 5. Payment records for Anna (previous year + current year + competition fee)
+        $db->prepare(
+            "INSERT INTO payments
+                (member_id, payment_type_id, amount, payment_date, period_year, method, reference, created_by)
+             VALUES (?, ?, 240.00, ?, ?, 'przelew', ?, ?)"
+        )->execute([
+            $anna, $ptAnnual,
+            date('Y-m-d', strtotime('-380 days')),
+            $year - 1,
+            'PRLW/' . ($year - 1) . '/00042',
+            $adminUserId,
+        ]);
+        $db->prepare(
+            "INSERT INTO payments
+                (member_id, payment_type_id, amount, payment_date, period_year, method, reference, created_by)
+             VALUES (?, ?, 240.00, ?, ?, 'gotówka', ?, ?)"
+        )->execute([
+            $anna, $ptAnnual,
+            date('Y-m-d', strtotime('-15 days')),
+            $year,
+            'KP/' . $year . '/00018',
+            $adminUserId,
+        ]);
+        $db->prepare(
+            "INSERT INTO payments
+                (member_id, payment_type_id, amount, payment_date, period_year, method, notes, created_by)
+             VALUES (?, ?, 35.00, ?, ?, 'gotówka', 'Zawody Wiosenne', ?)"
+        )->execute([
+            $anna, $ptComp,
+            date('Y-m-d', strtotime('-32 days')),
+            $year,
+            $adminUserId,
+        ]);
     }
 
     // ── Cleanup ───────────────────────────────────────────────────────────────
