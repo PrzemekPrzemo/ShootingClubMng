@@ -36,20 +36,20 @@ class ClubFeeConfigModel extends BaseModel
     }
 
     /**
-     * Class-based discounts.
-     * @return array<int, float>  keyed by member_class_id
+     * Class-based discounts keyed by discipline_class_id.
+     * @return array<int, float>
      */
     public function getClassDiscounts(int $clubId, int $year): array
     {
         try {
             $stmt = $this->db->prepare(
-                "SELECT member_class_id, discount_amount
+                "SELECT discipline_class_id, discount_amount
                  FROM club_fee_discount_class WHERE club_id = ? AND year = ?"
             );
             $stmt->execute([$clubId, $year]);
             $out = [];
             foreach ($stmt->fetchAll() as $row) {
-                $out[(int)$row['member_class_id']] = (float)$row['discount_amount'];
+                $out[(int)$row['discipline_class_id']] = (float)$row['discount_amount'];
             }
             return $out;
         } catch (\PDOException) {
@@ -136,7 +136,7 @@ class ClubFeeConfigModel extends BaseModel
 
     public function saveClassDiscounts(int $clubId, int $year, array $rows): void
     {
-        $sql = "INSERT INTO club_fee_discount_class (club_id, year, member_class_id, discount_amount)
+        $sql = "INSERT INTO club_fee_discount_class (club_id, year, discipline_class_id, discount_amount)
                 VALUES (?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE discount_amount = VALUES(discount_amount)";
         $stmt = $this->db->prepare($sql);
@@ -161,7 +161,7 @@ class ClubFeeConfigModel extends BaseModel
     /**
      * Calculate fee breakdown for one member.
      *
-     * @param array $member  Row from members table (needs: member_type, member_class_id, id)
+     * @param array $member  Row from members table (needs: member_type, id)
      * @return array{base: float, discount_class: float, discount_achieve: float,
      *               final_annual: float, monthly: float, early_payment_final: float}
      */
@@ -172,14 +172,32 @@ class ClubFeeConfigModel extends BaseModel
         $achDiscounts   = $this->getAchieveDiscounts($clubId, $year);
 
         $memberType = $member['member_type'] ?? '';
-        $classId    = isset($member['member_class_id']) ? (int)$member['member_class_id'] : null;
 
         $base  = $feeConfig[$memberType]['max_annual_fee']    ?? 0.0;
         $early = $feeConfig[$memberType]['early_payment_fee'] ?? 0.0;
 
-        $discountClass = ($classId && isset($classDiscounts[$classId]))
-            ? $classDiscounts[$classId]
-            : 0.0;
+        // Find member's best discipline class (lowest sort_order = highest rank)
+        // that matches a club-defined discipline_class entry (club_id = $clubId).
+        $discountClass = 0.0;
+        if (!empty($classDiscounts)) {
+            try {
+                $stmt = $this->db->prepare(
+                    "SELECT dc.id
+                     FROM member_disciplines md
+                     JOIN discipline_classes dc ON dc.name = md.class AND dc.club_id = ?
+                     WHERE md.member_id = ?
+                     ORDER BY dc.sort_order ASC
+                     LIMIT 1"
+                );
+                $stmt->execute([$clubId, (int)$member['id']]);
+                $dcRow = $stmt->fetch();
+                if ($dcRow && isset($classDiscounts[(int)$dcRow['id']])) {
+                    $discountClass = $classDiscounts[(int)$dcRow['id']];
+                }
+            } catch (\PDOException) {
+                // table not yet created — skip
+            }
+        }
 
         // Sum discounts for each unique achievement type the member holds
         $discountAchieve = 0.0;
@@ -222,7 +240,7 @@ class ClubFeeConfigModel extends BaseModel
     public function recalculateAll(int $clubId, int $year): array
     {
         $stmt = $this->db->prepare(
-            "SELECT id, member_type, member_class_id FROM members
+            "SELECT id, member_type FROM members
              WHERE club_id = ? AND status = 'aktywny'"
         );
         $stmt->execute([$clubId]);

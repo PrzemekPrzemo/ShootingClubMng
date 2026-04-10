@@ -100,15 +100,18 @@
 
 <!-- ═══ Karta 2: Zniżki za klasę sportową ════════════════════════════════ -->
 <div class="card mb-4">
-    <div class="card-header">
+    <div class="card-header d-flex align-items-center gap-2">
         <strong><i class="bi bi-award me-1"></i> Zniżki za klasę sportową — <?= $year ?></strong>
         <span class="ms-2 text-muted small">0 PLN = brak zniżki dla tej klasy</span>
+        <a href="<?= url('config/discipline-classes') ?>" class="btn btn-outline-secondary btn-sm ms-auto">
+            <i class="bi bi-pencil"></i> Zarządzaj klasami sportowymi
+        </a>
     </div>
     <div class="card-body p-0">
         <table class="table table-sm table-bordered mb-0">
             <thead class="table-dark">
                 <tr>
-                    <th>Klasa sportowa</th>
+                    <th>Klasa sportowa <span class="fw-normal text-muted small">(słownik: Klasy sportowe)</span></th>
                     <th class="text-center" style="min-width:180px">Zniżka roczna (PLN)</th>
                 </tr>
             </thead>
@@ -116,7 +119,7 @@
             <?php if (empty($memberClasses)): ?>
                 <tr><td colspan="2" class="text-center text-muted py-3">
                     Brak klas sportowych zdefiniowanych dla tego klubu.
-                    <a href="<?= url('config/member-classes') ?>">Dodaj klasy →</a>
+                    <a href="<?= url('config/discipline-classes') ?>">Dodaj klasy sportowe →</a>
                 </td></tr>
             <?php endif; ?>
             <?php foreach ($memberClasses as $mc):
@@ -125,7 +128,6 @@
             <tr class="<?= $mc['is_active'] ? '' : 'text-muted table-secondary' ?>">
                 <td>
                     <?= e($mc['name']) ?>
-                    <code class="small ms-1">[<?= e($mc['short_code']) ?>]</code>
                     <?php if (!$mc['is_active']): ?><span class="badge bg-secondary ms-1">nieaktywna</span><?php endif; ?>
                 </td>
                 <td class="p-1">

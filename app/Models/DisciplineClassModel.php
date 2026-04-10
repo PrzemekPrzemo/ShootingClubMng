@@ -59,6 +59,19 @@ class DisciplineClassModel extends BaseModel
         return $ids ? ' AND id NOT IN (' . implode(',', $ids) . ')' : '';
     }
 
+    /**
+     * Returns only discipline classes owned by the given club (club_id = $clubId).
+     * Used by the fee calculator.
+     */
+    public function getClubOwned(int $clubId): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT * FROM discipline_classes WHERE club_id = ? ORDER BY sort_order, name"
+        );
+        $stmt->execute([$clubId]);
+        return $stmt->fetchAll();
+    }
+
     public function save(array $data): int
     {
         return $this->insert($data);

@@ -6,22 +6,22 @@ use App\Helpers\ClubContext;
 use App\Helpers\Csrf;
 use App\Helpers\Session;
 use App\Models\ClubFeeConfigModel;
+use App\Models\DisciplineClassModel;
 use App\Models\MemberAchievementModel;
-use App\Models\MemberClassModel;
 use App\Models\MemberTypeModel;
 
 class ClubFeeConfigController extends BaseController
 {
-    private ClubFeeConfigModel $feeModel;
-    private MemberClassModel   $classModel;
-    private MemberTypeModel    $typeModel;
+    private ClubFeeConfigModel   $feeModel;
+    private DisciplineClassModel $classModel;
+    private MemberTypeModel      $typeModel;
 
     public function __construct()
     {
         parent::__construct();
         $this->requireRole(['admin', 'zarzad']);
         $this->feeModel   = new ClubFeeConfigModel();
-        $this->classModel = new MemberClassModel();
+        $this->classModel = new DisciplineClassModel();
         $this->typeModel  = new MemberTypeModel();
     }
 
@@ -31,8 +31,7 @@ class ClubFeeConfigController extends BaseController
         $clubId = ClubContext::current();
         $year   = (int)($_GET['year'] ?? date('Y'));
 
-        // Fee calculator uses only club-owned classes (club_id = current club),
-        // not global PZSS classes — so discounts are per club's own dictionary.
+        // Fee calculator uses club-owned discipline classes (Klasy sportowe, club_id = current club).
         $memberClasses = $clubId
             ? $this->classModel->getClubOwned($clubId)
             : $this->classModel->getAll();
