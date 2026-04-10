@@ -1,28 +1,47 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e($title ?? 'Shootero') ?> &mdash; <?= e($appName ?? 'Shootero') ?></title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Bootstrap & Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Shootero design system -->
     <link rel="stylesheet" href="<?= url('css/app.css') ?>">
     <?php
-    // Club branding — inject CSS custom properties
-    $__primaryColor = $clubBranding['primary_color'] ?? '#dc3545';
-    $__navbarBg     = $clubBranding['navbar_bg']     ?? '#1a1f2e';
+    $__primaryColor = $clubBranding['primary_color'] ?? '#D4A373';
+    $__navbarBg     = $clubBranding['navbar_bg']     ?? '#0F172A';
     $__customCss    = $clubBranding['custom_css']     ?? '';
     ?>
     <style>
         :root {
             --club-primary: <?= htmlspecialchars($__primaryColor, ENT_QUOTES) ?>;
             --club-navbar:  <?= htmlspecialchars($__navbarBg, ENT_QUOTES) ?>;
+            /* Shootero palette */
+            --sht-900: #0B1220;
+            --sht-800: #0F172A;
+            --sht-700: #1E293B;
+            --sht-gold: #D4A373;
+            --sht-gold-bright: #E6C200;
+            --sht-muted: #94A3B8;
+            --sht-dim: #475569;
         }
-        /* ── Critical layout — inlined so it works even if app.css lags ── */
-        html, body { height: 100%; margin: 0; padding: 0; }
-        body { display: flex; flex-direction: column; background: #f0f2f5; font-size: .92rem; }
 
-        /* Wrapper: sidebar + page */
+        /* ── Layout ── */
+        html, body { height: 100%; margin: 0; padding: 0; }
+        body {
+            display: flex;
+            flex-direction: column;
+            background: var(--sht-900);
+            color: #e2e8f0;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
         #layout-wrap {
             display: flex;
             flex: 1;
@@ -33,7 +52,7 @@
         #sidebar {
             width: 240px;
             min-width: 240px;
-            background: var(--club-navbar, #1a1f2e);
+            background: var(--club-navbar, var(--sht-800));
             display: flex;
             flex-direction: column;
             position: sticky;
@@ -43,132 +62,244 @@
             flex-shrink: 0;
             z-index: 100;
             transition: width .22s ease, min-width .22s ease;
+            border-right: 1px solid rgba(255,255,255,.05);
         }
         #sidebar.collapsed { width: 62px; min-width: 62px; }
+        #sidebar::-webkit-scrollbar { width: 3px; }
+        #sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
 
         /* Brand */
         .sb-brand {
             display: flex;
             align-items: center;
-            gap: .6rem;
-            padding: .9rem 1rem;
+            gap: .65rem;
+            padding: 1rem 1rem .9rem;
             color: #fff;
             text-decoration: none;
-            border-bottom: 1px solid rgba(255,255,255,.08);
+            border-bottom: 1px solid rgba(255,255,255,.06);
             white-space: nowrap;
             overflow: hidden;
             flex-shrink: 0;
         }
-        .sb-brand i { font-size: 1.35rem; color: var(--club-primary, #dc3545); flex-shrink: 0; }
-        .sb-brand-text { font-weight: 700; font-size: .97rem; transition: opacity .2s; }
+        .sb-brand-text {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: .98rem;
+            letter-spacing: .5px;
+            transition: opacity .2s;
+            color: #fff;
+        }
         #sidebar.collapsed .sb-brand-text { opacity: 0; width: 0; overflow: hidden; }
 
+        /* Shootero crosshair icon */
+        .sb-shootero-icon {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+        }
+
         /* Nav */
-        .sb-nav { list-style: none; padding: .4rem .5rem; margin: 0; flex: 1; overflow-y: auto; overflow-x: hidden; }
+        .sb-nav { list-style: none; padding: .5rem .5rem; margin: 0; flex: 1; overflow-y: auto; overflow-x: hidden; }
         .sb-nav::-webkit-scrollbar { width: 3px; }
-        .sb-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 2px; }
+        .sb-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
 
         .sb-link {
             display: flex;
             align-items: center;
             gap: .75rem;
-            padding: .52rem .75rem;
-            color: #b8c0d4;
+            padding: .54rem .75rem;
+            color: var(--sht-muted);
             text-decoration: none;
-            border-radius: .4rem;
+            border-radius: .45rem;
+            font-family: 'Inter', sans-serif;
             font-size: .875rem;
+            font-weight: 500;
             white-space: nowrap;
             overflow: hidden;
             transition: background .14s, color .14s;
             margin-bottom: 2px;
         }
-        .sb-link i { font-size: 1.05rem; flex-shrink: 0; width: 1.25rem; text-align: center; }
+        .sb-link i {
+            font-size: 1.05rem;
+            flex-shrink: 0;
+            width: 1.25rem;
+            text-align: center;
+            transition: color .14s;
+        }
         .sb-link span { transition: opacity .2s; }
-        .sb-link:hover { background: #2a3147; color: #fff; }
-        .sb-link.active { background: var(--club-primary, #dc3545); color: #fff; font-weight: 600; }
+        .sb-link:hover {
+            background: rgba(212,163,115,.1);
+            color: var(--sht-gold);
+        }
+        .sb-link:hover i { color: var(--sht-gold); }
+        .sb-link.active {
+            background: linear-gradient(135deg, rgba(212,163,115,.18) 0%, rgba(230,194,0,.12) 100%);
+            color: var(--sht-gold);
+            font-weight: 600;
+            border-left: 3px solid var(--sht-gold);
+            padding-left: calc(.75rem - 3px);
+        }
+        .sb-link.active i { color: var(--sht-gold); }
+
         #sidebar.collapsed .sb-link { justify-content: center; padding-left: 0; padding-right: 0; }
+        #sidebar.collapsed .sb-link.active { padding-left: 0; border-left: none; border-bottom: 2px solid var(--sht-gold); }
         #sidebar.collapsed .sb-link span { opacity: 0; width: 0; overflow: hidden; }
+
+        /* Nav section label */
+        .sb-section {
+            font-family: 'Poppins', sans-serif;
+            font-size: .68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--sht-dim);
+            padding: .9rem .75rem .3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: opacity .2s;
+        }
+        #sidebar.collapsed .sb-section { opacity: 0; height: 0; padding: 0; overflow: hidden; }
 
         /* Footer */
         .sb-footer {
-            border-top: 1px solid rgba(255,255,255,.08);
+            border-top: 1px solid rgba(255,255,255,.06);
             padding: .7rem .9rem;
             display: flex;
             align-items: center;
             gap: .5rem;
             flex-shrink: 0;
             overflow: hidden;
+            background: rgba(255,255,255,.01);
         }
         .sb-user { display: flex; align-items: center; gap: .5rem; flex: 1; min-width: 0; }
-        .sb-user > i { font-size: 1.25rem; color: #8a94a8; flex-shrink: 0; }
-        .sb-user-name { font-size: .82rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sb-user > i { font-size: 1.3rem; color: var(--sht-muted); flex-shrink: 0; }
+        .sb-user-name {
+            font-family: 'Poppins', sans-serif;
+            font-size: .82rem;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         .sb-user-role { margin-top: 1px; }
         .sb-user-info { min-width: 0; overflow: hidden; transition: opacity .2s; }
         #sidebar.collapsed .sb-user-info { opacity: 0; width: 0; }
-        .sb-logout { color: #7a8499; font-size: 1.1rem; text-decoration: none; padding: .2rem .3rem; border-radius: .3rem; flex-shrink: 0; transition: color .14s, background .14s; }
-        .sb-logout:hover { color: #fff; background: rgba(255,255,255,.1); }
-        #sidebar.collapsed .sb-logout { display: none; }
-
-        /* Collapse toggle button */
-        .sb-collapse-btn {
-            background: none; border: none; color: #7a8499; font-size: 1rem;
-            padding: .2rem .4rem; border-radius: .3rem; cursor: pointer; flex-shrink: 0;
+        .sb-action-btn {
+            color: var(--sht-dim);
+            font-size: 1.05rem;
+            text-decoration: none;
+            padding: .2rem .3rem;
+            border-radius: .3rem;
+            flex-shrink: 0;
             transition: color .14s, background .14s;
         }
-        .sb-collapse-btn:hover { color: #fff; background: rgba(255,255,255,.1); }
-        /* collapsed: button stays visible, shifts to top-center as the only footer element */
+        .sb-action-btn:hover { color: var(--sht-gold); background: rgba(212,163,115,.1); }
+        .sb-logout { color: var(--sht-dim); font-size: 1.05rem; text-decoration: none; padding: .2rem .3rem; border-radius: .3rem; flex-shrink: 0; transition: color .14s, background .14s; }
+        .sb-logout:hover { color: #fca5a5; background: rgba(220,38,38,.1); }
+        #sidebar.collapsed .sb-logout { display: none; }
+        #sidebar.collapsed .sb-action-btn { display: none; }
+
+        /* Collapse button */
+        .sb-collapse-btn {
+            background: none;
+            border: none;
+            color: var(--sht-dim);
+            font-size: .95rem;
+            padding: .2rem .4rem;
+            border-radius: .3rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: color .14s, background .14s;
+        }
+        .sb-collapse-btn:hover { color: var(--sht-gold); background: rgba(212,163,115,.1); }
         #sidebar.collapsed .sb-footer { justify-content: center; }
         #sidebar.collapsed .sb-collapse-btn { display: flex; }
 
-        /* ── Page area (right of sidebar) ── */
+        /* ── Page area ── */
         #page-area {
             flex: 1;
             min-width: 0;
             display: flex;
             flex-direction: column;
+            background: var(--sht-900);
         }
 
         /* Top bar */
         #topbar {
-            background: #fff;
-            border-bottom: 1px solid #dee2e6;
+            background: var(--sht-800);
+            border-bottom: 1px solid rgba(255,255,255,.06);
             padding: 0 1.25rem;
             height: 52px;
             display: flex;
             align-items: center;
             gap: .75rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,.05);
             position: sticky;
             top: 0;
             z-index: 99;
         }
         .topbar-hamburger {
-            background: none; border: none; font-size: 1.45rem;
-            color: #555; cursor: pointer; padding: .1rem .35rem;
-            border-radius: .3rem; line-height: 1;
-            display: none; /* shown only on mobile via media query */
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            color: var(--sht-muted);
+            cursor: pointer;
+            padding: .1rem .35rem;
+            border-radius: .35rem;
+            line-height: 1;
+            display: none;
         }
-        .topbar-hamburger:hover { background: #f0f0f0; }
-        .topbar-title { font-weight: 600; font-size: .93rem; color: #333; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .topbar-user { display: flex; align-items: center; gap: .5rem; font-size: .85rem; color: #555; }
-        .topbar-user a { color: #888; font-size: 1.1rem; text-decoration: none; }
-        .topbar-user a:hover { color: #dc3545; }
+        .topbar-hamburger:hover { background: rgba(255,255,255,.07); color: #fff; }
+        .topbar-title {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: .93rem;
+            color: #e2e8f0;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            font-size: .85rem;
+            color: var(--sht-muted);
+        }
+        .topbar-user a {
+            color: var(--sht-dim);
+            font-size: 1.1rem;
+            text-decoration: none;
+            padding: .2rem .3rem;
+            border-radius: .3rem;
+            transition: color .14s, background .14s;
+        }
+        .topbar-user a:hover { color: var(--sht-gold); background: rgba(212,163,115,.1); }
+        .topbar-user a.text-danger:hover { color: #fca5a5 !important; background: rgba(220,38,38,.1); }
 
         /* Main content */
         #main-content {
             flex: 1;
-            padding: 1.25rem 1.5rem 2.5rem;
+            padding: 1.35rem 1.5rem 2.5rem;
         }
         footer.main-foot {
-            text-align: center; font-size: .8rem; color: #aaa;
-            padding: .75rem; border-top: 1px solid #e9ecef;
+            text-align: center;
+            font-size: .8rem;
+            color: var(--sht-dim);
+            padding: .75rem;
+            border-top: 1px solid rgba(255,255,255,.06);
+            background: var(--sht-800);
+            font-family: 'Inter', sans-serif;
         }
 
         /* ── Mobile overlay ── */
         #sb-overlay {
             display: none;
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,.45);
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.6);
+            backdrop-filter: blur(2px);
             z-index: 99;
         }
         #sb-overlay.open { display: block; }
@@ -191,16 +322,19 @@
             #sidebar.collapsed .sb-link span,
             #sidebar.collapsed .sb-user-info { opacity: 1 !important; width: auto !important; overflow: visible !important; }
             #sidebar.collapsed .sb-link { justify-content: flex-start !important; padding-left: .75rem !important; padding-right: .75rem !important; }
+            #sidebar.collapsed .sb-link.active { border-left: 3px solid var(--sht-gold); padding-left: calc(.75rem - 3px) !important; border-bottom: none; }
             #sidebar.collapsed .sb-logout { display: flex !important; }
+            #sidebar.collapsed .sb-action-btn { display: flex !important; }
+            #sidebar.collapsed .sb-section { opacity: 1 !important; height: auto !important; padding: .9rem .75rem .3rem !important; }
             #page-area { margin-left: 0 !important; }
             .topbar-hamburger { display: block; }
         }
 
-        /* Print */
+        /* ── Print ── */
         @media print {
             #sidebar, #topbar, #sb-overlay { display: none !important; }
             #layout-wrap { display: block; }
-            #page-area { margin: 0; }
+            #page-area { background: #fff; }
             #main-content { padding: 0; }
         }
         <?php if ($__customCss): ?>
@@ -216,7 +350,6 @@ use App\Models\RolePermissionModel;
 $role       = $authUser['role'] ?? '';
 $uri        = $_SERVER['REQUEST_URI'] ?? '';
 $navModules = $navModules ?? RolePermissionModel::modulesForRole($role);
-
 $allModules = RolePermissionModel::MODULES;
 
 function isActive(string $mod, string $uri): bool {
@@ -238,11 +371,26 @@ function isActive(string $mod, string $uri): bool {
         default         => false,
     };
 }
+
+// Shootero crosshair SVG logo
+$shooteroIcon = '<svg class="sb-shootero-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="20" cy="20" r="13" stroke="rgba(148,163,184,.55)" stroke-width="1.2"/>
+  <circle cx="20" cy="20" r="7" stroke="#D4A373" stroke-width="1.3"/>
+  <circle cx="20" cy="20" r="2.5" fill="#E6C200"/>
+  <line x1="20" y1="3" x2="20" y2="12" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="20" y1="28" x2="20" y2="37" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="3" y1="20" x2="12" y2="20" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="28" y1="20" x2="37" y2="20" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M7 8 L12 14" stroke="#D4A373" stroke-width="2" stroke-linecap="round"/>
+  <path d="M33 32 L28 26" stroke="#D4A373" stroke-width="2" stroke-linecap="round"/>
+  <path d="M7 32 L12 26" stroke="#E6C200" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M33 8 L28 14" stroke="#E6C200" stroke-width="1.6" stroke-linecap="round"/>
+</svg>';
 ?>
 
 <div id="layout-wrap">
 
-<!-- ── Sidebar ──────────────────────────────────────────────────────── -->
+<!-- ── Sidebar ────────────────────────────────────────────── -->
 <?php
 $__isSuperAdminNav = !empty($isSuperAdmin);
 $__hasClubCtx      = \App\Helpers\ClubContext::current() !== null;
@@ -255,37 +403,32 @@ $__brandText       = $__hasClubCtx
     <a href="<?= $__brandHref ?>" class="sb-brand">
         <?php if (!empty($clubBranding['logo_path']) && $__hasClubCtx): ?>
             <img src="<?= url('club/logo') ?>" alt="" style="height:26px;width:auto;flex-shrink:0">
-        <?php elseif ($__isSuperAdminNav && !$__hasClubCtx): ?>
-            <?php if (!empty($systemBranding['logo'])): ?>
-                <img src="<?= url('admin/system-logo') ?>" alt="" style="height:26px;max-width:80px;object-fit:contain;flex-shrink:0">
-            <?php else: ?>
-                <i class="bi bi-shield-lock-fill" style="color:#dc3545"></i>
-            <?php endif; ?>
         <?php else: ?>
             <?php if (!empty($systemBranding['logo'])): ?>
                 <img src="<?= url('admin/system-logo') ?>" alt="" style="height:26px;max-width:80px;object-fit:contain;flex-shrink:0">
             <?php else: ?>
-                <i class="bi bi-bullseye"></i>
+                <?= $shooteroIcon ?>
             <?php endif; ?>
         <?php endif; ?>
         <span class="sb-brand-text"><?= $__brandText ?></span>
     </a>
 
     <?php if ($__isSuperAdminNav && !$__hasClubCtx): ?>
-    <!-- ── Admin nav (superadmin bez kontekstu klubu) ── -->
+    <!-- Admin nav (superadmin) -->
+    <div class="sb-section">Administracja</div>
     <ul class="sb-nav">
         <?php
         $__adminNav = [
-            ['icon' => 'speedometer2',        'label' => 'Dashboard',      'url' => 'admin/dashboard',            'match' => '/admin/dashboard'],
-            ['icon' => 'building',             'label' => 'Kluby',          'url' => 'admin/clubs',                'match' => '/admin/clubs'],
-            ['icon' => 'people',               'label' => 'Użytkownicy',    'url' => 'admin/users',                'match' => '/admin/users'],
-            ['icon' => 'book',                 'label' => 'Słowniki',       'url' => 'config/disciplines',         'match' => '/config/'],
-            ['icon' => 'joystick',             'label' => 'Demo',           'url' => 'admin/demos',                'match' => '/admin/demos'],
-            ['icon' => 'credit-card-2-front',  'label' => 'Subskrypcje',   'url' => 'admin/subscriptions',        'match' => '/admin/subscriptions'],
-            ['icon' => 'bar-chart-line',       'label' => 'Analityka',      'url' => 'admin/analytics',            'match' => '/admin/analytics'],
-            ['icon' => 'megaphone',            'label' => 'Reklamy',        'url' => 'admin/ads',                  'match' => '/admin/ads'],
-            ['icon' => 'gear',                 'label' => 'Ustawienia',     'url' => 'admin/settings',             'match' => '/admin/settings'],
-            ['icon' => 'shield-check',         'label' => 'Bezpieczeństwo', 'url' => 'admin/security',             'match' => '/admin/security'],
+            ['icon' => 'speedometer2',        'label' => 'Dashboard',      'url' => 'admin/dashboard',    'match' => '/admin/dashboard'],
+            ['icon' => 'building',             'label' => 'Kluby',          'url' => 'admin/clubs',        'match' => '/admin/clubs'],
+            ['icon' => 'people',               'label' => 'Użytkownicy',    'url' => 'admin/users',        'match' => '/admin/users'],
+            ['icon' => 'book',                 'label' => 'Słowniki',       'url' => 'config/disciplines', 'match' => '/config/'],
+            ['icon' => 'joystick',             'label' => 'Demo',           'url' => 'admin/demos',        'match' => '/admin/demos'],
+            ['icon' => 'credit-card-2-front',  'label' => 'Subskrypcje',   'url' => 'admin/subscriptions','match' => '/admin/subscriptions'],
+            ['icon' => 'bar-chart-line',       'label' => 'Analityka',      'url' => 'admin/analytics',    'match' => '/admin/analytics'],
+            ['icon' => 'megaphone',            'label' => 'Reklamy',        'url' => 'admin/ads',          'match' => '/admin/ads'],
+            ['icon' => 'gear',                 'label' => 'Ustawienia',     'url' => 'admin/settings',     'match' => '/admin/settings'],
+            ['icon' => 'shield-check',         'label' => 'Bezpieczeństwo', 'url' => 'admin/security',     'match' => '/admin/security'],
         ];
         foreach ($__adminNav as $__item):
             $__aActive = str_contains($uri, $__item['match']);
@@ -300,15 +443,15 @@ $__brandText       = $__hasClubCtx
     </ul>
 
     <?php elseif ($__isSuperAdminNav && $__hasClubCtx): ?>
-    <!-- ── Admin managing club — limited nav ── -->
+    <!-- Admin managing club -->
+    <div class="sb-section">Klub</div>
     <ul class="sb-nav">
         <?php
         $__clubAdminNav = [
-            ['icon' => 'speedometer2',  'label' => 'Dashboard',    'url' => 'dashboard',              'match' => '/dashboard'],
-            ['icon' => 'people',        'label' => 'Zawodnicy',     'url' => 'members',                'match' => '/members'],
-            ['icon' => 'gear',          'label' => 'Konfiguracja',  'url' => 'config',                 'match' => '/config'],
-            ['icon' => 'book',          'label' => 'Słowniki',      'url' => 'config/disciplines',     'match' => '/config/disciplines'],
-            ['icon' => 'bell',          'label' => 'Powiadomienia', 'url' => 'config/notifications',   'match' => '/config/notifications'],
+            ['icon' => 'speedometer2',  'label' => 'Dashboard',    'url' => 'dashboard',            'match' => '/dashboard'],
+            ['icon' => 'people',        'label' => 'Zawodnicy',    'url' => 'members',              'match' => '/members'],
+            ['icon' => 'gear',          'label' => 'Konfiguracja', 'url' => 'config',               'match' => '/config'],
+            ['icon' => 'bell',          'label' => 'Powiadomienia','url' => 'config/notifications', 'match' => '/config/notifications'],
         ];
         foreach ($__clubAdminNav as $__item):
             $__aActive = str_contains($uri, $__item['match']);
@@ -320,9 +463,9 @@ $__brandText       = $__hasClubCtx
             </a>
         </li>
         <?php endforeach; ?>
-        <li><hr style="border-color:rgba(255,255,255,.1);margin:.3rem .75rem"></li>
+        <li><hr style="border-color:rgba(255,255,255,.07);margin:.4rem .75rem"></li>
         <li>
-            <a href="<?= url('admin/exit-club') ?>" class="sb-link" style="color:#ff8c8c">
+            <a href="<?= url('admin/exit-club') ?>" class="sb-link" style="color:#fca5a5">
                 <i class="bi bi-arrow-left-circle"></i>
                 <span>Panel admina</span>
             </a>
@@ -330,7 +473,7 @@ $__brandText       = $__hasClubCtx
     </ul>
 
     <?php else: ?>
-    <!-- ── Club nav ── -->
+    <!-- Club nav -->
     <ul class="sb-nav">
         <?php foreach ($allModules as $mod => $cfg):
             if (!in_array($mod, $navModules, true)) continue;
@@ -353,7 +496,7 @@ $__brandText       = $__hasClubCtx
             <div class="sb-user-info">
                 <div class="sb-user-name"><?= e($authUser['full_name'] ?? $authUser['username'] ?? '') ?></div>
                 <div class="sb-user-role">
-                    <span class="badge bg-<?= match($role) { 'admin'=>'danger','zarzad'=>'warning text-dark',default=>'secondary' } ?>" style="font-size:.68rem">
+                    <span class="badge" style="font-size:.65rem;background:rgba(212,163,115,.15);color:#D4A373;border:1px solid rgba(212,163,115,.2)">
                         <?= e($role) ?>
                     </span>
                 </div>
@@ -362,7 +505,7 @@ $__brandText       = $__hasClubCtx
         <button class="sb-collapse-btn" id="desktopCollapse" title="Zwiń sidebar">
             <i class="bi bi-chevron-left"></i>
         </button>
-        <a href="<?= url('2fa/setup') ?>" class="sb-logout" title="Ustawienia 2FA">
+        <a href="<?= url('2fa/setup') ?>" class="sb-action-btn" title="Ustawienia 2FA">
             <i class="bi bi-shield-lock"></i>
         </a>
         <a href="<?= url('auth/logout') ?>" class="sb-logout" title="Wyloguj">
@@ -371,7 +514,7 @@ $__brandText       = $__hasClubCtx
     </div>
 </nav>
 
-<!-- ── Page area ────────────────────────────────────────────────────── -->
+<!-- ── Page area ─────────────────────────────────────────── -->
 <div id="page-area">
 
     <!-- Top bar -->
@@ -382,32 +525,33 @@ $__brandText       = $__hasClubCtx
         <span class="topbar-title"><?= e($title ?? '') ?></span>
         <div class="topbar-user">
             <?php
-            // Notification badge (admin/zarząd only, try/catch for pre-migration safety)
             if (in_array($authUser['role'] ?? '', ['admin', 'zarzad'])) {
                 try {
                     $__notifCount = (new \App\Models\NotificationModel())->countUnreadForRoles([$authUser['role']]);
                 } catch (\Throwable) { $__notifCount = 0; }
                 if ($__notifCount > 0):
             ?>
-            <a href="<?= url('dashboard') ?>" title="<?= $__notifCount ?> nieprzeczytanych powiadomień" class="position-relative text-decoration-none me-1">
-                <i class="bi bi-bell text-warning" style="font-size:1.15rem"></i>
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:.6rem">
+            <a href="<?= url('dashboard') ?>" title="<?= $__notifCount ?> powiadomień" class="position-relative text-decoration-none">
+                <i class="bi bi-bell" style="font-size:1.1rem;color:#D4A373"></i>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:.58rem">
                     <?= $__notifCount ?>
                 </span>
             </a>
             <?php endif; } ?>
             <?php if (!empty($isSuperAdmin)): ?>
-                <a href="<?= url($__hasClubCtx ? 'admin/exit-club' : 'admin/dashboard') ?>" class="text-decoration-none me-1" title="Panel administratora">
-                    <i class="bi bi-shield-lock text-danger" style="font-size:1.1rem"></i>
+                <a href="<?= url($__hasClubCtx ? 'admin/exit-club' : 'admin/dashboard') ?>" title="Panel administratora">
+                    <i class="bi bi-shield-lock text-danger" style="font-size:1.05rem"></i>
                 </a>
             <?php endif; ?>
             <?php if (in_array($authUser['role'] ?? '', ['admin', 'zarzad'])): ?>
-                <a href="<?= url('club/settings') ?>" class="text-decoration-none me-1" title="Ustawienia klubu">
+                <a href="<?= url('club/settings') ?>" title="Ustawienia klubu">
                     <i class="bi bi-building" style="font-size:1rem"></i>
                 </a>
             <?php endif; ?>
-            <span class="d-none d-md-inline"><?= e($authUser['full_name'] ?? '') ?></span>
-            <a href="<?= url('auth/logout') ?>" title="Wyloguj"><i class="bi bi-box-arrow-right"></i></a>
+            <span class="d-none d-md-inline" style="color:#94A3B8"><?= e($authUser['full_name'] ?? '') ?></span>
+            <a href="<?= url('auth/logout') ?>" title="Wyloguj">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
         </div>
     </div>
 
@@ -425,32 +569,31 @@ $__brandText       = $__hasClubCtx
                 if ($__daysLeft >= 0):
     ?>
     <div class="alert alert-warning alert-dismissible rounded-0 mb-0 py-2 px-3 small"
-         style="border-left:4px solid #ffc107;border-radius:0!important">
-        <i class="bi bi-clock"></i>
-        <strong>Okres próbny:</strong> pozostało <?= $__daysLeft ?> dni.
-        Skontaktuj się z administratorem systemu, aby wybrać plan.
+         style="border-radius:0!important;border-left:4px solid #E6C200">
+        <i class="bi bi-clock-history me-1"></i>
+        <strong>Okres próbny:</strong> pozostało <?= $__daysLeft ?> dni. Skontaktuj się z administratorem.
         <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
     </div>
     <?php
                 elseif ($__daysLeft < 0 && $__subscription['status'] === 'active'):
     ?>
-    <div class="alert alert-danger rounded-0 mb-0 py-2 px-3 small"
-         style="border-left:4px solid #dc3545;border-radius:0!important">
-        <i class="bi bi-exclamation-triangle"></i>
-        <strong>Okres próbny wygasł.</strong> Skontaktuj się z administratorem systemu, aby przedłużyć dostęp.
+    <div class="alert alert-danger rounded-0 mb-0 py-2 px-3 small" style="border-radius:0!important">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        <strong>Okres próbny wygasł.</strong> Skontaktuj się z administratorem systemu.
     </div>
     <?php       endif;
             }
         }
-    } catch (\Throwable) { /* table may not exist before migration */ }
+    } catch (\Throwable) {}
     ?>
 
     <!-- Impersonation banner -->
     <?php if (\App\Helpers\Auth::isImpersonating()): ?>
-    <div class="alert alert-danger mb-0 rounded-0 py-2 text-center" style="position:sticky;top:0;z-index:1050">
-        <i class="bi bi-person-fill-exclamation"></i>
-        <strong>TRYB IMPERSONACJI</strong> — przeglądasz system jako inny użytkownik.
-        <a href="<?= url('admin/stop-impersonation') ?>" class="btn btn-sm btn-danger ms-3">
+    <div class="alert alert-danger mb-0 rounded-0 py-2 text-center small fw-semibold"
+         style="position:sticky;top:0;z-index:1050;background:rgba(220,38,38,.15);border-color:rgba(220,38,38,.4);color:#fca5a5">
+        <i class="bi bi-person-fill-exclamation me-1"></i>
+        TRYB IMPERSONACJI — przeglądasz system jako inny użytkownik.
+        <a href="<?= url('admin/stop-impersonation') ?>" class="btn btn-sm btn-danger ms-3 py-0">
             <i class="bi bi-x-circle"></i> Zakończ
         </a>
     </div>
@@ -460,25 +603,25 @@ $__brandText       = $__hasClubCtx
     <div style="padding: .75rem 1.5rem 0">
         <?php if (!empty($flashSuccess)): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle"></i> <?= $flashSuccess ?>
+                <i class="bi bi-check-circle me-1"></i> <?= $flashSuccess ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
         <?php if (!empty($flashError)): ?>
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle"></i> <?= e($flashError) ?>
+                <i class="bi bi-exclamation-triangle me-1"></i> <?= e($flashError) ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
         <?php if (!empty($flashWarning)): ?>
             <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-circle"></i> <?= $flashWarning ?>
+                <i class="bi bi-exclamation-circle me-1"></i> <?= $flashWarning ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
     </div>
 
-    <!-- Ads banner (club_ui) -->
+    <!-- Ads banner -->
     <?php $adsTarget = 'club_ui'; include ROOT_PATH . '/app/Views/partials/ads_banner.php'; ?>
 
     <!-- Main content -->
@@ -487,7 +630,8 @@ $__brandText       = $__hasClubCtx
     </main>
 
     <footer class="main-foot">
-        &copy; <?= date('Y') ?> <?= e($clubBranding['club_name'] ?? 'Klub Strzelecki') ?> &mdash; System zarządzania
+        &copy; <?= date('Y') ?> <?= e($clubBranding['club_name'] ?? 'Shootero') ?>
+        &mdash; <span style="color:#D4A373">Shootero</span> — Zarządzaj klubem. Wspieraj ludzi.
     </footer>
 
 </div><!-- /page-area -->
@@ -505,7 +649,6 @@ $__brandText       = $__hasClubCtx
     var mobToggle = document.getElementById('mobileToggle');
     var dskToggle = document.getElementById('desktopCollapse');
 
-    // Mobile open/close
     function openMobile()  { sidebar.classList.add('mobile-open');    overlay.classList.add('open'); }
     function closeMobile() { sidebar.classList.remove('mobile-open'); overlay.classList.remove('open'); }
 
@@ -514,13 +657,10 @@ $__brandText       = $__hasClubCtx
     });
     overlay.addEventListener('click', closeMobile);
 
-    // Desktop collapse (icon-only mode)
     function updateCollapseBtn() {
         if (!dskToggle) return;
         var isCollapsed = sidebar.classList.contains('collapsed');
-        dskToggle.querySelector('i').className = isCollapsed
-            ? 'bi bi-chevron-right'
-            : 'bi bi-chevron-left';
+        dskToggle.querySelector('i').className = isCollapsed ? 'bi bi-chevron-right' : 'bi bi-chevron-left';
         dskToggle.title = isCollapsed ? 'Rozwiń menu' : 'Zwiń menu';
     }
 

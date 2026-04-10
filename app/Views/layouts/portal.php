@@ -1,81 +1,222 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= e($title ?? 'Portal Zawodnika') ?> &mdash; Klub Strzelecki</title>
+    <title><?= e($title ?? 'Portal Zawodnika') ?> &mdash; Shootero</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Bootstrap & Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Shootero design system -->
+    <link rel="stylesheet" href="<?= url('css/app.css') ?>">
     <style>
-        body { background: #f0f2f5; font-size: .93rem; }
-        .portal-navbar { background: #1a1f2e; }
-        .portal-navbar .navbar-brand { color: #fff; font-weight: 700; }
-        .portal-navbar .navbar-brand i { color: #dc3545; }
-        .portal-navbar .nav-link { color: #b8c0d4; }
-        .portal-navbar .nav-link:hover,
-        .portal-navbar .nav-link.active { color: #fff; }
-        .portal-main { min-height: calc(100vh - 56px - 48px); padding: 1.5rem; }
-        footer.portal-foot { text-align: center; font-size: .8rem; color: #aaa; padding: .75rem; border-top: 1px solid #e9ecef; background: #fff; }
+        :root {
+            --sht-900: #0B1220;
+            --sht-800: #0F172A;
+            --sht-700: #1E293B;
+            --sht-gold: #D4A373;
+            --sht-gold-bright: #E6C200;
+            --sht-muted: #94A3B8;
+            --sht-dim: #475569;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            background: var(--sht-900);
+            color: #e2e8f0;
+            font-family: 'Inter', -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Navbar ── */
+        .portal-navbar {
+            background: var(--sht-800);
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            padding: .5rem 0;
+        }
+        .portal-navbar .navbar-brand {
+            color: #fff;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: .98rem;
+            letter-spacing: .5px;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            text-decoration: none;
+        }
+        .portal-navbar .navbar-brand svg { flex-shrink: 0; }
+
+        .portal-navbar .nav-link {
+            color: var(--sht-muted);
+            font-family: 'Inter', sans-serif;
+            font-size: .875rem;
+            font-weight: 500;
+            padding: .4rem .75rem;
+            border-radius: .35rem;
+            transition: color .14s, background .14s;
+        }
+        .portal-navbar .nav-link:hover {
+            color: var(--sht-gold);
+            background: rgba(212,163,115,.08);
+        }
+        .portal-navbar .nav-link.active {
+            color: var(--sht-gold);
+            background: rgba(212,163,115,.13);
+            font-weight: 600;
+        }
+        .portal-navbar .nav-link i { margin-right: .3rem; }
+
+        .portal-navbar .navbar-toggler {
+            border-color: rgba(255,255,255,.15);
+            color: var(--sht-muted);
+        }
+        .portal-navbar .navbar-toggler-icon {
+            filter: invert(1);
+            opacity: .7;
+        }
+
+        /* Member badge */
+        .portal-member-badge {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            color: var(--sht-muted);
+            font-size: .82rem;
+        }
+        .portal-member-badge i {
+            color: var(--sht-gold);
+            font-size: 1.1rem;
+        }
+
+        /* ── Main ── */
+        .portal-main {
+            min-height: calc(100vh - 56px - 52px);
+            padding: 1.75rem 1.5rem;
+        }
+
+        /* ── Footer ── */
+        .portal-foot {
+            background: var(--sht-800);
+            border-top: 1px solid rgba(255,255,255,.06);
+            padding: .85rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: .5rem;
+        }
+        .portal-foot-brand {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: .82rem;
+            color: var(--sht-gold);
+            letter-spacing: .5px;
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        .portal-foot-copy {
+            font-size: .75rem;
+            color: var(--sht-dim);
+        }
+        .portal-foot-tagline {
+            font-size: .72rem;
+            color: var(--sht-dim);
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
 
+<?php
+$__portalIcon = '<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px">
+  <circle cx="16" cy="16" r="10.5" stroke="rgba(148,163,184,.45)" stroke-width="1.2"/>
+  <circle cx="16" cy="16" r="5.5" stroke="#D4A373" stroke-width="1.4"/>
+  <circle cx="16" cy="16" r="2.2" fill="#E6C200"/>
+  <line x1="16" y1="2" x2="16" y2="9" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="16" y1="23" x2="16" y2="30" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="2" y1="16" x2="9" y2="16" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="23" y1="16" x2="30" y2="16" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round"/>
+</svg>';
+$__uri = $_SERVER['REQUEST_URI'] ?? '';
+?>
+
 <nav class="navbar navbar-expand-md portal-navbar">
     <div class="container-fluid px-3">
         <a class="navbar-brand" href="<?= url('portal') ?>">
-            <i class="bi bi-bullseye"></i> Klub Strzelecki
+            <?= $__portalIcon ?>
+            <span>Shootero</span>
         </a>
-        <button class="navbar-toggler text-white border-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#portalNav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#portalNav" aria-controls="portalNav" aria-expanded="false">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="portalNav">
             <?php if (isset($memberUser)): ?>
-            <ul class="navbar-nav me-auto">
+            <ul class="navbar-nav me-auto gap-1">
                 <li class="nav-item">
-                    <a class="nav-link <?= str_ends_with($_SERVER['REQUEST_URI'], '/portal') ? 'active' : '' ?>" href="<?= url('portal') ?>">
-                        <i class="bi bi-speedometer2"></i> Dashboard
+                    <a class="nav-link <?= (str_ends_with(rtrim($__uri, '/'), '/portal') || str_ends_with($__uri, '/portal/dashboard')) ? 'active' : '' ?>"
+                       href="<?= url('portal') ?>">
+                        <i class="bi bi-speedometer2"></i>Dashboard
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/portal/profile') ? 'active' : '' ?>" href="<?= url('portal/profile') ?>">
-                        <i class="bi bi-person"></i> Mój profil
+                    <a class="nav-link <?= str_contains($__uri, '/portal/profile') ? 'active' : '' ?>"
+                       href="<?= url('portal/profile') ?>">
+                        <i class="bi bi-person-circle"></i>Mój profil
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/portal/exams') ? 'active' : '' ?>" href="<?= url('portal/exams') ?>">
-                        <i class="bi bi-heart-pulse"></i> Badania lekarskie
+                    <a class="nav-link <?= str_contains($__uri, '/portal/exams') ? 'active' : '' ?>"
+                       href="<?= url('portal/exams') ?>">
+                        <i class="bi bi-heart-pulse"></i>Badania
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/portal/competitions') ? 'active' : '' ?>" href="<?= url('portal/competitions') ?>">
-                        <i class="bi bi-trophy"></i> Zawody
+                    <a class="nav-link <?= str_contains($__uri, '/portal/competitions') ? 'active' : '' ?>"
+                       href="<?= url('portal/competitions') ?>">
+                        <i class="bi bi-trophy"></i>Zawody
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/portal/results') ? 'active' : '' ?>" href="<?= url('portal/results') ?>">
-                        <i class="bi bi-bar-chart"></i> Wyniki
+                    <a class="nav-link <?= str_contains($__uri, '/portal/results') ? 'active' : '' ?>"
+                       href="<?= url('portal/results') ?>">
+                        <i class="bi bi-bar-chart-line"></i>Wyniki
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/portal/fees') ? 'active' : '' ?>" href="<?= url('portal/fees') ?>">
-                        <i class="bi bi-cash"></i> Opłaty
+                    <a class="nav-link <?= str_contains($__uri, '/portal/fees') ? 'active' : '' ?>"
+                       href="<?= url('portal/fees') ?>">
+                        <i class="bi bi-cash-stack"></i>Opłaty
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/portal/weapons') ? 'active' : '' ?>" href="<?= url('portal/weapons') ?>">
-                        <i class="bi bi-shield-lock"></i> Moja broń
+                    <a class="nav-link <?= str_contains($__uri, '/portal/weapons') ? 'active' : '' ?>"
+                       href="<?= url('portal/weapons') ?>">
+                        <i class="bi bi-shield-lock"></i>Broń
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/portal/trainings') ? 'active' : '' ?>" href="<?= url('portal/trainings') ?>">
-                        <i class="bi bi-calendar-check"></i> Treningi
+                    <a class="nav-link <?= str_contains($__uri, '/portal/trainings') ? 'active' : '' ?>"
+                       href="<?= url('portal/trainings') ?>">
+                        <i class="bi bi-calendar-check"></i>Treningi
                     </a>
                 </li>
             </ul>
-            <div class="d-flex align-items-center gap-3">
-                <span class="text-secondary small"><?= e($memberUser['full_name'] ?? '') ?></span>
-                <a href="<?= url('portal/logout') ?>" class="btn btn-sm btn-outline-secondary text-white border-secondary">
-                    <i class="bi bi-box-arrow-right"></i> Wyloguj
+            <div class="d-flex align-items-center gap-3 ms-3">
+                <div class="portal-member-badge d-none d-lg-flex">
+                    <i class="bi bi-person-fill"></i>
+                    <span><?= e($memberUser['full_name'] ?? '') ?></span>
+                </div>
+                <a href="<?= url('portal/logout') ?>"
+                   class="btn btn-sm btn-outline-secondary"
+                   style="border-color:rgba(255,255,255,.15);color:var(--sht-muted)">
+                    <i class="bi bi-box-arrow-right me-1"></i>Wyloguj
                 </a>
             </div>
             <?php endif; ?>
@@ -85,20 +226,26 @@
 
 <div class="portal-main container-fluid">
     <?php if (!empty($flashSuccess)): ?>
-        <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-            <i class="bi bi-check-circle"></i> <?= e($flashSuccess) ?>
+        <div class="alert alert-success alert-dismissible fade show mt-0 mb-3" role="alert">
+            <i class="bi bi-check-circle me-2"></i><?= $flashSuccess ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
     <?php if (!empty($flashError)): ?>
-        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-            <i class="bi bi-exclamation-triangle"></i> <?= e($flashError) ?>
+        <div class="alert alert-danger alert-dismissible fade show mt-0 mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i><?= e($flashError) ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
     <?php if (!empty($flashWarning)): ?>
-        <div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
-            <i class="bi bi-exclamation-circle"></i> <?= e($flashWarning) ?>
+        <div class="alert alert-warning alert-dismissible fade show mt-0 mb-3" role="alert">
+            <i class="bi bi-exclamation-circle me-2"></i><?= $flashWarning ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+    <?php if (!empty($flashInfo)): ?>
+        <div class="alert alert-info alert-dismissible fade show mt-0 mb-3" role="alert">
+            <i class="bi bi-info-circle me-2"></i><?= $flashInfo ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
@@ -110,7 +257,20 @@
 </div>
 
 <footer class="portal-foot">
-    &copy; <?= date('Y') ?> Klub Strzelecki &mdash; Portal Zawodnika v1.0
+    <div class="portal-foot-brand">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px">
+            <circle cx="10" cy="10" r="6.5" stroke="rgba(148,163,184,.4)" stroke-width="1"/>
+            <circle cx="10" cy="10" r="3.5" stroke="#D4A373" stroke-width="1.2"/>
+            <circle cx="10" cy="10" r="1.5" fill="#E6C200"/>
+            <line x1="10" y1="1" x2="10" y2="5.5" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="10" y1="14.5" x2="10" y2="19" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="1" y1="10" x2="5.5" y2="10" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="14.5" y1="10" x2="19" y2="10" stroke="#94A3B8" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        SHOOTERO
+    </div>
+    <span class="portal-foot-tagline">Zarządzaj klubem. Wspieraj ludzi.</span>
+    <span class="portal-foot-copy">&copy; <?= date('Y') ?> Shootero &mdash; Portal Zawodnika</span>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
