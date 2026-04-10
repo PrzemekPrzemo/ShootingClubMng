@@ -267,7 +267,7 @@ class AdminController extends BaseController
     {
         $settingModel = new SettingModel();
         $settings = [];
-        foreach (['base_domain', 'allow_club_smtp', 'smtp_host', 'smtp_port', 'smtp_secure', 'smtp_user', 'smtp_pass_enc', 'system_name', 'system_logo'] as $key) {
+        foreach (['base_domain', 'allow_club_smtp', 'smtp_host', 'smtp_port', 'smtp_secure', 'smtp_user', 'smtp_pass_enc', 'system_name', 'system_logo', 'global_api_key'] as $key) {
             $settings[$key] = $settingModel->get($key);
         }
 
@@ -335,6 +335,17 @@ class AdminController extends BaseController
         }
         http_response_code(404);
         exit;
+    }
+
+    /** POST /admin/settings/regenerate-api-key */
+    public function regenerateGlobalApiKey(): void
+    {
+        Csrf::verify();
+        $settingModel = new SettingModel();
+        $newKey = bin2hex(random_bytes(24));
+        $settingModel->upsert('global_api_key', $newKey, 'Globalny klucz API', 'text');
+        Session::flash('success', 'Globalny klucz API został wygenerowany.');
+        $this->redirect('admin/settings');
     }
 
     // ── Switch club ──────────────────────────────────────────────────────────

@@ -94,3 +94,33 @@
         <i class="bi bi-check-lg"></i> Zapisz ustawienia
     </button>
 </form>
+
+<div class="card mt-4" style="max-width:700px">
+    <div class="card-header"><h5 class="mb-0"><i class="bi bi-code-slash me-2"></i>Globalny klucz API</h5></div>
+    <div class="card-body">
+        <p class="text-muted small mb-3">
+            Globalny klucz umożliwia dostęp do <code>/api/v1/</code> dla wszystkich klubów bez potrzeby
+            ustawiania klucza per klub. Używaj wyłącznie w zaufanych integracjach.
+        </p>
+        <?php $gk = $settings['global_api_key'] ?? ''; ?>
+        <?php if ($gk): ?>
+        <div class="mb-3">
+            <div class="input-group">
+                <input type="text" class="form-control font-monospace small" id="gApiKey"
+                       value="<?= e($gk) ?>" readonly>
+                <button class="btn btn-outline-secondary btn-sm"
+                        onclick="navigator.clipboard.writeText(document.getElementById('gApiKey').value)">
+                    <i class="bi bi-clipboard"></i>
+                </button>
+            </div>
+        </div>
+        <?php endif; ?>
+        <form method="post" action="<?= url('admin/settings/regenerate-api-key') ?>">
+            <?= csrf_field() ?>
+            <button type="submit" class="btn btn-outline-warning btn-sm"
+                    onclick="return confirm('Wygenerować nowy globalny klucz API?')">
+                <i class="bi bi-arrow-repeat me-1"></i><?= $gk ? 'Wygeneruj nowy' : 'Wygeneruj globalny klucz API' ?>
+            </button>
+        </form>
+    </div>
+</div>

@@ -200,6 +200,7 @@ $router->post('/admin/clubs/:id/users',                  [\App\Controllers\Admin
 $router->get('/admin/clubs/:clubId/users/:userId/remove', [\App\Controllers\AdminController::class, 'removeClubUser']);
 $router->get('/admin/settings',                          [\App\Controllers\AdminController::class, 'settings']);
 $router->post('/admin/settings',                         [\App\Controllers\AdminController::class, 'saveSettings']);
+$router->post('/admin/settings/regenerate-api-key',      [\App\Controllers\AdminController::class, 'regenerateGlobalApiKey']);
 $router->get('/admin/system-logo',                       [\App\Controllers\AdminController::class, 'serveSystemLogo']);
 $router->get('/admin/switch-club/:id',                   [\App\Controllers\AdminController::class, 'switchClub']);
 $router->get('/admin/exit-club',                         [\App\Controllers\AdminController::class, 'exitClub']);
