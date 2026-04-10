@@ -31,12 +31,18 @@ class ClubFeeConfigController extends BaseController
         $clubId = ClubContext::current();
         $year   = (int)($_GET['year'] ?? date('Y'));
 
+        // Fee calculator uses only club-owned classes (club_id = current club),
+        // not global PZSS classes — so discounts are per club's own dictionary.
+        $memberClasses = $clubId
+            ? $this->classModel->getClubOwned($clubId)
+            : $this->classModel->getAll();
+
         $this->render('config/fee_config', [
             'title'           => 'Kalkulator składek',
             'year'            => $year,
             'clubId'          => $clubId,
             'memberTypes'     => $this->typeModel->getAll(),
-            'memberClasses'   => $this->classModel->getAll(),
+            'memberClasses'   => $memberClasses,
             'achievementTypes'=> MemberAchievementModel::TYPES,
             'feeConfig'       => $clubId ? $this->feeModel->getFeeConfig($clubId, $year)     : [],
             'classDiscounts'  => $clubId ? $this->feeModel->getClassDiscounts($clubId, $year) : [],

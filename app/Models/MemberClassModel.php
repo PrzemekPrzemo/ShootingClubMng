@@ -47,6 +47,20 @@ class MemberClassModel extends BaseModel
         return $ids ? ' AND id NOT IN (' . implode(',', $ids) . ')' : '';
     }
 
+    /**
+     * Returns only classes owned by the given club (club_id = $clubId).
+     * Used by the fee calculator so discounts are configured against
+     * club-specific classes only, not global PZSS classes.
+     */
+    public function getClubOwned(int $clubId): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT * FROM member_classes WHERE club_id = ? ORDER BY sort_order, name"
+        );
+        $stmt->execute([$clubId]);
+        return $stmt->fetchAll();
+    }
+
     public function save(array $data): int
     {
         return $this->insert($data);

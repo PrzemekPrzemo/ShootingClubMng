@@ -114,7 +114,10 @@
             </thead>
             <tbody>
             <?php if (empty($memberClasses)): ?>
-                <tr><td colspan="2" class="text-center text-muted py-3">Brak zdefiniowanych klas sportowych.</td></tr>
+                <tr><td colspan="2" class="text-center text-muted py-3">
+                    Brak klas sportowych zdefiniowanych dla tego klubu.
+                    <a href="<?= url('config/member-classes') ?>">Dodaj klasy →</a>
+                </td></tr>
             <?php endif; ?>
             <?php foreach ($memberClasses as $mc):
                 $discount = $classDiscounts[$mc['id']] ?? 0;
@@ -124,7 +127,6 @@
                     <?= e($mc['name']) ?>
                     <code class="small ms-1">[<?= e($mc['short_code']) ?>]</code>
                     <?php if (!$mc['is_active']): ?><span class="badge bg-secondary ms-1">nieaktywna</span><?php endif; ?>
-                    <?php if (empty($mc['club_id'])): ?><span class="badge bg-secondary ms-1">Globalna</span><?php endif; ?>
                 </td>
                 <td class="p-1">
                     <div class="input-group input-group-sm" style="max-width:200px;margin:0 auto">
