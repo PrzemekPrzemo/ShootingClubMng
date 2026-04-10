@@ -7,6 +7,7 @@ $navItems = [
     'config/medical-exam-types' => ['bi-heart-pulse',  'Typy badań'],
     'config/license-types'      => ['bi-card-checklist','Typy licencji'],
     'config/fee-rates'          => ['bi-cash-coin',    'Cennik składek'],
+    'config/fee-config'         => ['bi-calculator',   'Kalkulator składek'],
     'config/users'              => ['bi-people',       'Użytkownicy'],
 ];
 $currentPath = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
@@ -25,6 +26,16 @@ $currentPath = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
         </a>
     </div>
     <?php endforeach; ?>
+</div>
+
+<div class="alert alert-info d-flex align-items-center gap-3 mb-4">
+    <i class="bi bi-calculator fs-4 flex-shrink-0"></i>
+    <div>
+        <strong>Szukasz kalkulatora składek per zawodnik?</strong><br>
+        Ta strona to <em>cennik</em> — statyczna matryca kwot używana jako podpowiedź przy rejestracji wpłaty.<br>
+        Konfiguracja stawki maksymalnej, wczesnej wpłaty i zniżek za klasę / osiągnięcia znajduje się w
+        <a href="<?= url('config/fee-config') ?>" class="alert-link fw-bold">Kalkulatorze składek <i class="bi bi-arrow-right"></i></a>
+    </div>
 </div>
 
 <div class="row g-4">
