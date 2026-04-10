@@ -104,6 +104,35 @@ class DashboardController extends BaseController
 
     public function index(): void
     {
+        // Zawodnik (staff role) → bridge to member portal
+        if (Auth::role() === 'zawodnik') {
+            if (!\App\Helpers\MemberAuth::check()) {
+                $userId  = Auth::id();
+                $clubId  = \App\Helpers\ClubContext::current();
+                $db      = \App\Helpers\Database::pdo();
+                // Fetch staff user's email from DB
+                $uStmt   = $db->prepare("SELECT email FROM users WHERE id = ? LIMIT 1");
+                $uStmt->execute([$userId]);
+                $uRow    = $uStmt->fetch();
+                $email   = $uRow['email'] ?? '';
+                if ($email && $clubId) {
+                    $mStmt = $db->prepare(
+                        "SELECT * FROM members WHERE email = ? AND club_id = ? AND status = 'aktywny' LIMIT 1"
+                    );
+                    $mStmt->execute([$email, $clubId]);
+                    $member = $mStmt->fetch();
+                    if ($member) {
+                        \App\Helpers\Session::set('member_id',             (int)$member['id']);
+                        \App\Helpers\Session::set('member_full_name',      $member['first_name'] . ' ' . $member['last_name']);
+                        \App\Helpers\Session::set('member_email',          $member['email'] ?? '');
+                        \App\Helpers\Session::set('member_status',         $member['status']);
+                        \App\Helpers\Session::set('must_change_password',  false);
+                    }
+                }
+            }
+            $this->redirect('portal');
+        }
+
         $memberModel      = new MemberModel();
         $licenseModel     = new LicenseModel();
         $examModel        = new MedicalExamModel();

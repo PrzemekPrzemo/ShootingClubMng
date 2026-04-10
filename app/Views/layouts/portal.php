@@ -66,6 +66,11 @@
                         <i class="bi bi-shield-lock"></i> Moja broń
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= str_contains($_SERVER['REQUEST_URI'], '/portal/trainings') ? 'active' : '' ?>" href="<?= url('portal/trainings') ?>">
+                        <i class="bi bi-calendar-check"></i> Treningi
+                    </a>
+                </li>
             </ul>
             <div class="d-flex align-items-center gap-3">
                 <span class="text-secondary small"><?= e($memberUser['full_name'] ?? '') ?></span>

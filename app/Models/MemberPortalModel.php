@@ -32,6 +32,30 @@ class MemberPortalModel extends BaseModel
     }
 
     /**
+     * Returns upcoming competitions from ALL clubs (open + planned) with member's entry status.
+     */
+    public function getUpcomingCompetitions(int $memberId): array
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT c.*, d.name AS discipline_name, cl.name AS club_name,
+                       ce.id AS entry_id, ce.status AS entry_status
+                FROM competitions c
+                LEFT JOIN disciplines d ON d.id = c.discipline_id
+                LEFT JOIN clubs cl ON cl.id = c.club_id
+                LEFT JOIN competition_entries ce ON ce.competition_id = c.id AND ce.member_id = ?
+                WHERE c.status IN ('otwarte','planowane')
+                  AND c.competition_date >= CURDATE()
+                ORDER BY c.competition_date ASC
+            ");
+            $stmt->execute([$memberId]);
+            return $stmt->fetchAll();
+        } catch (\PDOException) {
+            return [];
+        }
+    }
+
+    /**
      * Returns open competitions with member's entry status (if any).
      */
     public function getOpenCompetitions(int $memberId): array

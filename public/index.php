@@ -473,6 +473,13 @@ $router->post('/portal/competitions/:id/register',   [\App\Controllers\MemberPor
 $router->post('/portal/entries/:id/cancel',          [\App\Controllers\MemberPortalController::class, 'cancelRegistration']);
 $router->get('/portal/fees',                         [\App\Controllers\MemberPortalController::class, 'fees']);
 $router->get('/portal/weapons',                      [\App\Controllers\MemberPortalController::class, 'myWeapons']);
+$router->post('/portal/weapons',                     [\App\Controllers\MemberPortalController::class, 'storeWeapon']);
+$router->post('/portal/weapons/:id/deactivate',      [\App\Controllers\MemberPortalController::class, 'deactivateWeapon']);
+$router->get('/portal/profile/edit',                 [\App\Controllers\MemberPortalController::class, 'editProfile']);
+$router->post('/portal/profile/edit',                [\App\Controllers\MemberPortalController::class, 'updateProfile']);
+$router->get('/portal/trainings',                    [\App\Controllers\MemberPortalController::class, 'trainings']);
+$router->post('/portal/trainings/:id/enroll',        [\App\Controllers\MemberPortalController::class, 'enrollTraining']);
+$router->post('/portal/trainings/:id/unenroll',      [\App\Controllers\MemberPortalController::class, 'unenrollTraining']);
 
 // Entry approval + fee management (staff)
 $router->post('/competitions/entries/:id/approve',          [\App\Controllers\CompetitionsController::class, 'approveEntry']);

@@ -91,6 +91,44 @@ class MemberPortalController
         ]);
     }
 
+    public function editProfile(): void
+    {
+        $stmt = Database::getInstance()->prepare("SELECT * FROM members WHERE id = ?");
+        $stmt->execute([MemberAuth::id()]);
+        $member = $stmt->fetch() ?: [];
+
+        $this->render('portal/profile_edit', [
+            'title'  => 'Edytuj dane kontaktowe',
+            'member' => $member,
+        ]);
+    }
+
+    public function updateProfile(): void
+    {
+        Csrf::verify();
+        $memberId = MemberAuth::id();
+
+        // Tylko pola dozwolone dla zawodnika (NIE: first_name, last_name, pesel, email)
+        $allowed = ['phone', 'address_street', 'address_city', 'address_postal'];
+        $data = [];
+        foreach ($allowed as $field) {
+            if (isset($_POST[$field])) {
+                $data[$field] = trim($_POST[$field]);
+            }
+        }
+
+        if (!empty($data)) {
+            $sets   = implode(', ', array_map(fn($f) => "`{$f}` = ?", array_keys($data)));
+            $params = array_values($data);
+            $params[] = $memberId;
+            Database::getInstance()->prepare("UPDATE members SET {$sets} WHERE id = ?")
+                ->execute($params);
+            Session::flash('success', 'Dane kontaktowe zostały zaktualizowane.');
+        }
+
+        $this->redirectTo('portal/profile');
+    }
+
     // ── Medical Exams ─────────────────────────────────────────────────────────
 
     public function exams(): void
@@ -232,6 +270,7 @@ class MemberPortalController
         $this->render('portal/competitions', [
             'title'            => 'Zawody',
             'openCompetitions' => $this->portalModel->getOpenCompetitions($memberId),
+            'allUpcoming'      => $this->portalModel->getUpcomingCompetitions($memberId),
             'myEntries'        => $this->portalModel->getMemberEntries($memberId),
             'myWaitlist'       => $myWaitlist,
         ]);
@@ -458,13 +497,12 @@ class MemberPortalController
         $this->view->render($template, $data);
     }
 
-    // ── Personal weapons (read-only for portal member) ───────────────────────
+    // ── Personal weapons ─────────────────────────────────────────────────────
 
     public function myWeapons(): void
     {
-        $memberId = MemberAuth::id();
-        $member   = (new \App\Models\MemberModel())->findById($memberId);
-
+        $memberId    = MemberAuth::id();
+        $member      = (new \App\Models\MemberModel())->findById($memberId);
         $weaponModel = new \App\Models\MemberWeaponModel();
         $weapons     = $weaponModel->getForMember($memberId);
 
@@ -474,6 +512,119 @@ class MemberPortalController
             'member'  => $member,
             'types'   => \App\Models\MemberWeaponModel::$TYPES,
         ]);
+    }
+
+    public function storeWeapon(): void
+    {
+        Csrf::verify();
+        $memberId = MemberAuth::id();
+
+        $name = trim($_POST['name'] ?? '');
+        if ($name === '') {
+            Session::flash('error', 'Podaj nazwę / model broni.');
+            $this->redirectTo('portal/weapons');
+        }
+
+        $type = $_POST['type'] ?? 'inne';
+        if (!array_key_exists($type, \App\Models\MemberWeaponModel::$TYPES)) {
+            $type = 'inne';
+        }
+
+        (new \App\Models\MemberWeaponModel())->create([
+            'member_id'     => $memberId,
+            'name'          => $name,
+            'type'          => $type,
+            'manufacturer'  => trim($_POST['manufacturer'] ?? ''),
+            'caliber'       => trim($_POST['caliber'] ?? ''),
+            'serial_number' => trim($_POST['serial_number'] ?? ''),
+            'permit_number' => trim($_POST['permit_number'] ?? ''),
+            'notes'         => trim($_POST['notes'] ?? ''),
+            'is_active'     => 1,
+        ]);
+
+        Session::flash('success', 'Broń została dodana do Twojego profilu.');
+        $this->redirectTo('portal/weapons');
+    }
+
+    public function deactivateWeapon(string $id): void
+    {
+        Csrf::verify();
+        $memberId = MemberAuth::id();
+        $db       = Database::getInstance();
+
+        // Owner check
+        $stmt = $db->prepare("SELECT id FROM member_weapons WHERE id = ? AND member_id = ? AND is_active = 1");
+        $stmt->execute([(int)$id, $memberId]);
+        if (!$stmt->fetch()) {
+            Session::flash('error', 'Nie znaleziono aktywnej broni.');
+            $this->redirectTo('portal/weapons');
+        }
+
+        $db->prepare("UPDATE member_weapons SET is_active = 0 WHERE id = ?")->execute([(int)$id]);
+        Session::flash('success', 'Broń została oznaczona jako wycofana.');
+        $this->redirectTo('portal/weapons');
+    }
+
+    // ── Trainings ────────────────────────────────────────────────────────────
+
+    public function trainings(): void
+    {
+        $memberId = MemberAuth::id();
+        $db       = Database::getInstance();
+
+        $stmt = $db->prepare("
+            SELECT t.*, u.full_name AS instructor_name,
+                   ta.id AS enrolled_id, ta.attended
+            FROM trainings t
+            LEFT JOIN users u ON u.id = t.instructor_id
+            LEFT JOIN training_attendees ta ON ta.training_id = t.id AND ta.member_id = ?
+            WHERE t.training_date >= CURDATE()
+              AND t.status = 'planowany'
+            ORDER BY t.training_date ASC, t.time_start ASC
+        ");
+        $stmt->execute([$memberId]);
+        $upcomingTrainings = $stmt->fetchAll();
+
+        $this->render('portal/trainings', [
+            'title'     => 'Treningi',
+            'trainings' => $upcomingTrainings,
+        ]);
+    }
+
+    public function enrollTraining(string $id): void
+    {
+        Csrf::verify();
+        $memberId = MemberAuth::id();
+        $db       = Database::getInstance();
+
+        $stmt = $db->prepare("SELECT id FROM trainings WHERE id = ? AND training_date >= CURDATE() AND status = 'planowany'");
+        $stmt->execute([(int)$id]);
+        if (!$stmt->fetch()) {
+            Session::flash('error', 'Trening nie jest dostępny do zapisów.');
+            $this->redirectTo('portal/trainings');
+        }
+
+        try {
+            $db->prepare("INSERT IGNORE INTO training_attendees (training_id, member_id, attended) VALUES (?, ?, 0)")
+               ->execute([(int)$id, $memberId]);
+            Session::flash('success', 'Zostałeś/aś zapisany/a na trening.');
+        } catch (\PDOException) {
+            Session::flash('error', 'Błąd zapisu. Spróbuj ponownie.');
+        }
+        $this->redirectTo('portal/trainings');
+    }
+
+    public function unenrollTraining(string $id): void
+    {
+        Csrf::verify();
+        $memberId = MemberAuth::id();
+        $db       = Database::getInstance();
+
+        $db->prepare("DELETE FROM training_attendees WHERE training_id = ? AND member_id = ? AND attended = 0")
+           ->execute([(int)$id, $memberId]);
+
+        Session::flash('success', 'Zostałeś/aś wypisany/a z treningu.');
+        $this->redirectTo('portal/trainings');
     }
 
     private function redirectTo(string $path): never

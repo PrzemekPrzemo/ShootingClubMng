@@ -1,7 +1,12 @@
-<?php $role = $authUser['role'] ?? ''; $isFinanceRole = in_array($role, ['admin','zarzad']); ?>
+<?php
+$role          = $authUser['role'] ?? '';
+$isFinanceRole = in_array($role, ['admin','zarzad']);
+$isAdminRole   = in_array($role, ['admin','zarzad','instruktor','sędzia']);
+?>
 <h2 class="h4 mb-4"><i class="bi bi-speedometer2"></i> Dashboard</h2>
 
 <!-- Stats row -->
+<?php if ($isAdminRole): ?>
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-lg-3">
         <div class="card border-success h-100">
@@ -44,6 +49,7 @@
         </div>
     </div>
 </div>
+<?php endif; // $isAdminRole — stats row ?>
 
 <div class="row g-3">
     <!-- Alert: Licencje -->
@@ -236,6 +242,7 @@
     <?php endif; ?>
 
     <!-- Quick links -->
+    <?php if ($isAdminRole): ?>
     <div class="col-lg-<?= ($expiringLicenses || $expiringMedicals) ? '6' : '12' ?>">
         <div class="card h-100">
             <div class="card-header"><strong>Szybkie akcje</strong></div>
@@ -273,6 +280,7 @@
             </div>
         </div>
     </div>
+    <?php endif; // $isAdminRole — quick actions ?>
 </div>
 
 <?php

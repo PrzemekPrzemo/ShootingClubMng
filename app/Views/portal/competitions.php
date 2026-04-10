@@ -95,6 +95,52 @@
 </div>
 <?php endif; ?>
 
+<?php if (!empty($allUpcoming)): ?>
+<div class="card mt-4">
+    <div class="card-header"><strong><i class="bi bi-search"></i> Nadchodzące zawody — wszystkie kluby</strong></div>
+    <div class="card-body p-0">
+        <table class="table table-hover table-sm mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Zawody</th>
+                    <th>Klub</th>
+                    <th>Data</th>
+                    <th>Dyscyplina</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($allUpcoming as $c): ?>
+                <tr>
+                    <td>
+                        <strong><?= e($c['name']) ?></strong>
+                        <?php if ($c['location']): ?><br><small class="text-muted"><?= e($c['location']) ?></small><?php endif; ?>
+                    </td>
+                    <td class="small text-muted"><?= e($c['club_name'] ?? '—') ?></td>
+                    <td class="small"><?= format_date($c['competition_date']) ?></td>
+                    <td class="small"><?= e($c['discipline_name'] ?? '—') ?></td>
+                    <td>
+                        <?php $sc = match($c['status']) { 'otwarte'=>'success', 'planowane'=>'secondary', default=>'warning' }; ?>
+                        <span class="badge bg-<?= $sc ?>"><?= e($c['status']) ?></span>
+                    </td>
+                    <td>
+                        <?php if ($c['status'] === 'otwarte' && !$c['entry_id']): ?>
+                            <a href="<?= url('portal/competitions/' . $c['id'] . '/register') ?>"
+                               class="btn btn-sm btn-danger">Zapisz się</a>
+                        <?php elseif ($c['entry_id']): ?>
+                            <?php $sc2 = match($c['entry_status']) { 'potwierdzony'=>'success','wycofany'=>'secondary',default=>'warning' }; ?>
+                            <span class="badge bg-<?= $sc2 ?>"><?= e($c['entry_status']) ?></span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+<?php endif; ?>
+
 <?php if (!empty($myWaitlist)): ?>
 <div class="card mt-3">
     <div class="card-header"><strong><i class="bi bi-hourglass-split"></i> Lista rezerwowa</strong></div>

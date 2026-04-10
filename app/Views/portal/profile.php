@@ -1,4 +1,9 @@
-<h2 class="h4 mb-4"><i class="bi bi-person"></i> Mój profil</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h4 mb-0"><i class="bi bi-person"></i> Mój profil</h2>
+    <a href="<?= url('portal/profile/edit') ?>" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-pencil"></i> Edytuj dane kontaktowe
+    </a>
+</div>
 
 <?php if (!empty($member['photo_path'])): ?>
 <div class="text-center mb-3">
