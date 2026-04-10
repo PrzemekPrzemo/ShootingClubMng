@@ -156,6 +156,26 @@ $currentClubId = \App\Helpers\ClubContext::current();
                 Własne kategorie klubu są niezależne od globalnych — możesz je swobodnie edytować i usuwać.
             </div>
         </div>
+
+        <div class="card mt-3 border-warning">
+            <div class="card-header bg-warning bg-opacity-10 py-2">
+                <strong><i class="bi bi-arrow-repeat me-1"></i> Przelicz kategorie zawodników</strong>
+            </div>
+            <div class="card-body py-3">
+                <p class="small text-muted mb-3">
+                    Aktualizuje pole <em>Kategoria wiekowa</em> dla wszystkich zawodników
+                    tego klubu na podstawie ich daty urodzenia i bieżących kategorii ze słownika.
+                    Zawodnicy bez daty urodzenia lub spoza zdefiniowanych zakresów wiekowych są pomijani.
+                </p>
+                <form method="post" action="<?= url('config/categories/recalculate') ?>"
+                      onsubmit="return confirm('Przelicz kategorie wiekowe dla wszystkich zawodników klubu?\n\nOperacja nadpisze aktualne przypisania kategorii.')">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="btn btn-warning btn-sm w-100">
+                        <i class="bi bi-arrow-repeat"></i> Przelicz teraz
+                    </button>
+                </form>
+            </div>
+        </div>
         <?php endif; ?>
     </div>
 </div>

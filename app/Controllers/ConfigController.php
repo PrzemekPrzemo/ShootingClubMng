@@ -185,6 +185,34 @@ class ConfigController extends BaseController
         $this->redirect('config/categories');
     }
 
+    public function recalculateAgeCategories(): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad']);
+
+        $clubId = ClubContext::current();
+        if ($clubId === null) {
+            Session::flash('error', 'Przeliczanie dostępne tylko w kontekście konkretnego klubu.');
+            $this->redirect('config/categories');
+        }
+
+        $stats = $this->categoryModel->recalculateForClub($clubId);
+
+        $msg = "Przeliczono kategorie wiekowe: "
+             . "<strong>{$stats['updated']}</strong> zaktualizowanych, "
+             . "<strong>{$stats['unchanged']}</strong> bez zmian";
+        if ($stats['no_birth_date'] > 0) {
+            $msg .= ", <strong>{$stats['no_birth_date']}</strong> bez daty urodzenia (pominięto)";
+        }
+        if ($stats['no_match'] > 0) {
+            $msg .= ", <strong>{$stats['no_match']}</strong> poza zdefiniowanymi zakresami (pominięto)";
+        }
+        $msg .= ".";
+
+        Session::flash('success', $msg);
+        $this->redirect('config/categories');
+    }
+
     // Users management
     public function users(): void
     {

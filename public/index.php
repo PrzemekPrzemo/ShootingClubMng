@@ -400,6 +400,7 @@ $router->post('/config',                [\App\Controllers\ConfigController::clas
 $router->get('/config/categories',      [\App\Controllers\ConfigController::class, 'categories']);
 $router->post('/config/categories',     [\App\Controllers\ConfigController::class, 'saveCategory']);
 $router->post('/config/categories/:id/delete',    [\App\Controllers\ConfigController::class, 'deleteCategory']);
+$router->post('/config/categories/recalculate',   [\App\Controllers\ConfigController::class, 'recalculateAgeCategories']);
 // Event templates overview
 $router->get('/config/event-templates',          [\App\Controllers\ConfigController::class,       'eventTemplates']);
 $router->get('/config/notifications',            [\App\Controllers\ConfigController::class,       'notifications']);
