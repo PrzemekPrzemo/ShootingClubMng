@@ -11,6 +11,13 @@ class MemberModel extends ClubScopedModel
         $where  = ['1=1'];
         $params = [];
 
+        // Scope to current club — prevents cross-club data leakage
+        $clubId = $this->clubId();
+        if ($clubId !== null) {
+            $where[]  = 'm.club_id = ?';
+            $params[] = $clubId;
+        }
+
         if (!empty($filters['q'])) {
             $where[]  = "(m.first_name LIKE ? OR m.last_name LIKE ? OR m.member_number LIKE ? OR m.card_number LIKE ?)";
             $q = '%' . $filters['q'] . '%';
@@ -41,15 +48,19 @@ class MemberModel extends ClubScopedModel
 
     public function getWithDetails(int $id): ?array
     {
+        $clubId    = $this->clubId();
+        $clubWhere = $clubId !== null ? 'AND m.club_id = ?' : '';
+        $params    = $clubId !== null ? [$id, $clubId] : [$id];
+
         $stmt = $this->db->prepare("
             SELECT m.*, ac.name AS age_category_name,
                    mc.name AS member_class_name, mc.short_code AS member_class_code
             FROM members m
             LEFT JOIN member_age_categories ac ON ac.id = m.age_category_id
             LEFT JOIN member_classes mc ON mc.id = m.member_class_id
-            WHERE m.id = ?
+            WHERE m.id = ? {$clubWhere}
         ");
-        $stmt->execute([$id]);
+        $stmt->execute($params);
         $row = $stmt->fetch();
         return $row ?: null;
     }
@@ -79,9 +90,20 @@ class MemberModel extends ClubScopedModel
 
     public function createMember(array $data): int
     {
-        // Auto-generate member number
-        $year = date('Y');
-        $last = $this->db->query("SELECT member_number FROM members WHERE member_number LIKE 'KS{$year}%' ORDER BY id DESC LIMIT 1")->fetchColumn();
+        // Auto-generate member number scoped to current club
+        $year   = date('Y');
+        $clubId = $this->clubId();
+        if ($clubId !== null) {
+            $stmt = $this->db->prepare(
+                "SELECT member_number FROM members WHERE member_number LIKE ? AND club_id = ? ORDER BY id DESC LIMIT 1"
+            );
+            $stmt->execute(["KS{$year}%", $clubId]);
+            $last = $stmt->fetchColumn();
+        } else {
+            $last = $this->db->query(
+                "SELECT member_number FROM members WHERE member_number LIKE 'KS{$year}%' ORDER BY id DESC LIMIT 1"
+            )->fetchColumn();
+        }
         if ($last) {
             $seq = (int)substr($last, 6) + 1;
         } else {
@@ -128,19 +150,34 @@ class MemberModel extends ClubScopedModel
         return $stmt->fetch();
     }
 
-    /** Count members grouped by status */
+    /** Count members grouped by status — scoped to current club */
     public function countByStatus(): array
     {
-        $rows = $this->db->query("SELECT status, COUNT(*) as cnt FROM members GROUP BY status")->fetchAll();
+        $clubId = $this->clubId();
+        if ($clubId !== null) {
+            $stmt = $this->db->prepare(
+                "SELECT status, COUNT(*) as cnt FROM members WHERE club_id = ? GROUP BY status"
+            );
+            $stmt->execute([$clubId]);
+        } else {
+            $stmt = $this->db->query(
+                "SELECT status, COUNT(*) as cnt FROM members GROUP BY status"
+            );
+        }
         $result = [];
-        foreach ($rows as $r) {
+        foreach ($stmt->fetchAll() as $r) {
             $result[$r['status']] = (int)$r['cnt'];
         }
         return $result;
     }
 
+    /** Get members with expiring medicals — scoped to current club */
     public function getExpiredMedicals(int $daysAhead = 30): array
     {
+        $clubId    = $this->clubId();
+        $clubWhere = $clubId !== null ? 'AND m.club_id = ?' : '';
+        $params    = $clubId !== null ? [$clubId, $daysAhead] : [$daysAhead];
+
         $stmt = $this->db->prepare("
             SELECT m.id, m.first_name, m.last_name, m.member_number,
                    e.valid_until, DATEDIFF(e.valid_until, CURDATE()) AS days_left
@@ -150,10 +187,30 @@ class MemberModel extends ClubScopedModel
             )
             WHERE m.member_type = 'wyczynowy'
               AND m.status = 'aktywny'
+              {$clubWhere}
               AND DATEDIFF(e.valid_until, CURDATE()) <= ?
             ORDER BY days_left
         ");
-        $stmt->execute([$daysAhead]);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    /** Get active members for dropdowns/lookups — scoped to current club */
+    public function getAllActive(): array
+    {
+        $clubId = $this->clubId();
+        if ($clubId !== null) {
+            $stmt = $this->db->prepare(
+                "SELECT id, CONCAT(last_name, ' ', first_name) AS full_name, member_number, member_class_id
+                 FROM members WHERE status = 'aktywny' AND club_id = ? ORDER BY last_name, first_name"
+            );
+            $stmt->execute([$clubId]);
+        } else {
+            $stmt = $this->db->query(
+                "SELECT id, CONCAT(last_name, ' ', first_name) AS full_name, member_number, member_class_id
+                 FROM members WHERE status = 'aktywny' ORDER BY last_name, first_name"
+            );
+        }
         return $stmt->fetchAll();
     }
 
@@ -164,10 +221,5 @@ class MemberModel extends ClubScopedModel
         $stmt  = $this->db->prepare("INSERT INTO `{$table}` (`{$cols}`) VALUES ({$holds})");
         $stmt->execute(array_values($data));
         return (int)$this->db->lastInsertId();
-    }
-
-    public function getAllActive(): array
-    {
-        return $this->db->query("SELECT id, CONCAT(last_name, ' ', first_name) AS full_name, member_number, member_class_id FROM members WHERE status = 'aktywny' ORDER BY last_name, first_name")->fetchAll();
     }
 }
