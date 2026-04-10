@@ -27,7 +27,11 @@
                     <td><?= e($user['full_name']) ?></td>
                     <td><?= e($user['username']) ?></td>
                     <td><?= e($user['email']) ?></td>
-                    <td><span class="badge bg-info"><?= e($user['club_role']) ?></span></td>
+                    <td>
+                        <?php foreach (explode(',', $user['club_roles'] ?? '') as $r): ?>
+                            <span class="badge bg-secondary"><?= e(trim($r)) ?></span>
+                        <?php endforeach; ?>
+                    </td>
                     <td class="text-end d-flex gap-1 justify-content-end">
                         <a href="<?= url("admin/impersonate/club/{$club['id']}/user/{$user['id']}") ?>"
                            class="btn btn-sm btn-outline-warning" title="Zaloguj się jako ten użytkownik">
