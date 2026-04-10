@@ -74,6 +74,7 @@
                         <option value="zarzad">Zarząd</option>
                         <option value="instruktor" selected>Instruktor</option>
                         <option value="sędzia">Sędzia</option>
+                        <option value="zawodnik">Zawodnik</option>
                     </select>
                 </div>
                 <div class="col-md-3">
