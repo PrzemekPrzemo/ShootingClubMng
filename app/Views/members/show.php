@@ -208,6 +208,30 @@
                 <p class="mb-0">
                     Łącznie zapłacono: <strong><?= format_money($payment['total'] ?? 0) ?></strong>
                 </p>
+                <?php if (!empty($feeAssignment) && (float)$feeAssignment['final_annual_fee'] > 0): ?>
+                <hr class="my-2">
+                <p class="mb-0 small">
+                    <span class="text-muted">Obliczona składka:</span><br>
+                    <strong><?= number_format((float)$feeAssignment['final_annual_fee'], 2, ',', ' ') ?> PLN</strong>/rok
+                    &nbsp;|&nbsp;
+                    <strong><?= number_format((float)$feeAssignment['monthly_fee'], 2, ',', ' ') ?> PLN</strong>/mies.
+                    <?php if ((float)$feeAssignment['early_payment_fee'] > 0): ?>
+                    <br><span class="text-muted">Wczesna wpłata (do końca lutego):</span>
+                    <strong><?= number_format((float)$feeAssignment['early_payment_fee'], 2, ',', ' ') ?> PLN</strong>
+                    <?php endif; ?>
+                </p>
+                <?php if ((float)($feeAssignment['discount_class'] ?? 0) > 0 || (float)($feeAssignment['discount_achieve'] ?? 0) > 0): ?>
+                <p class="mb-0 mt-1 small text-muted">
+                    Baza: <?= number_format((float)$feeAssignment['base_annual_fee'], 2, ',', ' ') ?> PLN
+                    <?php if ((float)$feeAssignment['discount_class'] > 0): ?>
+                    − <?= number_format((float)$feeAssignment['discount_class'], 2, ',', ' ') ?> (klasa)
+                    <?php endif; ?>
+                    <?php if ((float)$feeAssignment['discount_achieve'] > 0): ?>
+                    − <?= number_format((float)$feeAssignment['discount_achieve'], 2, ',', ' ') ?> (osiągnięcia)
+                    <?php endif; ?>
+                </p>
+                <?php endif; ?>
+                <?php endif; ?>
                 <a href="<?= url('finances?member_id=' . $member['id']) ?>" class="small">Historia wpłat</a>
             </div>
         </div>

@@ -439,6 +439,10 @@ $router->post('/config/discipline-classes/:id/delete',  [\App\Controllers\Config
 $router->get('/config/member-types',                    [\App\Controllers\ConfigController::class, 'memberTypes']);
 $router->post('/config/member-types',                   [\App\Controllers\ConfigController::class, 'saveMemberType']);
 $router->post('/config/member-types/:id/delete',        [\App\Controllers\ConfigController::class, 'deleteMemberType']);
+// Fee calculator (kalkulator składek per klub)
+$router->get('/config/fee-config',                      [\App\Controllers\ClubFeeConfigController::class, 'index']);
+$router->post('/config/fee-config/save',                [\App\Controllers\ClubFeeConfigController::class, 'save']);
+$router->post('/config/fee-config/recalculate',         [\App\Controllers\ClubFeeConfigController::class, 'recalculate']);
 // Fee rates (cennik składek)
 $router->get('/config/fee-rates',                       [\App\Controllers\FeeConfigController::class, 'index']);
 $router->post('/config/fee-rates/type',                 [\App\Controllers\FeeConfigController::class, 'saveType']);
