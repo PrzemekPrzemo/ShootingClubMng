@@ -5,33 +5,52 @@ namespace App\Models;
 class DisciplineModel extends BaseModel
 {
     protected string $table = 'disciplines';
+    public const DICTIONARY_KEY = 'disciplines';
 
-    /** Globalne + per-klub aktywne dyscypliny. */
+    /** Globalne (nieukryte) + per-klub aktywne dyscypliny. */
     public function getActive(): array
     {
         $clubId = \App\Helpers\ClubContext::current();
         if ($clubId === null) {
             return $this->db->query("SELECT * FROM disciplines WHERE is_active = 1 ORDER BY name")->fetchAll();
         }
+        $excl = $this->buildExclNotIn($clubId);
         $stmt = $this->db->prepare(
-            "SELECT * FROM disciplines WHERE is_active = 1 AND (club_id IS NULL OR club_id = ?) ORDER BY club_id ASC, name"
+            "SELECT * FROM disciplines WHERE is_active = 1 AND ((club_id IS NULL{$excl}) OR club_id = ?) ORDER BY club_id ASC, name"
         );
         $stmt->execute([$clubId]);
         return $stmt->fetchAll();
     }
 
-    /** Globalne + per-klub wszystkie dyscypliny. */
+    /** Globalne (nieukryte) + per-klub wszystkie dyscypliny. */
     public function getAll(): array
     {
         $clubId = \App\Helpers\ClubContext::current();
         if ($clubId === null) {
             return $this->db->query("SELECT * FROM disciplines ORDER BY name")->fetchAll();
         }
+        $excl = $this->buildExclNotIn($clubId);
         $stmt = $this->db->prepare(
-            "SELECT * FROM disciplines WHERE club_id IS NULL OR club_id = ? ORDER BY club_id ASC, name"
+            "SELECT * FROM disciplines WHERE (club_id IS NULL{$excl}) OR club_id = ? ORDER BY club_id ASC, name"
         );
         $stmt->execute([$clubId]);
         return $stmt->fetchAll();
+    }
+
+    public function getExcludedGlobal(int $clubId): array
+    {
+        $ids = (new ClubDictionaryExclusionModel())->getExcludedIds($clubId, self::DICTIONARY_KEY);
+        if (empty($ids)) return [];
+        $in  = implode(',', $ids);
+        return $this->db->query(
+            "SELECT * FROM disciplines WHERE id IN ({$in}) AND club_id IS NULL ORDER BY name"
+        )->fetchAll();
+    }
+
+    private function buildExclNotIn(int $clubId): string
+    {
+        $ids = (new ClubDictionaryExclusionModel())->getExcludedIds($clubId, self::DICTIONARY_KEY);
+        return $ids ? ' AND id NOT IN (' . implode(',', $ids) . ')' : '';
     }
 
     public function save(array $data): int

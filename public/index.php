@@ -401,6 +401,8 @@ $router->get('/config/categories',      [\App\Controllers\ConfigController::clas
 $router->post('/config/categories',     [\App\Controllers\ConfigController::class, 'saveCategory']);
 $router->post('/config/categories/:id/delete',    [\App\Controllers\ConfigController::class, 'deleteCategory']);
 $router->post('/config/categories/recalculate',   [\App\Controllers\ConfigController::class, 'recalculateAgeCategories']);
+$router->post('/config/dictionary/exclude',       [\App\Controllers\ConfigController::class, 'excludeDictionaryEntry']);
+$router->post('/config/dictionary/restore',       [\App\Controllers\ConfigController::class, 'restoreDictionaryEntry']);
 // Event templates overview
 $router->get('/config/event-templates',          [\App\Controllers\ConfigController::class,       'eventTemplates']);
 $router->get('/config/notifications',            [\App\Controllers\ConfigController::class,       'notifications']);

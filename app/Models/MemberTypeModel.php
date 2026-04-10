@@ -5,6 +5,7 @@ namespace App\Models;
 class MemberTypeModel extends BaseModel
 {
     protected string $table = 'member_types';
+    public const DICTIONARY_KEY = 'member_types';
 
     public function getActive(): array
     {
@@ -14,9 +15,10 @@ class MemberTypeModel extends BaseModel
                 "SELECT * FROM member_types WHERE is_active = 1 ORDER BY sort_order, name"
             )->fetchAll();
         }
+        $excl = $this->buildExclNotIn($clubId);
         $stmt = $this->db->prepare(
             "SELECT * FROM member_types
-             WHERE is_active = 1 AND (club_id IS NULL OR club_id = ?)
+             WHERE is_active = 1 AND ((club_id IS NULL{$excl}) OR club_id = ?)
              ORDER BY club_id ASC, sort_order, name"
         );
         $stmt->execute([$clubId]);
@@ -31,13 +33,30 @@ class MemberTypeModel extends BaseModel
                 "SELECT * FROM member_types ORDER BY sort_order, name"
             )->fetchAll();
         }
+        $excl = $this->buildExclNotIn($clubId);
         $stmt = $this->db->prepare(
             "SELECT * FROM member_types
-             WHERE club_id IS NULL OR club_id = ?
+             WHERE (club_id IS NULL{$excl}) OR club_id = ?
              ORDER BY club_id ASC, sort_order, name"
         );
         $stmt->execute([$clubId]);
         return $stmt->fetchAll();
+    }
+
+    public function getExcludedGlobal(int $clubId): array
+    {
+        $ids = (new ClubDictionaryExclusionModel())->getExcludedIds($clubId, self::DICTIONARY_KEY);
+        if (empty($ids)) return [];
+        $in  = implode(',', $ids);
+        return $this->db->query(
+            "SELECT * FROM member_types WHERE id IN ({$in}) AND club_id IS NULL ORDER BY sort_order, name"
+        )->fetchAll();
+    }
+
+    private function buildExclNotIn(int $clubId): string
+    {
+        $ids = (new ClubDictionaryExclusionModel())->getExcludedIds($clubId, self::DICTIONARY_KEY);
+        return $ids ? ' AND id NOT IN (' . implode(',', $ids) . ')' : '';
     }
 
     public function save(array $data): int

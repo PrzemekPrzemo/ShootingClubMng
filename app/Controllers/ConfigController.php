@@ -120,10 +120,12 @@ class ConfigController extends BaseController
             }
         }
 
+        $clubId = ClubContext::current();
         $this->render('config/categories', [
-            'title'      => 'Kategorie wiekowe',
-            'categories' => $this->categoryModel->getAll(),
-            'editItem'   => $editItem,
+            'title'          => 'Kategorie wiekowe',
+            'categories'     => $this->categoryModel->getAll(),
+            'editItem'       => $editItem,
+            'excludedGlobal' => $clubId ? $this->categoryModel->getExcludedGlobal($clubId) : [],
         ]);
     }
 
@@ -411,10 +413,12 @@ class ConfigController extends BaseController
         $editId   = (int)($_GET['edit'] ?? 0);
         $editItem = $editId ? $this->disciplineModel->findById($editId) : null;
 
+        $clubId = ClubContext::current();
         $this->render('config/disciplines', [
-            'title'       => 'Słownik dyscyplin',
-            'disciplines' => $this->disciplineModel->getAll(),
-            'editItem'    => $editItem,
+            'title'          => 'Słownik dyscyplin',
+            'disciplines'    => $this->disciplineModel->getAll(),
+            'editItem'       => $editItem,
+            'excludedGlobal' => $clubId ? $this->disciplineModel->getExcludedGlobal($clubId) : [],
         ]);
     }
 
@@ -588,10 +592,12 @@ class ConfigController extends BaseController
         $editId   = (int)($_GET['edit'] ?? 0);
         $editItem = $editId ? $this->memberClassModel->findById($editId) : null;
 
+        $clubId = ClubContext::current();
         $this->render('config/member_classes', [
-            'title'    => 'Klasy zawodników',
-            'classes'  => $this->memberClassModel->getAll(),
-            'editItem' => $editItem,
+            'title'          => 'Klasy zawodników',
+            'classes'        => $this->memberClassModel->getAll(),
+            'editItem'       => $editItem,
+            'excludedGlobal' => $clubId ? $this->memberClassModel->getExcludedGlobal($clubId) : [],
         ]);
     }
 
@@ -660,10 +666,12 @@ class ConfigController extends BaseController
         $editId   = (int)($_GET['edit'] ?? 0);
         $editItem = $editId ? $this->examTypeModel->findById($editId) : null;
 
+        $clubId = ClubContext::current();
         $this->render('config/medical_exam_types', [
-            'title'     => 'Typy badań lekarskich',
-            'examTypes' => $this->examTypeModel->getAll(),
-            'editItem'  => $editItem,
+            'title'          => 'Typy badań lekarskich',
+            'examTypes'      => $this->examTypeModel->getAll(),
+            'editItem'       => $editItem,
+            'excludedGlobal' => $clubId ? $this->examTypeModel->getExcludedGlobal($clubId) : [],
         ]);
     }
 
@@ -735,10 +743,12 @@ class ConfigController extends BaseController
         $editId  = (int)($_GET['edit'] ?? 0);
         $editItem = $editId ? $model->findById($editId) : null;
 
+        $clubId = ClubContext::current();
         $this->render('config/license_types', [
-            'title'        => 'Typy licencji',
-            'licenseTypes' => $model->getAll(),
-            'editItem'     => $editItem,
+            'title'          => 'Typy licencji',
+            'licenseTypes'   => $model->getAll(),
+            'editItem'       => $editItem,
+            'excludedGlobal' => $clubId ? $model->getExcludedGlobal($clubId) : [],
         ]);
     }
 
@@ -1077,10 +1087,12 @@ class ConfigController extends BaseController
         if (!empty($_GET['edit'])) {
             $editItem = $model->findById((int)$_GET['edit']);
         }
+        $clubId = ClubContext::current();
         $this->render('config/discipline_classes', [
-            'title'    => 'Klasy sportowe',
-            'items'    => $model->getAll(),
-            'editItem' => $editItem,
+            'title'          => 'Klasy sportowe',
+            'items'          => $model->getAll(),
+            'editItem'       => $editItem,
+            'excludedGlobal' => $clubId ? $model->getExcludedGlobal($clubId) : [],
         ]);
     }
 
@@ -1150,10 +1162,12 @@ class ConfigController extends BaseController
         if (!empty($_GET['edit'])) {
             $editItem = $model->findById((int)$_GET['edit']);
         }
+        $clubId = ClubContext::current();
         $this->render('config/member_types', [
-            'title'    => 'Typy członkostwa',
-            'items'    => $model->getAll(),
-            'editItem' => $editItem,
+            'title'          => 'Typy członkostwa',
+            'items'          => $model->getAll(),
+            'editItem'       => $editItem,
+            'excludedGlobal' => $clubId ? $model->getExcludedGlobal($clubId) : [],
         ]);
     }
 
@@ -1212,5 +1226,51 @@ class ConfigController extends BaseController
         $model->delete((int)$id);
         Session::flash('success', 'Typ usunięty.');
         $this->redirect('config/member-types');
+    }
+
+    // ── Dictionary exclusions per club ───────────────────────────────────────
+
+    public function excludeDictionaryEntry(): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad']);
+
+        $clubId = ClubContext::current();
+        if ($clubId === null) {
+            Session::flash('error', 'Wykluczanie dostępne tylko w kontekście klubu.');
+            $this->redirect('config');
+        }
+
+        $dictionary = trim($_POST['dictionary'] ?? '');
+        $entryId    = (int)($_POST['entry_id'] ?? 0);
+        $redirect   = trim($_POST['redirect'] ?? 'config');
+
+        if (!in_array($dictionary, \App\Models\ClubDictionaryExclusionModel::ALLOWED, true) || $entryId <= 0) {
+            Session::flash('error', 'Nieprawidłowe parametry.');
+            $this->redirect($redirect);
+        }
+
+        (new \App\Models\ClubDictionaryExclusionModel())->exclude($clubId, $dictionary, $entryId);
+        Session::flash('success', 'Wpis globalny został ukryty dla Twojego klubu.');
+        $this->redirect($redirect);
+    }
+
+    public function restoreDictionaryEntry(): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad']);
+
+        $clubId = ClubContext::current();
+        if ($clubId === null) {
+            $this->redirect('config');
+        }
+
+        $dictionary = trim($_POST['dictionary'] ?? '');
+        $entryId    = (int)($_POST['entry_id'] ?? 0);
+        $redirect   = trim($_POST['redirect'] ?? 'config');
+
+        (new \App\Models\ClubDictionaryExclusionModel())->restore($clubId, $dictionary, $entryId);
+        Session::flash('success', 'Wpis globalny został przywrócony do słownika.');
+        $this->redirect($redirect);
     }
 }

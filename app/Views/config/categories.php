@@ -12,7 +12,7 @@ $currentClubId = \App\Helpers\ClubContext::current();
     <i class="bi bi-info-circle fs-5 flex-shrink-0"></i>
     <div>
         Wpisy <span class="badge bg-secondary">Globalny</span> to systemowe kategorie widoczne we wszystkich klubach.
-        Kliknij <strong>Kopiuj</strong>, aby utworzyć własną wersję tylko dla Twojego klubu.
+        Kliknij <strong>Kopiuj</strong>, aby utworzyć własną wersję, lub <i class="bi bi-eye-slash"></i> <strong>Ukryj</strong>, aby usunąć wpis globalny z widoku Twojego klubu.
     </div>
 </div>
 <?php endif; ?>
@@ -68,6 +68,16 @@ $currentClubId = \App\Helpers\ClubContext::current();
                                        title="Utwórz własną kopię tej kategorii dla klubu">
                                         <i class="bi bi-copy"></i> Kopiuj
                                     </a>
+                                    <form method="post" action="<?= url('config/dictionary/exclude') ?>" class="d-inline">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="dictionary" value="categories">
+                                        <input type="hidden" name="entry_id" value="<?= $cat['id'] ?>">
+                                        <input type="hidden" name="redirect" value="config/categories">
+                                        <button class="btn btn-xs btn-outline-secondary py-0 px-1" title="Ukryj dla tego klubu"
+                                                onclick="return confirm('Ukryć tę kategorię globalną dla Twojego klubu?')">
+                                            <i class="bi bi-eye-slash"></i>
+                                        </button>
+                                    </form>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -77,6 +87,35 @@ $currentClubId = \App\Helpers\ClubContext::current();
                     <?php endif; ?>
                     </tbody>
                 </table>
+                <?php if (!empty($excludedGlobal) && $currentClubId !== null): ?>
+                <details class="border-top">
+                    <summary class="px-3 py-2 small text-muted" style="cursor:pointer; list-style:none; user-select:none">
+                        <i class="bi bi-eye-slash me-1"></i>Ukryte wpisy globalne (<?= count($excludedGlobal) ?>)
+                    </summary>
+                    <table class="table table-sm mb-0 bg-light">
+                        <tbody>
+                        <?php foreach ($excludedGlobal as $excl): ?>
+                        <tr class="text-muted">
+                            <td><?= e($excl['name']) ?> <span class="badge bg-secondary">Globalny</span></td>
+                            <td class="text-center"><?= (int)$excl['age_from'] ?></td>
+                            <td class="text-center"><?= (int)$excl['age_to'] ?></td>
+                            <td class="text-end pe-3" colspan="2">
+                                <form method="post" action="<?= url('config/dictionary/restore') ?>" class="d-inline">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="dictionary" value="categories">
+                                    <input type="hidden" name="entry_id" value="<?= $excl['id'] ?>">
+                                    <input type="hidden" name="redirect" value="config/categories">
+                                    <button class="btn btn-xs btn-outline-success py-0 px-1" title="Przywróć do słownika">
+                                        <i class="bi bi-eye"></i> Przywróć
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </details>
+                <?php endif; ?>
             </div>
         </div>
     </div>

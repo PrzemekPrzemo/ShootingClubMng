@@ -5,13 +5,15 @@ namespace App\Models;
 class LicenseTypeModel extends BaseModel
 {
     protected string $table = 'license_types';
+    public const DICTIONARY_KEY = 'license_types';
 
     public function getAll(): array
     {
         try {
             $clubId = \App\Helpers\ClubContext::current();
             if ($clubId !== null) {
-                $stmt = $this->db->prepare("SELECT * FROM license_types WHERE club_id IS NULL OR club_id = ? ORDER BY sort_order, name");
+                $excl = $this->buildExclNotIn($clubId);
+                $stmt = $this->db->prepare("SELECT * FROM license_types WHERE (club_id IS NULL{$excl}) OR club_id = ? ORDER BY sort_order, name");
                 $stmt->execute([$clubId]);
                 return $stmt->fetchAll();
             }
@@ -34,7 +36,8 @@ class LicenseTypeModel extends BaseModel
         try {
             $clubId = \App\Helpers\ClubContext::current();
             if ($clubId !== null) {
-                $stmt = $this->db->prepare("SELECT * FROM license_types WHERE is_active = 1 AND (club_id IS NULL OR club_id = ?) ORDER BY sort_order, name");
+                $excl = $this->buildExclNotIn($clubId);
+                $stmt = $this->db->prepare("SELECT * FROM license_types WHERE is_active = 1 AND ((club_id IS NULL{$excl}) OR club_id = ?) ORDER BY sort_order, name");
                 $stmt->execute([$clubId]);
                 return $stmt->fetchAll();
             }
@@ -44,6 +47,22 @@ class LicenseTypeModel extends BaseModel
         } catch (\PDOException) {
             return array_filter($this->getAll(), fn($r) => $r['is_active']);
         }
+    }
+
+    public function getExcludedGlobal(int $clubId): array
+    {
+        $ids = (new ClubDictionaryExclusionModel())->getExcludedIds($clubId, self::DICTIONARY_KEY);
+        if (empty($ids)) return [];
+        $in  = implode(',', $ids);
+        return $this->db->query(
+            "SELECT * FROM license_types WHERE id IN ({$in}) AND club_id IS NULL ORDER BY sort_order, name"
+        )->fetchAll();
+    }
+
+    private function buildExclNotIn(int $clubId): string
+    {
+        $ids = (new ClubDictionaryExclusionModel())->getExcludedIds($clubId, self::DICTIONARY_KEY);
+        return $ids ? ' AND id NOT IN (' . implode(',', $ids) . ')' : '';
     }
 
     public function save(array $data): int

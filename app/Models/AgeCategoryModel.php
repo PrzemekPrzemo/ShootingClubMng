@@ -5,6 +5,7 @@ namespace App\Models;
 class AgeCategoryModel extends BaseModel
 {
     protected string $table = 'member_age_categories';
+    public const DICTIONARY_KEY = 'categories';
 
     public function getAll(): array
     {
@@ -12,9 +13,28 @@ class AgeCategoryModel extends BaseModel
         if ($clubId === null) {
             return $this->db->query("SELECT * FROM member_age_categories ORDER BY sort_order, age_from")->fetchAll();
         }
-        $stmt = $this->db->prepare("SELECT * FROM member_age_categories WHERE club_id IS NULL OR club_id = ? ORDER BY sort_order, age_from");
+        $excl  = $this->buildExclNotIn($clubId);
+        $stmt  = $this->db->prepare(
+            "SELECT * FROM member_age_categories WHERE (club_id IS NULL{$excl}) OR club_id = ? ORDER BY sort_order, age_from"
+        );
         $stmt->execute([$clubId]);
         return $stmt->fetchAll();
+    }
+
+    public function getExcludedGlobal(int $clubId): array
+    {
+        $ids = (new ClubDictionaryExclusionModel())->getExcludedIds($clubId, self::DICTIONARY_KEY);
+        if (empty($ids)) return [];
+        $in   = implode(',', $ids);
+        return $this->db->query(
+            "SELECT * FROM member_age_categories WHERE id IN ({$in}) AND club_id IS NULL ORDER BY sort_order, age_from"
+        )->fetchAll();
+    }
+
+    private function buildExclNotIn(int $clubId): string
+    {
+        $ids = (new ClubDictionaryExclusionModel())->getExcludedIds($clubId, self::DICTIONARY_KEY);
+        return $ids ? ' AND id NOT IN (' . implode(',', $ids) . ')' : '';
     }
 
     public function detectCategory(int $age): ?array
