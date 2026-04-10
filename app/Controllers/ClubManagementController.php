@@ -167,14 +167,26 @@ class ClubManagementController extends BaseController
         Csrf::verify();
         $clubId = $this->currentClub();
 
-        $keys = ['smtp_enabled', 'smtp_host', 'smtp_port', 'smtp_secure', 'smtp_user', 'smtp_pass_enc', 'smtp_from_email', 'smtp_from_name'];
-        foreach ($keys as $key) {
-            if (isset($_POST[$key])) {
-                $this->settingsModel->set($clubId, $key, trim($_POST[$key]));
+        if (($_POST['_section'] ?? '') === 'sms') {
+            // SMS section
+            $smsKeys = ['sms_enabled', 'sms_api_key', 'sms_sender'];
+            foreach ($smsKeys as $key) {
+                if (isset($_POST[$key])) {
+                    $this->settingsModel->set($clubId, $key, trim($_POST[$key]));
+                }
             }
+            Session::flash('success', 'Zapisano konfigurację SMS.');
+        } else {
+            // SMTP section
+            $keys = ['smtp_enabled', 'smtp_host', 'smtp_port', 'smtp_secure', 'smtp_user', 'smtp_pass_enc', 'smtp_from_email', 'smtp_from_name'];
+            foreach ($keys as $key) {
+                if (isset($_POST[$key])) {
+                    $this->settingsModel->set($clubId, $key, trim($_POST[$key]));
+                }
+            }
+            Session::flash('success', 'Zapisano konfigurację SMTP.');
         }
 
-        Session::flash('success', 'Zapisano konfigurację SMTP.');
         $this->redirect('club/smtp');
     }
 
