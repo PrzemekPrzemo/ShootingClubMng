@@ -1,6 +1,6 @@
 /* ============================================================
    Shootero — Design System CSS
-   Palette: Navy 900 #0B1220 | Navy 800 #0F172A | Navy 700 #1E293B
+   Palette: Navy 500 #081220 | Navy 600 #0F172A | Navy 700 #1E2838
             Gold 500 #D4A373 | Gold 400 #E6C200 | Gold Soft #F3E9DC
             Gray 400 #94A3B8 | Gray 600 #475569
             Error #DC2626 | Success #16A34A
@@ -26,12 +26,12 @@ h1, h2, h3, h4, h5, h6,
 
 /* ── Bootstrap dark theme overrides ─────────────────────────── */
 [data-bs-theme="dark"] {
-    --bs-body-bg:                  #0B1220;
-    --bs-body-bg-rgb:              11,18,32;
+    --bs-body-bg:                  #081220;
+    --bs-body-bg-rgb:              8,18,32;
     --bs-body-color:               #e2e8f0;
     --bs-body-color-rgb:           226,232,240;
     --bs-secondary-bg:             #0F172A;
-    --bs-tertiary-bg:              #1E293B;
+    --bs-tertiary-bg:              #1E2838;
     --bs-border-color:             rgba(255,255,255,.08);
     --bs-border-color-translucent: rgba(255,255,255,.12);
     --bs-primary:                  #D4A373;
@@ -52,7 +52,7 @@ h1, h2, h3, h4, h5, h6,
 
 /* ── Cards ───────────────────────────────────────────────────── */
 .card {
-    --bs-card-bg:           #1E293B;
+    --bs-card-bg:           #1E2838;
     --bs-card-border-color: rgba(255,255,255,.07);
     --bs-card-cap-bg:       rgba(255,255,255,.03);
     --bs-card-color:        #e2e8f0;

@@ -1,24 +1,29 @@
 <?php
-// Shootero brand icon: S-bolt blades + metallic crosshair (large 64px version)
-$loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:68px;height:68px;display:block;margin:0 auto;filter:drop-shadow(0 4px 16px rgba(212,163,115,.3))">
-  <!-- Upper-left S-bolt blade -->
-  <path d="M22 3 L3 8 L8 20 L30 12 Z" fill="#D4A373"/>
-  <!-- Lower-right S-bolt blade -->
-  <path d="M38 57 L57 52 L52 40 L30 48 Z" fill="#D4A373"/>
-  <!-- Outer metallic ring -->
-  <circle cx="30" cy="30" r="18" stroke="rgba(226,232,240,.4)" stroke-width="2" fill="none"/>
-  <!-- Outer ring highlight arc -->
-  <path d="M42.7 17.3 A18 18 0 0 1 47.3 30" stroke="rgba(226,232,240,.75)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-  <!-- Inner bright ring -->
-  <circle cx="30" cy="30" r="11" stroke="rgba(226,232,240,.88)" stroke-width="2.4" fill="none"/>
-  <!-- Crosshair tick marks (between rings) -->
-  <line x1="30" y1="12" x2="30" y2="19"  stroke="rgba(226,232,240,.9)" stroke-width="2.2" stroke-linecap="round"/>
-  <line x1="30" y1="41" x2="30" y2="48"  stroke="rgba(226,232,240,.9)" stroke-width="2.2" stroke-linecap="round"/>
-  <line x1="12" y1="30" x2="19" y2="30"  stroke="rgba(226,232,240,.9)" stroke-width="2.2" stroke-linecap="round"/>
-  <line x1="41" y1="30" x2="48" y2="30"  stroke="rgba(226,232,240,.9)" stroke-width="2.2" stroke-linecap="round"/>
-  <!-- Center dot -->
-  <circle cx="30" cy="30" r="5" fill="#D4A373"/>
-  <circle cx="30" cy="30" r="2.5" fill="#E6C200"/>
+// Shootero brand icon — brand spec 2026 (login page, 72px)
+$loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:72px;height:72px;display:block;margin:0 auto;filter:drop-shadow(0 4px 20px rgba(212,163,115,.35))">
+  <!-- Upper-left S-bolt blade (wide angular) -->
+  <path d="M21 1.5 L1.5 10.5 L10.5 28.5 L33 18 Z" fill="#D4A373"/>
+  <!-- Lower-right S-bolt blade (wide angular) -->
+  <path d="M39 58.5 L58.5 49.5 L49.5 31.5 L27 42 Z" fill="#D4A373"/>
+  <!-- Outer metallic ring (with depth fill) -->
+  <circle cx="30" cy="30" r="18" stroke="rgba(200,218,232,.55)" stroke-width="3.5" fill="rgba(8,18,32,.4)"/>
+  <!-- Metallic highlight arc upper-right -->
+  <path d="M42.7 17.3 A18 18 0 0 1 48 30" stroke="rgba(255,255,255,.88)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- Inner ring -->
+  <circle cx="30" cy="30" r="11.5" stroke="rgba(226,232,240,.9)" stroke-width="3" fill="none"/>
+  <!-- Crosshair ticks between rings -->
+  <line x1="30" y1="12.5" x2="30" y2="18.5" stroke="rgba(226,232,240,.92)" stroke-width="2.6" stroke-linecap="round"/>
+  <line x1="30" y1="41.5" x2="30" y2="47.5" stroke="rgba(226,232,240,.92)" stroke-width="2.6" stroke-linecap="round"/>
+  <line x1="12.5" y1="30" x2="18.5" y2="30" stroke="rgba(226,232,240,.92)" stroke-width="2.6" stroke-linecap="round"/>
+  <line x1="41.5" y1="30" x2="47.5" y2="30" stroke="rgba(226,232,240,.92)" stroke-width="2.6" stroke-linecap="round"/>
+  <!-- Inner crosshair lines (inside inner ring) -->
+  <line x1="30" y1="21"  x2="30" y2="26"  stroke="rgba(255,255,255,.65)" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="30" y1="34"  x2="30" y2="39"  stroke="rgba(255,255,255,.65)" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="21"  y1="30" x2="26"  y2="30" stroke="rgba(255,255,255,.65)" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="34"  y1="30" x2="39"  y2="30" stroke="rgba(255,255,255,.65)" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Center dot (gold + bright highlight) -->
+  <circle cx="30" cy="30" r="6" fill="#D4A373"/>
+  <circle cx="30" cy="30" r="3" fill="#E6C200"/>
 </svg>';
 ?>
 <div class="text-center mb-4">
@@ -52,7 +57,7 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
             <?= e($systemBranding['name'] ?? 'SHOOTERO') ?>
         </h4>
         <p class="mt-2 mb-0" style="color:#D4A373;font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:2px;font-size:.7rem;text-transform:uppercase">
-            Zarządzaj klubem&nbsp;&nbsp;•&nbsp;&nbsp;Wspieraj ludzi
+            ZARZĄDZAJ KLUBEM.&nbsp;&nbsp;WSPIERAJ LUDZI.
         </p>
     <?php endif; ?>
 </div>

@@ -13,11 +13,12 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Shootero design system -->
     <link rel="stylesheet" href="<?= url('css/app.css') ?>">
+    <link rel="icon" type="image/svg+xml" href="<?= url('favicon.svg') ?>">
     <style>
         :root {
-            --sht-900: #0B1220;
+            --sht-900: #081220;
             --sht-800: #0F172A;
-            --sht-700: #1E293B;
+            --sht-700: #1E2838;
             --sht-gold: #D4A373;
             --sht-gold-bright: #E6C200;
             --sht-muted: #94A3B8;
@@ -135,26 +136,23 @@
 <body>
 
 <?php
-// Shootero brand icon: S-bolt + crosshair (same 40x40 viewBox, rendered at 26px)
+// Shootero brand icon — brand spec 2026 (portal navbar, 26px)
 $__portalIcon = '<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:26px;height:26px;flex-shrink:0">
-  <!-- Upper-left S-bolt blade -->
-  <path d="M15 2 L2 6 L6 14 L21 9 Z" fill="#D4A373"/>
-  <!-- Lower-right S-bolt blade -->
-  <path d="M25 38 L38 34 L34 26 L19 31 Z" fill="#D4A373"/>
-  <!-- Outer metallic ring -->
-  <circle cx="20" cy="20" r="12" stroke="rgba(226,232,240,.4)" stroke-width="1.4" fill="none"/>
-  <!-- Outer ring highlight arc -->
-  <path d="M28.5 11.5 A12 12 0 0 1 31.5 20" stroke="rgba(226,232,240,.8)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-  <!-- Inner bright ring -->
-  <circle cx="20" cy="20" r="7.5" stroke="rgba(226,232,240,.85)" stroke-width="1.8" fill="none"/>
-  <!-- Crosshair ticks -->
-  <line x1="20" y1="8"    x2="20" y2="12.5"  stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
-  <line x1="20" y1="27.5" x2="20" y2="32"    stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
-  <line x1="8"  y1="20"   x2="12.5" y2="20"  stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
-  <line x1="27.5" y1="20" x2="32"  y2="20"   stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
-  <!-- Center dot -->
-  <circle cx="20" cy="20" r="3.5" fill="#D4A373"/>
-  <circle cx="20" cy="20" r="1.8" fill="#E6C200"/>
+  <path d="M14 1 L1 7 L7 19 L22 12 Z" fill="#D4A373"/>
+  <path d="M26 39 L39 33 L33 21 L18 28 Z" fill="#D4A373"/>
+  <circle cx="20" cy="20" r="12" stroke="rgba(200,218,232,.55)" stroke-width="2.5" fill="rgba(8,18,32,.35)"/>
+  <path d="M28.5 11.5 A12 12 0 0 1 32 20" stroke="rgba(255,255,255,.88)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <circle cx="20" cy="20" r="7.5" stroke="rgba(226,232,240,.9)" stroke-width="2" fill="none"/>
+  <line x1="20" y1="8.5"  x2="20" y2="12.5" stroke="rgba(226,232,240,.92)" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="20" y1="27.5" x2="20" y2="31.5" stroke="rgba(226,232,240,.92)" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="8.5"  y1="20" x2="12.5" y2="20" stroke="rgba(226,232,240,.92)" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="27.5" y1="20" x2="31.5" y2="20" stroke="rgba(226,232,240,.92)" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="20" y1="14"  x2="20" y2="17"  stroke="rgba(255,255,255,.65)" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="20" y1="23"  x2="20" y2="26"  stroke="rgba(255,255,255,.65)" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="14"  y1="20" x2="17"  y2="20" stroke="rgba(255,255,255,.65)" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="23"  y1="20" x2="26"  y2="20" stroke="rgba(255,255,255,.65)" stroke-width="1.2" stroke-linecap="round"/>
+  <circle cx="20" cy="20" r="4" fill="#D4A373"/>
+  <circle cx="20" cy="20" r="2" fill="#E6C200"/>
 </svg>';
 $__uri = $_SERVER['REQUEST_URI'] ?? '';
 ?>
@@ -272,16 +270,16 @@ $__uri = $_SERVER['REQUEST_URI'] ?? '';
     <div class="portal-foot-brand">
         <!-- mini S-bolt icon -->
         <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px">
-            <path d="M15 2 L2 6 L6 14 L21 9 Z" fill="#D4A373"/>
-            <path d="M25 38 L38 34 L34 26 L19 31 Z" fill="#D4A373"/>
-            <circle cx="20" cy="20" r="12" stroke="rgba(226,232,240,.35)" stroke-width="1.4" fill="none"/>
-            <circle cx="20" cy="20" r="7.5" stroke="rgba(226,232,240,.75)" stroke-width="1.8" fill="none"/>
-            <circle cx="20" cy="20" r="3.5" fill="#D4A373"/>
-            <circle cx="20" cy="20" r="1.8" fill="#E6C200"/>
+            <path d="M14 1 L1 7 L7 19 L22 12 Z" fill="#D4A373"/>
+            <path d="M26 39 L39 33 L33 21 L18 28 Z" fill="#D4A373"/>
+            <circle cx="20" cy="20" r="12" stroke="rgba(200,218,232,.5)" stroke-width="2" fill="rgba(8,18,32,.4)"/>
+            <circle cx="20" cy="20" r="7.5" stroke="rgba(226,232,240,.8)" stroke-width="1.8" fill="none"/>
+            <circle cx="20" cy="20" r="4" fill="#D4A373"/>
+            <circle cx="20" cy="20" r="2" fill="#E6C200"/>
         </svg>
         SHOOTERO
     </div>
-    <span class="portal-foot-tagline" style="font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:1.5px;text-transform:uppercase">Zarządzaj&nbsp;klubem&nbsp;&bull;&nbsp;Wspieraj&nbsp;ludzi</span>
+    <span class="portal-foot-tagline" style="font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:1.5px;text-transform:uppercase">ZARZĄDZAJ&nbsp;KLUBEM.&nbsp;WSPIERAJ&nbsp;LUDZI.</span>
     <span class="portal-foot-copy">&copy; <?= date('Y') ?> Shootero &mdash; Portal Zawodnika</span>
 </footer>
 

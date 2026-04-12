@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Shootero design system -->
     <link rel="stylesheet" href="<?= url('css/app.css') ?>">
+    <link rel="icon" type="image/svg+xml" href="<?= url('favicon.svg') ?>">
     <?php
     $__primaryColor = $clubBranding['primary_color'] ?? '#D4A373';
     $__navbarBg     = $clubBranding['navbar_bg']     ?? '#0F172A';
@@ -22,10 +23,10 @@
         :root {
             --club-primary: <?= htmlspecialchars($__primaryColor, ENT_QUOTES) ?>;
             --club-navbar:  <?= htmlspecialchars($__navbarBg, ENT_QUOTES) ?>;
-            /* Shootero palette — full brand spec */
-            --sht-900: #0B1220;        /* Navy 900 */
-            --sht-800: #0F172A;        /* Navy 800 */
-            --sht-700: #1E293B;        /* Navy 700 */
+            /* Shootero palette — brand spec 2026 */
+            --sht-900: #081220;        /* Navy 500 */
+            --sht-800: #0F172A;        /* Navy 600 */
+            --sht-700: #1E2838;        /* Navy 700 */
             --sht-gold: #D4A373;       /* Gold 500 */
             --sht-gold-bright: #E6C200;/* Gold 400 */
             --sht-gold-soft: #F3E9DC;  /* Gold Soft */
@@ -369,26 +370,31 @@ function isActive(string $mod, string $uri): bool {
     };
 }
 
-// Shootero brand icon SVG: S-bolt blades (upper-left + lower-right) + metallic crosshair target
+// Shootero brand icon SVG — brand spec 2026
 $shooteroIcon = '<svg class="sb-shootero-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Upper-left S-bolt blade -->
-  <path d="M15 2 L2 6 L6 14 L21 9 Z" fill="#D4A373"/>
-  <!-- Lower-right S-bolt blade -->
-  <path d="M25 38 L38 34 L34 26 L19 31 Z" fill="#D4A373"/>
-  <!-- Outer metallic ring -->
-  <circle cx="20" cy="20" r="12" stroke="rgba(226,232,240,.45)" stroke-width="1.4" fill="none"/>
-  <!-- Outer ring highlight arc (upper-right) -->
-  <path d="M28.5 11.5 A12 12 0 0 1 31.5 20" stroke="rgba(226,232,240,.8)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-  <!-- Inner bright ring -->
-  <circle cx="20" cy="20" r="7.5" stroke="rgba(226,232,240,.85)" stroke-width="1.8" fill="none"/>
-  <!-- Crosshair tick marks (between rings) -->
-  <line x1="20" y1="8"    x2="20" y2="12.5"  stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
-  <line x1="20" y1="27.5" x2="20" y2="32"    stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
-  <line x1="8"  y1="20"   x2="12.5" y2="20"  stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
-  <line x1="27.5" y1="20" x2="32"  y2="20"   stroke="rgba(226,232,240,.9)" stroke-width="1.6" stroke-linecap="round"/>
-  <!-- Center dot -->
-  <circle cx="20" cy="20" r="3.5" fill="#D4A373"/>
-  <circle cx="20" cy="20" r="1.8" fill="#E6C200"/>
+  <!-- Upper-left S-bolt blade (wide angular) -->
+  <path d="M14 1 L1 7 L7 19 L22 12 Z" fill="#D4A373"/>
+  <!-- Lower-right S-bolt blade (wide angular) -->
+  <path d="M26 39 L39 33 L33 21 L18 28 Z" fill="#D4A373"/>
+  <!-- Outer metallic ring (with depth fill) -->
+  <circle cx="20" cy="20" r="12" stroke="rgba(200,218,232,.55)" stroke-width="2.5" fill="rgba(8,18,32,.35)"/>
+  <!-- Metallic highlight arc upper-right -->
+  <path d="M28.5 11.5 A12 12 0 0 1 32 20" stroke="rgba(255,255,255,.88)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Inner ring -->
+  <circle cx="20" cy="20" r="7.5" stroke="rgba(226,232,240,.9)" stroke-width="2" fill="none"/>
+  <!-- Crosshair ticks between rings -->
+  <line x1="20" y1="8.5"  x2="20" y2="12.5" stroke="rgba(226,232,240,.92)" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="20" y1="27.5" x2="20" y2="31.5" stroke="rgba(226,232,240,.92)" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="8.5"  y1="20" x2="12.5" y2="20" stroke="rgba(226,232,240,.92)" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="27.5" y1="20" x2="31.5" y2="20" stroke="rgba(226,232,240,.92)" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Inner crosshair lines (inside inner ring) -->
+  <line x1="20" y1="14"  x2="20" y2="17"  stroke="rgba(255,255,255,.65)" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="20" y1="23"  x2="20" y2="26"  stroke="rgba(255,255,255,.65)" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="14"  y1="20" x2="17"  y2="20" stroke="rgba(255,255,255,.65)" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="23"  y1="20" x2="26"  y2="20" stroke="rgba(255,255,255,.65)" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Center dot (gold + bright highlight) -->
+  <circle cx="20" cy="20" r="4" fill="#D4A373"/>
+  <circle cx="20" cy="20" r="2" fill="#E6C200"/>
 </svg>';
 ?>
 
@@ -637,7 +643,7 @@ $__brandText       = $__hasClubCtx
     <footer class="main-foot">
         <span style="font-family:'Poppins',sans-serif;font-weight:800;letter-spacing:2px;color:#D4A373;font-size:.78rem">SHOOTERO</span>
         <span style="color:#334155;margin:0 .4rem">&mdash;</span>
-        <span style="font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:1px;font-size:.7rem;color:#475569;text-transform:uppercase">Zarządzaj&nbsp;klubem&nbsp;•&nbsp;Wspieraj&nbsp;ludzi</span>
+        <span style="font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:1.5px;font-size:.7rem;color:#475569;text-transform:uppercase">ZARZĄDZAJ&nbsp;KLUBEM.&nbsp;WSPIERAJ&nbsp;LUDZI.</span>
         <span style="color:#1e293b;margin-left:.5rem;font-size:.7rem">&copy; <?= date('Y') ?></span>
     </footer>
 
