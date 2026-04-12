@@ -482,13 +482,49 @@ class MemberPortalController
 
     public function fees(): void
     {
+        $memberId = MemberAuth::id();
         $year     = (int)($_GET['year'] ?? date('Y'));
-        $payments = $this->portalModel->getFeesSummary(MemberAuth::id(), $year);
+        $payments = $this->portalModel->getFeesSummary($memberId, $year);
+
+        // Przelewy24 per-club check
+        $p24Enabled     = false;
+        $p24Sandbox     = true;
+        $onlinePayments = [];
+
+        try {
+            $db   = Database::getInstance();
+            $stmt = $db->prepare("SELECT club_id FROM members WHERE id = ? LIMIT 1");
+            $stmt->execute([$memberId]);
+            $clubId = (int)$stmt->fetchColumn();
+
+            if ($clubId > 0) {
+                $settings   = new \App\Models\ClubSettingsModel();
+                $p24Enabled = (bool)$settings->get($clubId, 'p24_enabled', false)
+                    && (string)$settings->get($clubId, 'p24_merchant_id', '') !== ''
+                    && (string)$settings->get($clubId, 'p24_api_key', '')     !== '';
+                $p24Sandbox = (bool)$settings->get($clubId, 'p24_sandbox', true);
+
+                if ($p24Enabled) {
+                    $opStmt = $db->prepare("
+                        SELECT id, description, amount, status, created_at, p24_order_id
+                        FROM   online_payments
+                        WHERE  member_id = ?
+                        ORDER  BY created_at DESC
+                        LIMIT  5
+                    ");
+                    $opStmt->execute([$memberId]);
+                    $onlinePayments = $opStmt->fetchAll();
+                }
+            }
+        } catch (\Throwable) {}
 
         $this->render('portal/fees', [
-            'title'    => 'Opłaty i składki',
-            'payments' => $payments,
-            'year'     => $year,
+            'title'          => 'Opłaty i składki',
+            'payments'       => $payments,
+            'year'           => $year,
+            'p24Enabled'     => $p24Enabled,
+            'p24Sandbox'     => $p24Sandbox,
+            'onlinePayments' => $onlinePayments,
         ]);
     }
 

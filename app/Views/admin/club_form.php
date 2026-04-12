@@ -179,6 +179,77 @@
             });
             </script>
 
+            <hr class="my-4">
+            <h6 class="text-uppercase text-muted small mb-3"><i class="bi bi-credit-card-2-front"></i> Przelewy24 — płatności online</h6>
+            <p class="text-muted small mb-2">
+                Pozwala zawodnikom opłacać składki i opłaty startowe bezpośrednio przez portal.
+                Dane uzyskasz po rejestracji konta w
+                <a href="https://www.przelewy24.pl" target="_blank" rel="noopener">przelewy24.pl</a>.
+            </p>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="p24_enabled" name="p24_enabled"
+                       <?= !empty($p24Config['p24_enabled']) ? 'checked' : '' ?>>
+                <label class="form-check-label" for="p24_enabled">Włącz płatności Przelewy24 dla tego klubu</label>
+            </div>
+
+            <div id="p24_fields" <?= empty($p24Config['p24_enabled']) ? 'style="display:none"' : '' ?>>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Merchant ID <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="p24_merchant_id"
+                               value="<?= (int)($p24Config['p24_merchant_id'] ?? 0) ?: '' ?>"
+                               placeholder="np. 123456">
+                        <div class="form-text">Twoje ID sprzedawcy z panelu P24.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">POS ID</label>
+                        <input type="number" class="form-control" name="p24_pos_id"
+                               value="<?= (int)($p24Config['p24_pos_id'] ?? 0) ?: '' ?>"
+                               placeholder="Domyślnie = Merchant ID">
+                        <div class="form-text">Zostaw puste jeśli taki sam jak Merchant ID.</div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Klucz API (api_key) <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" name="p24_api_key"
+                               autocomplete="new-password"
+                               placeholder="<?= $isEdit && !empty($p24Config['p24_has_api_key']) ? 'Zostaw puste = bez zmian' : 'Klucz API z panelu P24' ?>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Klucz CRC (crc_key) <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" name="p24_crc_key"
+                               autocomplete="new-password"
+                               placeholder="<?= $isEdit && !empty($p24Config['p24_has_crc_key']) ? 'Zostaw puste = bez zmian' : 'Klucz CRC z panelu P24' ?>">
+                        <div class="form-text">Służy do weryfikacji webhooków.</div>
+                    </div>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="p24_sandbox" name="p24_sandbox"
+                           <?= !empty($p24Config['p24_sandbox']) ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="p24_sandbox">
+                        Tryb testowy (sandbox) — nie pobiera prawdziwych płatności
+                    </label>
+                </div>
+
+                <?php if ($isEdit): ?>
+                <div class="alert alert-info small py-2">
+                    <i class="bi bi-info-circle me-1"></i>
+                    URL powiadomień (wklej w panelu P24 → <em>Ustawienia → URL do powiadomień</em>):
+                    <code class="ms-1 user-select-all"><?= url('portal/payment/notify') ?></code>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <script>
+            document.getElementById('p24_enabled').addEventListener('change', function () {
+                document.getElementById('p24_fields').style.display = this.checked ? '' : 'none';
+            });
+            </script>
+
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check-lg"></i> <?= $isEdit ? 'Zapisz' : 'Utwórz' ?>

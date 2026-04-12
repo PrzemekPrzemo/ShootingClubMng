@@ -81,6 +81,7 @@ class AdminController extends BaseController
             'subscription' => null,
             'clubModules'  => [],
             'smtpConfig'   => ['smtp_enabled' => false, 'smtp_host' => '', 'smtp_port' => 587, 'smtp_secure' => 'tls', 'smtp_user' => '', 'smtp_has_pass' => false, 'smtp_from_email' => '', 'smtp_from_name' => ''],
+            'p24Config'    => ['p24_enabled' => false, 'p24_merchant_id' => '', 'p24_pos_id' => '', 'p24_has_api_key' => false, 'p24_has_crc_key' => false, 'p24_sandbox' => true],
         ]);
     }
 
@@ -149,12 +150,22 @@ class AdminController extends BaseController
             'smtp_from_name'  => (string)$settings->get((int)$id, 'smtp_from_name', ''),
         ];
 
+        $p24Config = [
+            'p24_enabled'     => (bool)$settings->get((int)$id, 'p24_enabled', false),
+            'p24_merchant_id' => (string)$settings->get((int)$id, 'p24_merchant_id', ''),
+            'p24_pos_id'      => (string)$settings->get((int)$id, 'p24_pos_id', ''),
+            'p24_has_api_key' => (string)$settings->get((int)$id, 'p24_api_key', '') !== '',
+            'p24_has_crc_key' => (string)$settings->get((int)$id, 'p24_crc_key', '') !== '',
+            'p24_sandbox'     => (bool)$settings->get((int)$id, 'p24_sandbox', true),
+        ];
+
         $this->render('admin/club_form', [
             'title'        => 'Edycja klubu — ' . $club['name'],
             'club'         => $club,
             'subscription' => $subscription,
             'clubModules'  => $clubModules,
             'smtpConfig'   => $smtpConfig,
+            'p24Config'    => $p24Config,
         ]);
     }
 
@@ -215,6 +226,20 @@ class AdminController extends BaseController
         $smtpPw = trim($_POST['smtp_pass_enc'] ?? '');
         if ($smtpPw !== '') {
             $settings->set((int)$id, 'smtp_pass_enc', $smtpPw, 'SMTP Hasło', 'text');
+        }
+
+        // Przelewy24 per-klub
+        $settings->set((int)$id, 'p24_enabled',     isset($_POST['p24_enabled']) ? '1' : '0', 'P24 włączony',   'boolean');
+        $settings->set((int)$id, 'p24_merchant_id', trim($_POST['p24_merchant_id'] ?? ''),     'P24 Merchant ID', 'text');
+        $settings->set((int)$id, 'p24_pos_id',      trim($_POST['p24_pos_id'] ?? ''),          'P24 POS ID',      'text');
+        $settings->set((int)$id, 'p24_sandbox',     isset($_POST['p24_sandbox']) ? '1' : '0', 'P24 Sandbox',     'boolean');
+        $p24ApiKey = trim($_POST['p24_api_key'] ?? '');
+        if ($p24ApiKey !== '') {
+            $settings->set((int)$id, 'p24_api_key', $p24ApiKey, 'P24 API Key', 'text');
+        }
+        $p24CrcKey = trim($_POST['p24_crc_key'] ?? '');
+        if ($p24CrcKey !== '') {
+            $settings->set((int)$id, 'p24_crc_key', $p24CrcKey, 'P24 CRC Key', 'text');
         }
 
         Session::flash('success', 'Zapisano zmiany.');
@@ -600,4 +625,5 @@ class AdminController extends BaseController
             )->execute([Auth::id(), $targetType, $targetId, $clubId]);
         } catch (\Throwable) {}
     }
+
 }

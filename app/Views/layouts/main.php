@@ -438,6 +438,7 @@ $__brandText       = $__hasClubCtx
             ['icon' => 'bar-chart-line',       'label' => 'Analityka',      'url' => 'admin/analytics',    'match' => '/admin/analytics'],
             ['icon' => 'megaphone',            'label' => 'Reklamy',        'url' => 'admin/ads',          'match' => '/admin/ads'],
             ['icon' => 'gear',                 'label' => 'Ustawienia',     'url' => 'admin/settings',     'match' => '/admin/settings'],
+            ['icon' => 'cash-coin',            'label' => 'Płatności P24',  'url' => 'admin/online-payments', 'match' => '/admin/online-payments'],
             ['icon' => 'shield-check',         'label' => 'Bezpieczeństwo', 'url' => 'admin/security',     'match' => '/admin/security'],
             ['icon' => 'cloud-arrow-down',     'label' => 'Kopie zapasowe', 'url' => 'admin/backups',      'match' => '/admin/backups'],
         ];

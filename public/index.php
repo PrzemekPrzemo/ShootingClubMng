@@ -230,6 +230,10 @@ $router->get('/subscription',                          [\App\Controllers\Subscri
 // Security audit (superadmin)
 $router->get('/admin/security',  [\App\Controllers\AdminSecurityController::class, 'index']);
 
+// Online payments — master admin view
+$router->get('/admin/online-payments',               [\App\Controllers\PaymentGatewayController::class, 'adminIndex']);
+$router->post('/admin/online-payments/:id/cancel',   [\App\Controllers\PaymentGatewayController::class, 'adminCancel']);
+
 // Backups (superadmin)
 $router->get('/admin/backups',              [\App\Controllers\BackupController::class, 'index']);
 $router->post('/admin/backups/run',         [\App\Controllers\BackupController::class, 'run']);
@@ -500,6 +504,11 @@ $router->post('/portal/profile/edit',                [\App\Controllers\MemberPor
 $router->get('/portal/trainings',                    [\App\Controllers\MemberPortalController::class, 'trainings']);
 $router->post('/portal/trainings/:id/enroll',        [\App\Controllers\MemberPortalController::class, 'enrollTraining']);
 $router->post('/portal/trainings/:id/unenroll',      [\App\Controllers\MemberPortalController::class, 'unenrollTraining']);
+
+// Przelewy24 payment gateway
+$router->post('/portal/payment/initiate',            [\App\Controllers\PaymentGatewayController::class, 'initiate']);
+$router->get('/portal/payment/return',               [\App\Controllers\PaymentGatewayController::class, 'returnFromPayment']);
+$router->post('/portal/payment/notify',              [\App\Controllers\PaymentGatewayController::class, 'notify']);   // P24 webhook (no member session)
 
 // Entry approval + fee management (staff)
 $router->post('/competitions/entries/:id/approve',          [\App\Controllers\CompetitionsController::class, 'approveEntry']);
