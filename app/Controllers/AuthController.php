@@ -62,7 +62,6 @@ class AuthController extends BaseController
 
         $this->render('auth/login', [
             'title'          => 'Logowanie',
-            'clubs'          => $subdomainClub ? [] : $this->getActiveClubs(),
             'systemBranding' => $systemBranding,
             'subdomainClub'  => $subdomainClub,
         ]);
@@ -78,15 +77,9 @@ class AuthController extends BaseController
 
         $username = trim($_POST['username'] ?? '');
         $password = $_POST['password'] ?? '';
-        $clubId   = (int)($_POST['club_id'] ?? 0);
 
         if ($username === '' || $password === '') {
             Session::flash('error', 'Podaj login i hasło.');
-            $this->redirect('auth/login');
-        }
-
-        if ($clubId <= 0) {
-            Session::flash('error', 'Wybierz klub z listy.');
             $this->redirect('auth/login');
         }
 
@@ -108,12 +101,12 @@ class AuthController extends BaseController
         }
         RateLimiter::clear($rlKey);
 
-        // 2FA
+        // 2FA (club context resolved later — store pending user, redirect)
         if (!empty($user['totp_enabled'])) {
             Session::set('totp_required', true);
             Session::set('totp_pending_user_id', $user['id']);
             Session::set('totp_pending_user', $user);
-            Session::set('totp_pending_club_id', $clubId);
+            Session::set('totp_pending_club_id', null); // resolved after 2FA
             $this->redirect('2fa/verify');
         }
 
@@ -121,25 +114,68 @@ class AuthController extends BaseController
         Auth::login($user);
         $this->logActivity($user['id'], 'login', 'users', $user['id'], 'Zalogowanie do systemu');
 
-        // Verify club membership — get ALL roles
-        $roles = $this->userModel->getRolesInClub($user['id'], $clubId);
-        if (empty($roles)) {
-            Session::flash('error', 'Nie masz dostępu do wybranego klubu.');
+        $this->resolveClubContext($user);
+    }
+
+    /**
+     * Resolves club/role context after credentials are verified.
+     * Called from login() and from 2FA verify (after totp passes).
+     * Priority: subdomain club → single club → club picker.
+     */
+    public function resolveClubContext(array $user): void
+    {
+        // Super admin — no club context needed
+        if (!empty($user['is_super_admin'])) {
+            $this->redirect('admin/dashboard');
+        }
+
+        // Subdomain pre-selects the club
+        $subdomainClubId = ClubContext::current();
+        if ($subdomainClubId !== null) {
+            $roles = $this->userModel->getRolesInClub($user['id'], $subdomainClubId);
+            if (empty($roles)) {
+                Session::flash('error', 'Nie masz dostępu do tego klubu.');
+                Auth::logout();
+                $this->redirect('auth/login');
+            }
+            $this->applyClubAndRole($user['id'], $subdomainClubId, $roles);
+            return;
+        }
+
+        // Get all clubs the user belongs to
+        $clubs = $this->userModel->getClubsForUser($user['id']);
+
+        if (empty($clubs)) {
+            Session::flash('error', 'Twoje konto nie jest przypisane do żadnego klubu. Skontaktuj się z administratorem.');
             Auth::logout();
             $this->redirect('auth/login');
         }
 
-        // Multiple roles → role selection screen
+        if (count($clubs) === 1) {
+            // Single club — resolve role immediately
+            $this->applyClubAndRole($user['id'], (int)$clubs[0]['club_id'], $clubs[0]['roles']);
+            return;
+        }
+
+        // Multiple clubs — show club picker
+        Session::set('pending_clubs', $clubs);
+        $this->redirect('club-select');
+    }
+
+    /**
+     * Sets club context; if multiple roles → show role select; else log in.
+     */
+    private function applyClubAndRole(int $userId, int $clubId, array $roles): void
+    {
         if (count($roles) > 1) {
             Session::set('pending_role_select', [
-                'user_id' => $user['id'],
+                'user_id' => $userId,
                 'club_id' => $clubId,
                 'roles'   => $roles,
             ]);
             $this->redirect('auth/role-select');
         }
 
-        // Single role — log in immediately
         Auth::setClub($clubId, $roles[0]);
         $this->redirectAfterLogin();
     }

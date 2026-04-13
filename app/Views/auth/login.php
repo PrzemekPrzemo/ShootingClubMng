@@ -66,32 +66,6 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
 <form method="post" action="<?= url('auth/login') ?>">
     <?= csrf_field() ?>
 
-    <?php if (!empty($subdomainClub)): ?>
-        <input type="hidden" name="club_id" value="<?= (int)$subdomainClub['id'] ?>">
-    <?php else: ?>
-    <div class="mb-3">
-        <label for="club_id" class="form-label fw-semibold small" style="color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;font-size:.72rem">
-            Klub
-        </label>
-        <?php if (!empty($clubs)): ?>
-        <select class="form-select" id="club_id" name="club_id" required>
-            <option value="">— Wybierz klub —</option>
-            <?php foreach ($clubs as $club): ?>
-                <option value="<?= (int)$club['id'] ?>"
-                    <?= ((int)($_POST['club_id'] ?? 0) === (int)$club['id']) ? 'selected' : '' ?>>
-                    <?= e($club['name']) ?><?= $club['short_name'] ? ' (' . e($club['short_name']) . ')' : '' ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-        <?php else: ?>
-        <div class="alert alert-warning small py-2 mb-0">
-            <i class="bi bi-exclamation-triangle me-1"></i>
-            Brak aktywnych klubów. Skontaktuj się z administratorem systemu.
-        </div>
-        <?php endif; ?>
-    </div>
-    <?php endif; ?>
-
     <div class="mb-3">
         <label for="username" class="form-label fw-semibold small" style="color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;font-size:.72rem">
             Login
@@ -112,8 +86,7 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
     </div>
 
     <button type="submit" class="btn btn-primary w-100 fw-semibold"
-            style="font-family:'Poppins',sans-serif;letter-spacing:.5px;padding:.65rem"
-            <?= (empty($clubs) && empty($subdomainClub)) ? 'disabled' : '' ?>>
+            style="font-family:'Poppins',sans-serif;letter-spacing:.5px;padding:.65rem">
         <i class="bi bi-box-arrow-in-right me-1"></i> Zaloguj się
     </button>
 </form>

@@ -26,8 +26,22 @@ class ClubSelectorController extends BaseController
             $this->redirect('dashboard');
         }
 
+        // Load system branding for the view
+        $systemBranding = ['name' => 'Shootero', 'logo' => '', 'logoMts' => '0'];
+        try {
+            $sm       = new \App\Models\SettingModel();
+            $logoFile = (string)($sm->get('system_logo', '') ?: '');
+            $logoPath = ROOT_PATH . '/storage/system/' . basename($logoFile);
+            $logoOk   = $logoFile !== '' && file_exists($logoPath);
+            $systemBranding['name']    = $sm->get('system_name', 'Shootero') ?: 'Shootero';
+            $systemBranding['logo']    = $logoOk ? $logoFile : '';
+            $systemBranding['logoMts'] = $logoOk ? (string)filemtime($logoPath) : '0';
+        } catch (\Throwable) {}
+
         $this->render('auth/club_select', [
-            'clubs' => $clubs,
+            'title'          => 'Wybierz klub',
+            'clubs'          => $clubs,
+            'systemBranding' => $systemBranding,
         ]);
     }
 
@@ -51,10 +65,21 @@ class ClubSelectorController extends BaseController
             $this->redirect('club-select');
         }
 
-        $club = reset($match);
-        Auth::setClub($clubId, $club['role']);
+        $club  = reset($match);
+        $roles = $club['roles'] ?? [$club['role']];
         Session::remove('pending_clubs');
 
+        // Multiple roles in this club → role selection screen
+        if (count($roles) > 1) {
+            Session::set('pending_role_select', [
+                'user_id' => Auth::id(),
+                'club_id' => $clubId,
+                'roles'   => $roles,
+            ]);
+            $this->redirect('auth/role-select');
+        }
+
+        Auth::setClub($clubId, $roles[0]);
         $this->redirect('dashboard');
     }
 }
