@@ -54,13 +54,14 @@ class LicensesController extends BaseController
         }
 
         $this->render('licenses/form', [
-            'title'        => 'Dodaj licencję',
-            'license'      => null,
-            'mode'         => 'create',
-            'members'      => $this->memberModel->getAllActive(),
-            'disciplines'  => $this->disciplineModel->getActive(),
-            'licenseTypes' => $this->licenseTypeModel->getActive(),
-            'preselected'  => $preselectedMember,
+            'title'               => 'Dodaj licencję',
+            'license'             => null,
+            'mode'                => 'create',
+            'members'             => $this->memberModel->getAllActive(),
+            'disciplines'         => $this->disciplineModel->getActive(),
+            'licenseTypes'        => $this->licenseTypeModel->getActive(),
+            'preselected'         => $preselectedMember,
+            'selectedDisciplines' => [],
         ]);
     }
 
@@ -75,8 +76,10 @@ class LicensesController extends BaseController
             $this->redirect('licenses/create');
         }
 
-        unset($data['_no_expiry']);
-        $this->licenseModel->create($data);
+        $disciplineIds = $data['_discipline_ids'];
+        unset($data['_no_expiry'], $data['_discipline_ids']);
+        $newId = $this->licenseModel->create($data);
+        $this->licenseModel->saveDisciplines($newId, $disciplineIds);
         Session::flash('success', 'Licencja została dodana.');
         $this->redirect('licenses');
     }
@@ -90,13 +93,14 @@ class LicensesController extends BaseController
         }
 
         $this->render('licenses/form', [
-            'title'        => 'Edytuj licencję',
-            'license'      => $license,
-            'mode'         => 'edit',
-            'members'      => $this->memberModel->getAllActive(),
-            'disciplines'  => $this->disciplineModel->getActive(),
-            'licenseTypes' => $this->licenseTypeModel->getActive(),
-            'preselected'  => null,
+            'title'              => 'Edytuj licencję',
+            'license'            => $license,
+            'mode'               => 'edit',
+            'members'            => $this->memberModel->getAllActive(),
+            'disciplines'        => $this->disciplineModel->getActive(),
+            'licenseTypes'       => $this->licenseTypeModel->getActive(),
+            'preselected'        => null,
+            'selectedDisciplines'=> $this->licenseModel->getDisciplineIds((int)$id),
         ]);
     }
 
@@ -111,8 +115,10 @@ class LicensesController extends BaseController
             $this->redirect("licenses/{$id}/edit");
         }
 
-        unset($data['_no_expiry']);
+        $disciplineIds = $data['_discipline_ids'];
+        unset($data['_no_expiry'], $data['_discipline_ids']);
         $this->licenseModel->updateLicense((int)$id, $data);
+        $this->licenseModel->saveDisciplines((int)$id, $disciplineIds);
         Session::flash('success', 'Licencja została zaktualizowana.');
         $this->redirect('licenses');
     }
@@ -139,12 +145,15 @@ class LicensesController extends BaseController
             $typeCode = $lt['short_code'] ?? 'zawodnicza';
             $noExpiry = $lt !== null && $lt['validity_months'] === null;
         }
+        $disciplineIds = array_values(array_filter(
+            array_map('intval', (array)($_POST['discipline_ids'] ?? [])),
+            fn($id) => $id > 0
+        ));
         return [
             'member_id'       => (int)($_POST['member_id'] ?? 0),
             'license_type'    => $typeCode,
             'license_type_id' => $typeId,
             'license_number'  => trim($_POST['license_number'] ?? ''),
-            'discipline_id'   => $_POST['discipline_id'] ?: null,
             'issue_date'      => $_POST['issue_date'] ?? '',
             'valid_until'     => $noExpiry ? null : ($_POST['valid_until'] ?? ''),
             'pzss_qr_code'    => trim($_POST['pzss_qr_code'] ?? '') ?: null,
@@ -152,6 +161,7 @@ class LicensesController extends BaseController
             'notes'           => trim($_POST['notes'] ?? '') ?: null,
             'created_by'      => Auth::id(),
             '_no_expiry'      => $noExpiry,
+            '_discipline_ids' => $disciplineIds,
         ];
     }
 

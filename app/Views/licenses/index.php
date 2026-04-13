@@ -83,7 +83,7 @@
                                 </a>
                             <?php endif; ?>
                         </td>
-                        <td class="small"><?= e($lic['discipline_name'] ?? '—') ?></td>
+                        <td class="small"><?= e($lic['discipline_names'] ?? '—') ?></td>
                         <td class="small"><?= format_date($lic['issue_date']) ?></td>
                         <td class="small"><?= format_date($lic['valid_until']) ?></td>
                         <td>

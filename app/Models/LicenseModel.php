@@ -31,10 +31,14 @@ class LicenseModel extends BaseModel
         }
 
         $whereClause = implode(' AND ', $where);
-        $sql = "SELECT l.*, m.first_name, m.last_name, m.member_number, d.name AS discipline_name
+        $sql = "SELECT l.*,
+                       m.first_name, m.last_name, m.member_number,
+                       (SELECT GROUP_CONCAT(d2.name ORDER BY d2.name SEPARATOR ', ')
+                        FROM license_disciplines ld2
+                        JOIN disciplines d2 ON d2.id = ld2.discipline_id
+                        WHERE ld2.license_id = l.id) AS discipline_names
                 FROM licenses l
                 JOIN members m ON m.id = l.member_id
-                LEFT JOIN disciplines d ON d.id = l.discipline_id
                 WHERE {$whereClause}
                 ORDER BY l.valid_until ASC";
 
@@ -54,15 +58,42 @@ class LicenseModel extends BaseModel
     public function getWithMember(int $id): ?array
     {
         $stmt = $this->db->prepare("
-            SELECT l.*, m.first_name, m.last_name, m.member_number, d.name AS discipline_name
+            SELECT l.*, m.first_name, m.last_name, m.member_number,
+                   (SELECT GROUP_CONCAT(d2.name ORDER BY d2.name SEPARATOR ', ')
+                    FROM license_disciplines ld2
+                    JOIN disciplines d2 ON d2.id = ld2.discipline_id
+                    WHERE ld2.license_id = l.id) AS discipline_names
             FROM licenses l
             JOIN members m ON m.id = l.member_id
-            LEFT JOIN disciplines d ON d.id = l.discipline_id
             WHERE l.id = ?
         ");
         $stmt->execute([$id]);
         $row = $stmt->fetch();
         return $row ?: null;
+    }
+
+    /** Returns discipline IDs assigned to this license (for form pre-selection) */
+    public function getDisciplineIds(int $licenseId): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT discipline_id FROM license_disciplines WHERE license_id = ? ORDER BY discipline_id"
+        );
+        $stmt->execute([$licenseId]);
+        return array_column($stmt->fetchAll(), 'discipline_id');
+    }
+
+    /** Replaces all discipline assignments for a license */
+    public function saveDisciplines(int $licenseId, array $disciplineIds): void
+    {
+        $this->db->prepare("DELETE FROM license_disciplines WHERE license_id = ?")->execute([$licenseId]);
+        $stmt = $this->db->prepare(
+            "INSERT IGNORE INTO license_disciplines (license_id, discipline_id) VALUES (?, ?)"
+        );
+        foreach (array_unique($disciplineIds) as $did) {
+            if ((int)$did > 0) {
+                $stmt->execute([$licenseId, (int)$did]);
+            }
+        }
     }
 
     /**

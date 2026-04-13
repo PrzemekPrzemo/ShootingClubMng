@@ -51,15 +51,25 @@
                 </div>
             </div>
             <div class="mb-3">
-                <label class="form-label">Dyscyplina</label>
-                <select name="discipline_id" class="form-select">
-                    <option value="">— wszystkie —</option>
+                <label class="form-label">Dyscypliny</label>
+                <?php $selDisciplines = $selectedDisciplines ?? []; ?>
+                <div class="row g-1">
                     <?php foreach ($disciplines as $d): ?>
-                        <option value="<?= $d['id'] ?>" <?= ($license['discipline_id'] ?? '') == $d['id'] ? 'selected':'' ?>>
-                            <?= e($d['name']) ?>
-                        </option>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox"
+                                   name="discipline_ids[]"
+                                   value="<?= (int)$d['id'] ?>"
+                                   id="disc_<?= (int)$d['id'] ?>"
+                                   <?= in_array((int)$d['id'], array_map('intval', $selDisciplines)) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="disc_<?= (int)$d['id'] ?>">
+                                <?= e($d['name']) ?>
+                            </label>
+                        </div>
+                    </div>
                     <?php endforeach; ?>
-                </select>
+                </div>
+                <div class="form-text">Można wybrać więcej niż jedną dyscyplinę.</div>
             </div>
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
