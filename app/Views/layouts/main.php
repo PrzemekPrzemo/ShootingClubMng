@@ -420,7 +420,14 @@ $__brandText       = $__hasClubCtx
                 <?= $shooteroIcon ?>
             <?php endif; ?>
         <?php endif; ?>
+        <?php
+        // Show brand text only when no logo is displayed in this brand slot
+        $__showBrandText = !(!empty($clubBranding['logo_path']) && $__hasClubCtx)
+                        && empty($systemBranding['logo']);
+        ?>
+        <?php if ($__showBrandText): ?>
         <span class="sb-brand-text"><?= $__brandText ?></span>
+        <?php endif; ?>
     </a>
 
     <?php if ($__isSuperAdminNav && !$__hasClubCtx): ?>

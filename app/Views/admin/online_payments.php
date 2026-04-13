@@ -64,7 +64,7 @@ $cntFailed     = (int)($stats['failed']['cnt']   ?? 0);
         <select name="club_id" class="form-select form-select-sm" style="min-width:180px">
             <option value="">Wszystkie kluby</option>
             <?php foreach ($clubs as $c): ?>
-                <option value="<?= $c['id'] ?>" <?= $clubFilter === (int)$c['id'] ? 'selected' : '' ?>>
+                <option value="<?= (int)$c['id'] ?>" <?= $clubFilter === (int)$c['id'] ? 'selected' : '' ?>>
                     <?= e($c['name']) ?>
                 </option>
             <?php endforeach; ?>
@@ -75,8 +75,8 @@ $cntFailed     = (int)($stats['failed']['cnt']   ?? 0);
         <select name="status" class="form-select form-select-sm">
             <option value="">Wszystkie</option>
             <?php foreach ($statusLabels as $key => $lbl): ?>
-                <option value="<?= $key ?>" <?= $statusFilter === $key ? 'selected' : '' ?>>
-                    <?= $lbl['label'] ?>
+                <option value="<?= e($key) ?>" <?= $statusFilter === $key ? 'selected' : '' ?>>
+                    <?= e($lbl['label']) ?>
                 </option>
             <?php endforeach; ?>
         </select>
@@ -113,7 +113,7 @@ $cntFailed     = (int)($stats['failed']['cnt']   ?? 0);
                     $sl = $statusLabels[$p['status']] ?? ['label' => $p['status'], 'badge' => 'bg-secondary'];
                 ?>
                     <tr>
-                        <td class="ps-3 text-muted small font-monospace">#<?= $p['id'] ?></td>
+                        <td class="ps-3 text-muted small font-monospace">#<?= (int)$p['id'] ?></td>
                         <td class="small"><?= e($p['club_name']) ?></td>
                         <td>
                             <span class="small"><?= e($p['member_name']) ?></span>
@@ -121,13 +121,13 @@ $cntFailed     = (int)($stats['failed']['cnt']   ?? 0);
                             <div class="text-muted" style="font-size:.72rem"><?= e($p['payer_email']) ?></div>
                             <?php endif; ?>
                         </td>
-                        <td class="small text-muted"><?= $typeLabels[$p['payment_type']] ?? e($p['payment_type']) ?></td>
+                        <td class="small text-muted"><?= isset($typeLabels[$p['payment_type']]) ? e($typeLabels[$p['payment_type']]) : e($p['payment_type']) ?></td>
                         <td class="fw-semibold"><?= number_format((float)$p['amount'], 2, ',', ' ') ?> zł</td>
                         <td class="font-monospace small text-muted">
-                            <?= $p['p24_order_id'] ? '#' . $p['p24_order_id'] : '—' ?>
+                            <?= $p['p24_order_id'] ? '#' . e($p['p24_order_id']) : '—' ?>
                         </td>
                         <td>
-                            <span class="badge <?= $sl['badge'] ?>"><?= $sl['label'] ?></span>
+                            <span class="badge <?= e($sl['badge']) ?>"><?= e($sl['label']) ?></span>
                         </td>
                         <td class="small text-muted">
                             <?= date('d.m.Y H:i', strtotime($p['created_at'])) ?>
@@ -164,7 +164,7 @@ $cntFailed     = (int)($stats['failed']['cnt']   ?? 0);
     <ul class="pagination pagination-sm">
         <?php for ($i = 1; $i <= $pages; $i++): ?>
         <li class="page-item <?= $i === $page ? 'active' : '' ?>">
-            <a class="page-link" href="<?= url("admin/online-payments?page=$i&club_id=$clubFilter&status=$statusFilter") ?>">
+            <a class="page-link" href="<?= url('admin/online-payments') ?>?page=<?= $i ?>&club_id=<?= (int)$clubFilter ?>&status=<?= urlencode($statusFilter) ?>">
                 <?= $i ?>
             </a>
         </li>

@@ -23,13 +23,13 @@
     ];
     foreach ($kpis as $kpi): ?>
     <div class="col-6 col-md-3">
-        <div class="card border-<?= $kpi['color'] ?> h-100">
+        <div class="card border-<?= e($kpi['color']) ?> h-100">
             <div class="card-body py-3">
                 <div class="d-flex align-items-center gap-2 mb-1">
-                    <i class="bi <?= $kpi['icon'] ?> text-<?= $kpi['color'] ?>"></i>
+                    <i class="bi <?= e($kpi['icon']) ?> text-<?= e($kpi['color']) ?>"></i>
                     <span class="text-muted small"><?= e($kpi['label']) ?></span>
                 </div>
-                <div class="h4 fw-bold mb-0"><?= $kpi['val'] ?></div>
+                <div class="h4 fw-bold mb-0"><?= e($kpi['val']) ?></div>
             </div>
         </div>
     </div>
@@ -50,11 +50,11 @@
                 ?>
                 <div class="mb-2">
                     <div class="d-flex justify-content-between small mb-1">
-                        <span><span class="badge bg-<?= $planColors[$p['plan']] ?? 'secondary' ?>"><?= e($p['plan']) ?></span></span>
-                        <span><?= $p['cnt'] ?> (<?= $pct ?>%)</span>
+                        <span><span class="badge bg-<?= e($planColors[$p['plan']] ?? 'secondary') ?>"><?= e($p['plan']) ?></span></span>
+                        <span><?= (int)$p['cnt'] ?> (<?= (int)$pct ?>%)</span>
                     </div>
                     <div class="progress" style="height:6px">
-                        <div class="progress-bar bg-<?= $planColors[$p['plan']] ?? 'secondary' ?>" style="width:<?= $pct ?>%"></div>
+                        <div class="progress-bar bg-<?= e($planColors[$p['plan']] ?? 'secondary') ?>" style="width:<?= (int)$pct ?>%"></div>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -74,7 +74,7 @@
                     <?php foreach ($topClubs as $c): ?>
                     <tr>
                         <td><?= e($c['name']) ?></td>
-                        <td><span class="badge bg-<?= $planColors[$c['plan']] ?? 'secondary' ?>"><?= e($c['plan'] ?? '—') ?></span></td>
+                        <td><span class="badge bg-<?= e($planColors[$c['plan']] ?? 'secondary') ?>"><?= e($c['plan'] ?? '—') ?></span></td>
                         <td class="text-center"><?= (int)$c['members'] ?></td>
                         <td class="text-center"><?= (int)$c['competitions'] ?></td>
                     </tr>
@@ -98,7 +98,7 @@
                 <div class="d-flex gap-2 flex-wrap">
                 <?php foreach ($growth['clubs'] as $row): ?>
                     <div class="text-center">
-                        <div class="small fw-bold"><?= $row['clubs'] ?></div>
+                        <div class="small fw-bold"><?= (int)$row['clubs'] ?></div>
                         <div class="text-muted" style="font-size:.7rem"><?= e($row['month']) ?></div>
                     </div>
                 <?php endforeach; ?>
@@ -109,7 +109,7 @@
                 <div class="d-flex gap-2 flex-wrap">
                 <?php foreach ($growth['members'] as $row): ?>
                     <div class="text-center">
-                        <div class="small fw-bold"><?= $row['members'] ?></div>
+                        <div class="small fw-bold"><?= (int)$row['members'] ?></div>
                         <div class="text-muted" style="font-size:.7rem"><?= e($row['month']) ?></div>
                     </div>
                 <?php endforeach; ?>

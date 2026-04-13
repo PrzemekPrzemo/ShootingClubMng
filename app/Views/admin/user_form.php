@@ -96,11 +96,11 @@ $allRoles  = [
                         <div class="col-6">
                             <div class="form-check border rounded p-2 h-100">
                                 <input class="form-check-input" type="checkbox"
-                                       name="club_roles[]" value="<?= $roleKey ?>"
-                                       id="role_<?= $roleKey ?>">
-                                <label class="form-check-label w-100" for="role_<?= $roleKey ?>">
-                                    <span class="badge bg-<?= $roleInfo['color'] ?> me-1"><?= $roleInfo['label'] ?></span>
-                                    <span class="text-muted small d-block mt-1"><?= $roleInfo['desc'] ?></span>
+                                       name="club_roles[]" value="<?= e($roleKey) ?>"
+                                       id="role_<?= e($roleKey) ?>">
+                                <label class="form-check-label w-100" for="role_<?= e($roleKey) ?>">
+                                    <span class="badge bg-<?= e($roleInfo['color']) ?> me-1"><?= e($roleInfo['label']) ?></span>
+                                    <span class="text-muted small d-block mt-1"><?= e($roleInfo['desc']) ?></span>
                                 </label>
                             </div>
                         </div>
@@ -136,12 +136,12 @@ $allRoles  = [
                     <td>
                         <?php foreach ($uc['roles'] as $r): ?>
                         <?php $rc = ['zarzad'=>'warning','sędzia'=>'info','instruktor'=>'success','zawodnik'=>'secondary','admin'=>'danger'][$r] ?? 'secondary'; ?>
-                        <span class="badge bg-<?= $rc ?>"><?= e($r) ?></span>
+                        <span class="badge bg-<?= e($rc) ?>"><?= e($r) ?></span>
                         <?php endforeach; ?>
                     </td>
                     <td>
                         <?php $hr = $uc['highest_role']; $hc = ['zarzad'=>'warning','sędzia'=>'info','instruktor'=>'success','zawodnik'=>'secondary','admin'=>'danger'][$hr] ?? 'secondary'; ?>
-                        <span class="badge bg-<?= $hc ?>"><i class="bi bi-shield-check"></i> <?= e($hr) ?></span>
+                        <span class="badge bg-<?= e($hc) ?>"><i class="bi bi-shield-check"></i> <?= e($hr) ?></span>
                     </td>
                     <td class="text-end">
                         <form method="post" action="<?= url("admin/users/{$user['id']}/clubs/{$uc['club_id']}/remove") ?>">

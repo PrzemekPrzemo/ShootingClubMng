@@ -63,8 +63,8 @@
                     <select class="form-select" name="plan">
                         <option value="">— Brak —</option>
                         <?php foreach (['trial' => 'Trial (próbny)', 'basic' => 'Basic', 'standard' => 'Standard', 'premium' => 'Premium'] as $planKey => $planLabel): ?>
-                        <option value="<?= $planKey ?>" <?= ($subscription['plan'] ?? '') === $planKey ? 'selected' : '' ?>>
-                            <?= $planLabel ?>
+                        <option value="<?= e($planKey) ?>" <?= ($subscription['plan'] ?? '') === $planKey ? 'selected' : '' ?>>
+                            <?= e($planLabel) ?>
                         </option>
                         <?php endforeach; ?>
                     </select>
@@ -102,10 +102,10 @@
                 <div class="col-md-4 col-lg-3">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" name="modules[]"
-                               value="<?= $mod ?>" id="mod_<?= $mod ?>"
+                               value="<?= e($mod) ?>" id="mod_<?= e($mod) ?>"
                                <?= ($clubModules[$mod] ?? true) ? 'checked' : '' ?>>
-                        <label class="form-check-label small" for="mod_<?= $mod ?>">
-                            <i class="bi bi-<?= $cfg['icon'] ?>"></i> <?= e($cfg['label']) ?>
+                        <label class="form-check-label small" for="mod_<?= e($mod) ?>">
+                            <i class="bi bi-<?= e($cfg['icon']) ?>"></i> <?= e($cfg['label']) ?>
                         </label>
                     </div>
                 </div>
@@ -141,7 +141,7 @@
                         <label class="form-label">Szyfrowanie</label>
                         <select class="form-select" name="smtp_secure">
                             <?php foreach (['tls' => 'TLS (STARTTLS)', 'ssl' => 'SSL', '' => 'Brak'] as $val => $lbl): ?>
-                            <option value="<?= $val ?>" <?= ($smtpConfig['smtp_secure'] ?? 'tls') === $val ? 'selected' : '' ?>><?= $lbl ?></option>
+                            <option value="<?= e($val) ?>" <?= ($smtpConfig['smtp_secure'] ?? 'tls') === $val ? 'selected' : '' ?>><?= e($lbl) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>

@@ -58,7 +58,7 @@
                     <select name="club_id" class="form-select">
                         <option value="">— Wszystkie kluby —</option>
                         <?php foreach ($clubs as $c): ?>
-                            <option value="<?= $c['id'] ?>" <?= ($ad['club_id'] ?? null) == $c['id'] ? 'selected' : '' ?>>
+                            <option value="<?= (int)$c['id'] ?>" <?= ($ad['club_id'] ?? null) == $c['id'] ? 'selected' : '' ?>>
                                 <?= e($c['name']) ?>
                             </option>
                         <?php endforeach; ?>
@@ -73,9 +73,9 @@
                     <div class="d-flex flex-wrap gap-2 mt-1">
                     <?php foreach ($allPlans as $pk): ?>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" name="plan_keys[]" value="<?= $pk ?>"
-                                   id="pk_<?= $pk ?>" <?= in_array($pk, $currentPlans) ? 'checked' : '' ?>>
-                            <label class="form-check-label" for="pk_<?= $pk ?>"><?= $pk ?></label>
+                            <input class="form-check-input" type="checkbox" name="plan_keys[]" value="<?= e($pk) ?>"
+                                   id="pk_<?= e($pk) ?>" <?= in_array($pk, $currentPlans) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="pk_<?= e($pk) ?>"><?= e($pk) ?></label>
                         </div>
                     <?php endforeach; ?>
                     </div>

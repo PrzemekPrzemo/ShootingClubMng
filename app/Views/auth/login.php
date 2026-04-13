@@ -54,9 +54,11 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
             <?= e($systemBranding['name'] ?? 'SHOOTERO') ?> — System zarządzania klubem
         </p>
     <?php else: ?>
+        <?php if (empty($systemBranding['logo'])): ?>
         <h4 class="mt-3 mb-0" style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.65rem;letter-spacing:4px;text-transform:uppercase;color:#fff;line-height:1.1">
             <?= e($systemBranding['name'] ?? 'SHOOTERO') ?>
         </h4>
+        <?php endif; ?>
         <p class="mt-2 mb-0" style="color:#D4A373;font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:2px;font-size:.7rem;text-transform:uppercase">
             ZARZĄDZAJ KLUBEM.&nbsp;&nbsp;WSPIERAJ LUDZI.
         </p>

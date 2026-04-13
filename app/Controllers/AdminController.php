@@ -359,6 +359,7 @@ class AdminController extends BaseController
                 $settingModel->upsert('system_logo',      'db',  'Logo systemu', 'text');
                 $settingModel->upsert('system_logo_b64',  $b64,  'Logo base64',  'text');
                 $settingModel->upsert('system_logo_mime', $mime, 'Logo MIME',    'text');
+                Session::flash('warning', 'Logo zapisano w bazie danych (katalog storage/system/ niezapisywalny na serwerze). Aby zapisywać jako plik, ustaw prawa zapisu na ten katalog przez panel hostingowy.');
             }
         }
 
