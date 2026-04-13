@@ -11,6 +11,11 @@ define('ROOT_PATH', dirname(__DIR__));
 $scheme   = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $host     = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $baseDir  = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
+// When Plesk/Apache document root is the repo root (not public/), Apache sets
+// SCRIPT_NAME=/public/index.php — strip /public so URLs are generated correctly
+if (str_ends_with($baseDir, '/public')) {
+    $baseDir = substr($baseDir, 0, -strlen('/public'));
+}
 define('BASE_URL', $scheme . '://' . $host . $baseDir);
 
 // App config (app.local.php overrides app.php when present)

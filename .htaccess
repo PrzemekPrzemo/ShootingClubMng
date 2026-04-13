@@ -1,0 +1,14 @@
+RewriteEngine On
+RewriteBase /
+
+# ── Serve existing static files from public/ transparently ───────────────────
+# If the file doesn't exist at the root but exists under public/, serve it
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
+RewriteRule ^(.+)$ public/$1 [L]
+
+# ── Route all other requests through public/index.php ────────────────────────
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ public/index.php [L,QSA]
