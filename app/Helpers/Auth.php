@@ -105,14 +105,18 @@ class Auth
     /** Super admin starts impersonating a club user. Saves original session. */
     public static function impersonateClubUser(array $targetUser, int $clubId, string $roleInClub): void
     {
-        Session::set('impersonation_original', [
-            'user_id'        => Session::get('user_id'),
-            'username'       => Session::get('username'),
-            'full_name'      => Session::get('full_name'),
-            'role'           => Session::get('role'),
-            'club_id'        => Session::get('club_id'),
-            'is_super_admin' => Session::get('is_super_admin'),
-        ]);
+        // Only save the original session once — never overwrite when already impersonating,
+        // so nested impersonation (club user → member) still restores back to the real admin.
+        if (!Session::has('impersonation_original')) {
+            Session::set('impersonation_original', [
+                'user_id'        => Session::get('user_id'),
+                'username'       => Session::get('username'),
+                'full_name'      => Session::get('full_name'),
+                'role'           => Session::get('role'),
+                'club_id'        => Session::get('club_id'),
+                'is_super_admin' => Session::get('is_super_admin'),
+            ]);
+        }
 
         Session::set('user_id',        $targetUser['id']);
         Session::set('username',       $targetUser['username']);
@@ -127,14 +131,18 @@ class Auth
     /** Super admin starts impersonating a member (portal session). */
     public static function impersonateMember(array $member): void
     {
-        Session::set('impersonation_original', [
-            'user_id'        => Session::get('user_id'),
-            'username'       => Session::get('username'),
-            'full_name'      => Session::get('full_name'),
-            'role'           => Session::get('role'),
-            'club_id'        => Session::get('club_id'),
-            'is_super_admin' => Session::get('is_super_admin'),
-        ]);
+        // Only save the original session once — never overwrite when already impersonating,
+        // so admin can always return to their own account regardless of nesting.
+        if (!Session::has('impersonation_original')) {
+            Session::set('impersonation_original', [
+                'user_id'        => Session::get('user_id'),
+                'username'       => Session::get('username'),
+                'full_name'      => Session::get('full_name'),
+                'role'           => Session::get('role'),
+                'club_id'        => Session::get('club_id'),
+                'is_super_admin' => Session::get('is_super_admin'),
+            ]);
+        }
 
         Session::set('member_id',        $member['id']);
         Session::set('member_full_name', $member['first_name'] . ' ' . $member['last_name']);

@@ -235,6 +235,19 @@ $__uri = $_SERVER['REQUEST_URI'] ?? '';
 </nav>
 
 <div class="portal-main container-fluid">
+
+    <?php if (\App\Helpers\Auth::isImpersonating()): ?>
+    <div class="alert mb-0 rounded-0 py-2 text-center small fw-semibold"
+         style="position:sticky;top:0;z-index:1050;background:rgba(220,38,38,.15);border:none;border-bottom:1px solid rgba(220,38,38,.4);color:#fca5a5">
+        <i class="bi bi-person-fill-exclamation me-1"></i>
+        TRYB IMPERSONACJI — przeglądasz portal jako
+        <strong><?= e(\App\Helpers\Session::get('member_full_name', 'zawodnik')) ?></strong>.
+        <a href="<?= url('admin/stop-impersonation') ?>" class="btn btn-sm btn-danger ms-3 py-0">
+            <i class="bi bi-x-circle"></i> Zakończ — wróć do admina
+        </a>
+    </div>
+    <?php endif; ?>
+
     <?php if (!empty($flashSuccess)): ?>
         <div class="alert alert-success alert-dismissible fade show mt-0 mb-3" role="alert">
             <i class="bi bi-check-circle me-2"></i><?= $flashSuccess ?>
