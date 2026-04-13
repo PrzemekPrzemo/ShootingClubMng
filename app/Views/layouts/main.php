@@ -497,6 +497,15 @@ $__brandText       = $__hasClubCtx
             </a>
         </li>
         <?php endforeach; ?>
+        <?php if (\App\Helpers\Auth::linkedMemberId()): ?>
+        <li><hr style="border-color:rgba(255,255,255,.07);margin:.4rem .75rem"></li>
+        <li>
+            <a href="<?= url('auth/switch-to-portal') ?>" class="sb-link" style="color:#22d3ee">
+                <i class="bi bi-person-badge"></i>
+                <span>Portal Zawodnika</span>
+            </a>
+        </li>
+        <?php endif; ?>
     </ul>
     <?php endif; ?>
 
@@ -515,6 +524,9 @@ $__brandText       = $__hasClubCtx
         <button class="sb-collapse-btn" id="desktopCollapse" title="Zwiń sidebar">
             <i class="bi bi-chevron-left"></i>
         </button>
+        <a href="<?= url('auth/change-password') ?>" class="sb-action-btn" title="Zmień hasło">
+            <i class="bi bi-key"></i>
+        </a>
         <a href="<?= url('2fa/setup') ?>" class="sb-action-btn" title="Ustawienia 2FA">
             <i class="bi bi-shield-lock"></i>
         </a>

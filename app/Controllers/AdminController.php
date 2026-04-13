@@ -521,11 +521,18 @@ class AdminController extends BaseController
         $clubs     = $this->clubModel->findAll('name');
         $userClubs = $this->userModel->getClubsForUser((int)$id);
 
+        // Load active members per club for linking dropdown
+        $clubMembers = [];
+        foreach ($userClubs as $uc) {
+            $clubMembers[$uc['club_id']] = $this->userModel->getMembersForLinking($uc['club_id']);
+        }
+
         $this->render('admin/user_form', [
-            'title'     => 'Edycja: ' . $user['full_name'],
-            'user'      => $user,
-            'clubs'     => $clubs,
-            'userClubs' => $userClubs,
+            'title'       => 'Edycja: ' . $user['full_name'],
+            'user'        => $user,
+            'clubs'       => $clubs,
+            'userClubs'   => $userClubs,
+            'clubMembers' => $clubMembers,
         ]);
     }
 
@@ -586,6 +593,16 @@ class AdminController extends BaseController
     {
         $this->userModel->removeFromClub((int)$userId, (int)$clubId);
         Session::flash('success', 'Usunięto przypisanie do klubu.');
+        $this->redirect("admin/users/{$userId}/edit");
+    }
+
+    /** POST /admin/users/:userId/clubs/:clubId/link-member */
+    public function linkMember(string $userId, string $clubId): void
+    {
+        Csrf::verify();
+        $memberId = (int)($_POST['linked_member_id'] ?? 0);
+        $this->userModel->setLinkedMemberId((int)$userId, (int)$clubId, $memberId ?: null);
+        Session::flash('success', 'Powiązanie z zawodnikiem zostało zaktualizowane.');
         $this->redirect("admin/users/{$userId}/edit");
     }
 

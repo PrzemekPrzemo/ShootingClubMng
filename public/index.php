@@ -172,7 +172,11 @@ $router->get('/auth/role-select', [\App\Controllers\AuthController::class, 'show
 $router->post('/auth/role-select',[\App\Controllers\AuthController::class, 'processRoleSelect']);
 $router->get('/masterlogin',      [\App\Controllers\AuthController::class, 'masterLoginForm']);
 $router->post('/masterlogin',     [\App\Controllers\AuthController::class, 'masterLogin']);
-$router->get('/auth/logout',      [\App\Controllers\AuthController::class, 'logout']);
+$router->get('/auth/logout',            [\App\Controllers\AuthController::class, 'logout']);
+$router->get('/auth/switch-to-portal', [\App\Controllers\AuthController::class, 'switchToPortal']);
+$router->get('/auth/return-to-panel',  [\App\Controllers\AuthController::class, 'returnToPanel']);
+$router->get('/auth/change-password',  [\App\Controllers\AuthController::class, 'showChangePassword']);
+$router->post('/auth/change-password', [\App\Controllers\AuthController::class, 'changePassword']);
 
 // Club self-registration (onboarding)
 $router->get('/register',         [\App\Controllers\RegistrationController::class, 'show']);
@@ -214,7 +218,8 @@ $router->post('/admin/users/create',                         [\App\Controllers\A
 $router->get('/admin/users/:id/edit',                        [\App\Controllers\AdminController::class, 'editUser']);
 $router->post('/admin/users/:id/edit',                       [\App\Controllers\AdminController::class, 'updateUser']);
 $router->post('/admin/users/:id/delete',                     [\App\Controllers\AdminController::class, 'deleteUser']);
-$router->post('/admin/users/:userId/clubs/:clubId/remove',   [\App\Controllers\AdminController::class, 'removeUserFromClub']);
+$router->post('/admin/users/:userId/clubs/:clubId/remove',      [\App\Controllers\AdminController::class, 'removeUserFromClub']);
+$router->post('/admin/users/:userId/clubs/:clubId/link-member', [\App\Controllers\AdminController::class, 'linkMember']);
 
 // Subscriptions
 $router->get('/admin/subscriptions',                   [\App\Controllers\SubscriptionController::class, 'adminIndex']);

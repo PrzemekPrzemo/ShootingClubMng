@@ -136,7 +136,8 @@ class AuthController extends BaseController
         }
 
         // Single role — log in immediately
-        Auth::setClub($clubId, $roles[0]);
+        $linkedMemberId = $this->userModel->getLinkedMemberId($user['id'], $clubId);
+        Auth::setClub($clubId, $roles[0], $linkedMemberId);
         $this->redirectAfterLogin();
     }
 
@@ -181,7 +182,8 @@ class AuthController extends BaseController
         }
 
         Session::remove('pending_role_select');
-        Auth::setClub($pending['club_id'], $selectedRole);
+        $linkedMemberId = $this->userModel->getLinkedMemberId(Auth::id(), $pending['club_id']);
+        Auth::setClub($pending['club_id'], $selectedRole, $linkedMemberId);
         $this->redirectAfterLogin();
     }
 
@@ -288,6 +290,119 @@ class AuthController extends BaseController
             return [];
         }
     }
+
+    // ── Portal switching (staff ↔ member portal) ──────────────────��───────────
+
+    public function switchToPortal(): void
+    {
+        if (!Auth::check()) {
+            $this->redirect('auth/login');
+        }
+
+        $linkedMemberId = Auth::linkedMemberId();
+        if (!$linkedMemberId) {
+            Session::flash('error', 'Twoje konto nie jest powiązane z żadnym zawodnikiem.');
+            $this->redirect('dashboard');
+        }
+
+        $db   = Database::pdo();
+        $stmt = $db->prepare("SELECT * FROM members WHERE id = ? AND status = 'aktywny' LIMIT 1");
+        $stmt->execute([$linkedMemberId]);
+        $member = $stmt->fetch();
+
+        if (!$member) {
+            Session::flash('error', 'Powiązany zawodnik nie istnieje lub jest nieaktywny.');
+            $this->redirect('dashboard');
+        }
+
+        // Set member session keys WITHOUT clearing staff keys
+        Session::set('member_id',            (int)$member['id']);
+        Session::set('member_full_name',     $member['first_name'] . ' ' . $member['last_name']);
+        Session::set('member_email',         $member['email'] ?? '');
+        Session::set('member_status',        $member['status']);
+        Session::set('must_change_password', false);
+        Session::set('staff_portal_mode',    true);
+
+        $this->logActivity(Auth::id(), 'switch_to_portal', 'users', Auth::id(),
+            'Przełączenie na portal zawodnika (member_id=' . $member['id'] . ')');
+
+        $this->redirect('portal');
+    }
+
+    public function returnToPanel(): void
+    {
+        if (!Auth::check()) {
+            $this->redirect('auth/login');
+        }
+
+        // Clear member session keys
+        Session::remove('member_id');
+        Session::remove('member_full_name');
+        Session::remove('member_email');
+        Session::remove('member_status');
+        Session::remove('must_change_password');
+        Session::remove('staff_portal_mode');
+
+        $this->logActivity(Auth::id(), 'return_to_panel', 'users', Auth::id(),
+            'Powrót z portalu zawodnika do panelu');
+
+        $this->redirect('dashboard');
+    }
+
+    // ── Change password (staff) ───────────────────────────────��─────────────────
+
+    public function showChangePassword(): void
+    {
+        if (!Auth::check()) {
+            $this->redirect('auth/login');
+        }
+        $this->view->setLayout('main');
+        $this->render('auth/change_password', [
+            'title' => 'Zmiana hasła',
+        ]);
+    }
+
+    public function changePassword(): void
+    {
+        if (!Auth::check()) {
+            $this->redirect('auth/login');
+        }
+        Csrf::verify();
+
+        $currentPwd = $_POST['current_password'] ?? '';
+        $newPwd     = $_POST['new_password']     ?? '';
+        $confirmPwd = $_POST['confirm_password'] ?? '';
+
+        if ($currentPwd === '' || $newPwd === '' || $confirmPwd === '') {
+            Session::flash('error', 'Wszystkie pola są wymagane.');
+            $this->redirect('auth/change-password');
+        }
+
+        // Verify current password
+        $user = $this->userModel->findById(Auth::id());
+        if (!$user || !password_verify($currentPwd, $user['password'])) {
+            Session::flash('error', 'Obecne hasło jest nieprawidłowe.');
+            $this->redirect('auth/change-password');
+        }
+
+        if (strlen($newPwd) < 8) {
+            Session::flash('error', 'Nowe hasło musi mieć co najmniej 8 znaków.');
+            $this->redirect('auth/change-password');
+        }
+
+        if ($newPwd !== $confirmPwd) {
+            Session::flash('error', 'Nowe hasła nie są identyczne.');
+            $this->redirect('auth/change-password');
+        }
+
+        $this->userModel->updateUser(Auth::id(), ['password' => $newPwd]);
+
+        $this->logActivity(Auth::id(), 'password_change', 'users', Auth::id(), 'Zmiana hasła');
+        Session::flash('success', 'Hasło zostało zmienione.');
+        $this->redirect('dashboard');
+    }
+
+    // ── Helpers ───────────────────────────────────────��───────────────────────
 
     private function logActivity(?int $userId, string $action, string $entity, ?int $entityId, string $details): void
     {

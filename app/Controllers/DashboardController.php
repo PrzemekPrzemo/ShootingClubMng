@@ -107,27 +107,43 @@ class DashboardController extends BaseController
         // Zawodnik (staff role) → bridge to member portal
         if (Auth::role() === 'zawodnik') {
             if (!\App\Helpers\MemberAuth::check()) {
-                $userId  = Auth::id();
-                $clubId  = \App\Helpers\ClubContext::current();
-                $db      = \App\Helpers\Database::pdo();
-                // Fetch staff user's email from DB
-                $uStmt   = $db->prepare("SELECT email FROM users WHERE id = ? LIMIT 1");
-                $uStmt->execute([$userId]);
-                $uRow    = $uStmt->fetch();
-                $email   = $uRow['email'] ?? '';
-                if ($email && $clubId) {
+                $member = null;
+                $linkedMemberId = Auth::linkedMemberId();
+
+                if ($linkedMemberId) {
+                    // Explicit link via user_clubs.linked_member_id
+                    $db    = \App\Helpers\Database::pdo();
                     $mStmt = $db->prepare(
-                        "SELECT * FROM members WHERE email = ? AND club_id = ? AND status = 'aktywny' LIMIT 1"
+                        "SELECT * FROM members WHERE id = ? AND status = 'aktywny' LIMIT 1"
                     );
-                    $mStmt->execute([$email, $clubId]);
+                    $mStmt->execute([$linkedMemberId]);
                     $member = $mStmt->fetch();
-                    if ($member) {
-                        \App\Helpers\Session::set('member_id',             (int)$member['id']);
-                        \App\Helpers\Session::set('member_full_name',      $member['first_name'] . ' ' . $member['last_name']);
-                        \App\Helpers\Session::set('member_email',          $member['email'] ?? '');
-                        \App\Helpers\Session::set('member_status',         $member['status']);
-                        \App\Helpers\Session::set('must_change_password',  false);
+                }
+
+                if (!$member) {
+                    // Fallback: email matching (backward compat)
+                    $userId = Auth::id();
+                    $clubId = \App\Helpers\ClubContext::current();
+                    $db     = \App\Helpers\Database::pdo();
+                    $uStmt  = $db->prepare("SELECT email FROM users WHERE id = ? LIMIT 1");
+                    $uStmt->execute([$userId]);
+                    $uRow   = $uStmt->fetch();
+                    $email  = $uRow['email'] ?? '';
+                    if ($email && $clubId) {
+                        $mStmt = $db->prepare(
+                            "SELECT * FROM members WHERE email = ? AND club_id = ? AND status = 'aktywny' LIMIT 1"
+                        );
+                        $mStmt->execute([$email, $clubId]);
+                        $member = $mStmt->fetch();
                     }
+                }
+
+                if ($member) {
+                    \App\Helpers\Session::set('member_id',             (int)$member['id']);
+                    \App\Helpers\Session::set('member_full_name',      $member['first_name'] . ' ' . $member['last_name']);
+                    \App\Helpers\Session::set('member_email',          $member['email'] ?? '');
+                    \App\Helpers\Session::set('member_status',         $member['status']);
+                    \App\Helpers\Session::set('must_change_password',  false);
                 }
             }
             $this->redirect('portal');

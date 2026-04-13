@@ -82,11 +82,19 @@ class Auth
     }
 
     /** Ustaw aktywny klub w sesji (po zalogowaniu lub przełączeniu). */
-    public static function setClub(int $clubId, string $roleInClub): void
+    public static function setClub(int $clubId, string $roleInClub, ?int $linkedMemberId = null): void
     {
         Session::set('club_id', $clubId);
         Session::set('role', $roleInClub);
+        Session::set('linked_member_id', $linkedMemberId);
         ClubContext::set($clubId);
+    }
+
+    /** Pobierz ID powiązanego zawodnika (lub null). */
+    public static function linkedMemberId(): ?int
+    {
+        $val = Session::get('linked_member_id');
+        return $val ? (int)$val : null;
     }
 
     /** Czy zalogowany user jest super adminem? */
@@ -157,6 +165,7 @@ class Auth
         Session::remove('member_email');
         Session::remove('member_status');
         Session::remove('must_change_password');
+        Session::remove('staff_portal_mode');
         Session::remove('impersonating');
         Session::remove('impersonation_original');
 

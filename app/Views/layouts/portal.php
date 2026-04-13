@@ -225,6 +225,13 @@ $__uri = $_SERVER['REQUEST_URI'] ?? '';
                     <i class="bi bi-person-fill"></i>
                     <span><?= e($memberUser['full_name'] ?? '') ?></span>
                 </div>
+                <?php if (\App\Helpers\Session::get('staff_portal_mode')): ?>
+                <a href="<?= url('auth/return-to-panel') ?>"
+                   class="btn btn-sm btn-outline-info"
+                   style="border-color:rgba(34,211,238,.3);color:#22d3ee">
+                    <i class="bi bi-arrow-left-circle me-1"></i>Panel
+                </a>
+                <?php endif; ?>
                 <a href="<?= url('portal/logout') ?>"
                    class="btn btn-sm btn-outline-secondary"
                    style="border-color:rgba(255,255,255,.15);color:var(--sht-muted)">
@@ -237,6 +244,18 @@ $__uri = $_SERVER['REQUEST_URI'] ?? '';
 </nav>
 
 <div class="portal-main container-fluid">
+    <?php if (\App\Helpers\Session::get('staff_portal_mode')): ?>
+    <div class="alert alert-info mb-3 rounded py-2 text-center small fw-semibold"
+         style="background:rgba(34,211,238,.1);border-color:rgba(34,211,238,.3);color:#22d3ee">
+        <i class="bi bi-person-badge me-1"></i>
+        Przeglądasz portal jako zawodnik.
+        <a href="<?= url('auth/return-to-panel') ?>" class="btn btn-sm btn-outline-light ms-3 py-0"
+           style="border-color:rgba(34,211,238,.3);color:#22d3ee">
+            <i class="bi bi-arrow-left-circle"></i> Powrót do panelu
+        </a>
+    </div>
+    <?php endif; ?>
+
     <?php if (!empty($flashSuccess)): ?>
         <div class="alert alert-success alert-dismissible fade show mt-0 mb-3" role="alert">
             <i class="bi bi-check-circle me-2"></i><?= $flashSuccess ?>

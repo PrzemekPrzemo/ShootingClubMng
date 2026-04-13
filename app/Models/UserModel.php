@@ -103,7 +103,7 @@ class UserModel extends BaseModel
     public function getClubsForUser(int $userId): array
     {
         $stmt = $this->db->prepare(
-            "SELECT uc.club_id, uc.role, uc.is_active, c.name AS club_name, c.short_name
+            "SELECT uc.club_id, uc.role, uc.is_active, uc.linked_member_id, c.name AS club_name, c.short_name
              FROM user_clubs uc
              JOIN clubs c ON c.id = uc.club_id
              WHERE uc.user_id = ? AND uc.is_active = 1 AND c.is_active = 1
@@ -118,14 +118,15 @@ class UserModel extends BaseModel
             $cid = $row['club_id'];
             if (!isset($grouped[$cid])) {
                 $grouped[$cid] = [
-                    'club_id'      => $cid,
-                    'club_name'    => $row['club_name'],
-                    'short_name'   => $row['short_name'],
-                    'is_active'    => $row['is_active'],
-                    'roles'        => [],
-                    'highest_role' => 'zawodnik',
+                    'club_id'          => $cid,
+                    'club_name'        => $row['club_name'],
+                    'short_name'       => $row['short_name'],
+                    'is_active'        => $row['is_active'],
+                    'roles'            => [],
+                    'highest_role'     => 'zawodnik',
                     // keep legacy 'role' key for backward compat
-                    'role'         => 'zawodnik',
+                    'role'             => 'zawodnik',
+                    'linked_member_id' => $row['linked_member_id'] ? (int)$row['linked_member_id'] : null,
                 ];
             }
             $grouped[$cid]['roles'][]       = $row['role'];
@@ -166,20 +167,23 @@ class UserModel extends BaseModel
      */
     public function setRolesInClub(int $userId, int $clubId, array $roles): void
     {
+        // Preserve linked_member_id before soft-deleting
+        $linkedId = $this->getLinkedMemberId($userId, $clubId);
+
         // Soft-delete all current roles
         $this->db->prepare(
             "UPDATE user_clubs SET is_active = 0 WHERE user_id = ? AND club_id = ?"
         )->execute([$userId, $clubId]);
 
-        // Re-insert/activate each selected role
+        // Re-insert/activate each selected role (preserving linked member)
         $ins = $this->db->prepare(
-            "INSERT INTO user_clubs (user_id, club_id, role, is_active)
-             VALUES (?, ?, ?, 1)
-             ON DUPLICATE KEY UPDATE is_active = 1"
+            "INSERT INTO user_clubs (user_id, club_id, role, is_active, linked_member_id)
+             VALUES (?, ?, ?, 1, ?)
+             ON DUPLICATE KEY UPDATE is_active = 1, linked_member_id = VALUES(linked_member_id)"
         );
         foreach (array_unique($roles) as $role) {
             if (isset(self::ROLE_PRIORITY[$role])) {
-                $ins->execute([$userId, $clubId, $role]);
+                $ins->execute([$userId, $clubId, $role, $linkedId]);
             }
         }
     }
@@ -213,6 +217,60 @@ class UserModel extends BaseModel
              WHERE uc.club_id = ? AND uc.is_active = 1
              GROUP BY u.id, u.username, u.email, u.full_name, u.is_active, u.last_login
              ORDER BY u.full_name"
+        );
+        $stmt->execute([$clubId]);
+        return $stmt->fetchAll();
+    }
+
+    // ------------------------------------------------------------------
+    // Linked member (user ↔ member portal switching)
+    // ------------------------------------------------------------------
+
+    /** Pobierz linked_member_id dla użytkownika w danym klubie. */
+    public function getLinkedMemberId(int $userId, int $clubId): ?int
+    {
+        $stmt = $this->db->prepare(
+            "SELECT linked_member_id FROM user_clubs
+             WHERE user_id = ? AND club_id = ? AND is_active = 1 AND linked_member_id IS NOT NULL
+             LIMIT 1"
+        );
+        $stmt->execute([$userId, $clubId]);
+        $row = $stmt->fetch();
+        return $row ? (int)$row['linked_member_id'] : null;
+    }
+
+    /** Ustaw powiązanie z zawodnikiem (na wszystkich aktywnych rolach w klubie). */
+    public function setLinkedMemberId(int $userId, int $clubId, ?int $memberId): void
+    {
+        $this->db->prepare(
+            "UPDATE user_clubs SET linked_member_id = ? WHERE user_id = ? AND club_id = ? AND is_active = 1"
+        )->execute([$memberId, $userId, $clubId]);
+    }
+
+    /** Pobierz dane powiązanego zawodnika (do sesji). */
+    public function getLinkedMember(int $userId, int $clubId): ?array
+    {
+        $linkedId = $this->getLinkedMemberId($userId, $clubId);
+        if (!$linkedId) {
+            return null;
+        }
+        $stmt = $this->db->prepare(
+            "SELECT id, first_name, last_name, email, status, club_id
+             FROM members WHERE id = ? AND status = 'aktywny' LIMIT 1"
+        );
+        $stmt->execute([$linkedId]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /** Pobierz aktywnych zawodników klubu (do dropdownu powiązania). */
+    public function getMembersForLinking(int $clubId): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT id, first_name, last_name, email, member_number
+             FROM members
+             WHERE club_id = ? AND status = 'aktywny'
+             ORDER BY last_name, first_name"
         );
         $stmt->execute([$clubId]);
         return $stmt->fetchAll();

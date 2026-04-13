@@ -127,7 +127,7 @@ $allRoles  = [
         <div class="card-body p-0">
             <table class="table table-sm mb-0">
                 <thead class="table-light">
-                    <tr><th>Klub</th><th>Role</th><th>Najwyższa</th><th></th></tr>
+                    <tr><th>Klub</th><th>Role</th><th>Najwyższa</th><th>Powiązany zawodnik</th><th></th></tr>
                 </thead>
                 <tbody>
                 <?php foreach ($userClubs as $uc): ?>
@@ -142,6 +142,25 @@ $allRoles  = [
                     <td>
                         <?php $hr = $uc['highest_role']; $hc = ['zarzad'=>'warning','sędzia'=>'info','instruktor'=>'success','zawodnik'=>'secondary','admin'=>'danger'][$hr] ?? 'secondary'; ?>
                         <span class="badge bg-<?= $hc ?>"><i class="bi bi-shield-check"></i> <?= e($hr) ?></span>
+                    </td>
+                    <td>
+                        <form method="post" action="<?= url("admin/users/{$user['id']}/clubs/{$uc['club_id']}/link-member") ?>"
+                              class="d-flex gap-1 align-items-center">
+                            <?= csrf_field() ?>
+                            <select name="linked_member_id" class="form-select form-select-sm" style="max-width:220px">
+                                <option value="">— brak —</option>
+                                <?php foreach (($clubMembers[$uc['club_id']] ?? []) as $m): ?>
+                                <option value="<?= (int)$m['id'] ?>"
+                                    <?= ((int)($uc['linked_member_id'] ?? 0) === (int)$m['id']) ? 'selected' : '' ?>>
+                                    <?= e($m['last_name'] . ' ' . $m['first_name']) ?>
+                                    <?php if (!empty($m['member_number'])): ?>(<?= e($m['member_number']) ?>)<?php endif; ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Zapisz powiązanie">
+                                <i class="bi bi-link-45deg"></i>
+                            </button>
+                        </form>
                     </td>
                     <td class="text-end">
                         <form method="post" action="<?= url("admin/users/{$user['id']}/clubs/{$uc['club_id']}/remove") ?>">

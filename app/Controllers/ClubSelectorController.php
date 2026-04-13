@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Helpers\Auth;
 use App\Helpers\Session;
+use App\Models\UserModel;
 
 class ClubSelectorController extends BaseController
 {
@@ -49,7 +50,8 @@ class ClubSelectorController extends BaseController
         }
 
         $club = reset($match);
-        Auth::setClub($clubId, $club['role']);
+        $linkedMemberId = (new UserModel())->getLinkedMemberId(Auth::id(), $clubId);
+        Auth::setClub($clubId, $club['role'], $linkedMemberId);
         Session::remove('pending_clubs');
 
         $this->redirect('dashboard');
