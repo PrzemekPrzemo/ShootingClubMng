@@ -324,18 +324,34 @@ class AdminController extends BaseController
             $ext = strtolower(pathinfo($_FILES['system_logo']['name'], PATHINFO_EXTENSION));
             if (in_array($ext, ['png', 'jpg', 'jpeg', 'svg', 'webp'], true)) {
                 $logoDir = ROOT_PATH . '/storage/system/';
-                if (!is_dir($logoDir)) {
-                    mkdir($logoDir, 0775, true);
+                if (!is_dir($logoDir) && !mkdir($logoDir, 0775, true)) {
+                    Session::flash('error', 'Nie można zapisać logo — katalog storage/system/ jest niedostępny do zapisu. Skontaktuj się z administratorem serwera.');
+                    $this->redirect('admin/settings');
                 }
                 // Remove old logo files
                 foreach (glob($logoDir . 'logo.*') ?: [] as $f) {
-                    unlink($f);
+                    @unlink($f);
                 }
                 $dest = $logoDir . 'logo.' . $ext;
                 if (move_uploaded_file($_FILES['system_logo']['tmp_name'], $dest)) {
                     $settingModel->upsert('system_logo', 'logo.' . $ext, 'Logo systemu', 'text');
+                } else {
+                    Session::flash('error', 'Nie udało się zapisać pliku logo. Sprawdź uprawnienia katalogu storage/system/.');
+                    $this->redirect('admin/settings');
                 }
+            } else {
+                Session::flash('error', 'Niedozwolony format pliku. Dopuszczalne: PNG, JPG, SVG, WebP.');
+                $this->redirect('admin/settings');
             }
+        }
+
+        // Delete logo (if requested)
+        if (isset($_POST['delete_logo'])) {
+            $logoDir = ROOT_PATH . '/storage/system/';
+            foreach (glob($logoDir . 'logo.*') ?: [] as $f) {
+                @unlink($f);
+            }
+            $settingModel->upsert('system_logo', '', 'Logo systemu', 'text');
         }
 
         Session::flash('success', 'Zapisano ustawienia globalne.');
@@ -346,14 +362,18 @@ class AdminController extends BaseController
     public function serveSystemLogo(): void
     {
         $settingModel = new SettingModel();
-        $fileName = $settingModel->get('system_logo', '');
-        if ($fileName !== '' && $fileName !== null) {
-            $path = ROOT_PATH . '/storage/system/' . basename((string)$fileName);
+        $fileName     = (string)($settingModel->get('system_logo', '') ?: '');
+        if ($fileName !== '') {
+            $path = ROOT_PATH . '/storage/system/' . basename($fileName);
             if (file_exists($path)) {
                 $ext  = strtolower(pathinfo($path, PATHINFO_EXTENSION));
                 $mime = ['png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'svg' => 'image/svg+xml', 'webp' => 'image/webp'][$ext] ?? 'image/png';
+                $mts  = filemtime($path);
                 header('Content-Type: ' . $mime);
-                header('Cache-Control: public, max-age=86400');
+                // Cache 7 days keyed by mtime (url includes ?v= mtime)
+                header('Cache-Control: public, max-age=604800, immutable');
+                header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $mts) . ' GMT');
+                header('ETag: "' . $mts . '"');
                 readfile($path);
                 exit;
             }

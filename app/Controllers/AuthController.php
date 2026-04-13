@@ -33,11 +33,15 @@ class AuthController extends BaseController
         }
 
         // Load system branding from settings
-        $systemBranding = ['name' => 'Shootero', 'logo' => ''];
+        $systemBranding = ['name' => 'Shootero', 'logo' => '', 'logoMts' => '0'];
         try {
-            $sm = new SettingModel();
-            $systemBranding['name'] = $sm->get('system_name', 'Shootero') ?: 'Shootero';
-            $systemBranding['logo'] = $sm->get('system_logo', '') ?: '';
+            $sm       = new SettingModel();
+            $logoFile = (string)($sm->get('system_logo', '') ?: '');
+            $logoPath = ROOT_PATH . '/storage/system/' . basename($logoFile);
+            $logoOk   = $logoFile !== '' && file_exists($logoPath);
+            $systemBranding['name']    = $sm->get('system_name', 'Shootero') ?: 'Shootero';
+            $systemBranding['logo']    = $logoOk ? $logoFile : '';
+            $systemBranding['logoMts'] = $logoOk ? (string)filemtime($logoPath) : '0';
         } catch (\Throwable) {}
 
         // Detect if coming via club subdomain

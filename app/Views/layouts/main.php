@@ -415,7 +415,7 @@ $__brandText       = $__hasClubCtx
             <img src="<?= url('club/logo') ?>" alt="" style="height:26px;width:auto;flex-shrink:0">
         <?php else: ?>
             <?php if (!empty($systemBranding['logo'])): ?>
-                <img src="<?= url('admin/system-logo') ?>" alt="" style="height:26px;max-width:80px;object-fit:contain;flex-shrink:0">
+                <img src="<?= url('admin/system-logo') ?>?v=<?= $systemBranding['logoMts'] ?? '0' ?>" alt="" style="height:26px;max-width:80px;object-fit:contain;flex-shrink:0">
             <?php else: ?>
                 <?= $shooteroIcon ?>
             <?php endif; ?>

@@ -50,13 +50,17 @@ abstract class BaseController
         $data['isSuperAdmin']  = Auth::isSuperAdmin();
         // System branding (name + logo) from global settings
         try {
-            $sm = new \App\Models\SettingModel();
+            $sm        = new \App\Models\SettingModel();
+            $logoFile  = (string)($sm->get('system_logo', '') ?: '');
+            $logoValid = $logoFile !== ''
+                && file_exists(ROOT_PATH . '/storage/system/' . basename($logoFile));
             $data['systemBranding'] = [
-                'name' => $sm->get('system_name', $data['appName']) ?: $data['appName'],
-                'logo' => $sm->get('system_logo', '') ?: '',
+                'name'    => $sm->get('system_name', $data['appName']) ?: $data['appName'],
+                'logo'    => $logoValid ? $logoFile : '',
+                'logoMts' => $logoValid ? (string)filemtime(ROOT_PATH . '/storage/system/' . basename($logoFile)) : '0',
             ];
         } catch (\Throwable) {
-            $data['systemBranding'] = ['name' => $data['appName'], 'logo' => ''];
+            $data['systemBranding'] = ['name' => $data['appName'], 'logo' => '', 'logoMts' => '0'];
         }
         $this->view->render($template, $data);
     }

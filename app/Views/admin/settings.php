@@ -18,15 +18,39 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Logo systemu</label>
-                <?php if (!empty($settings['system_logo'])): ?>
-                <div class="mb-2 p-2 bg-dark d-inline-block rounded">
-                    <img src="<?= url('admin/system-logo') ?>" alt="Logo systemu"
-                         style="height:48px; max-width:200px; object-fit:contain">
+                <?php
+                // Check if logo actually exists on disk (not just in DB)
+                $logoInDb   = !empty($settings['system_logo']);
+                $logoOnDisk = $logoInDb && file_exists(ROOT_PATH . '/storage/system/' . basename($settings['system_logo']));
+                ?>
+                <?php if ($logoInDb && $logoOnDisk): ?>
+                <div class="mb-2 d-flex align-items-center gap-3">
+                    <div class="p-2 rounded" style="background:#0F172A;border:1px solid rgba(255,255,255,.1)">
+                        <img src="<?= url('admin/system-logo') ?>?v=<?= filemtime(ROOT_PATH . '/storage/system/' . basename($settings['system_logo'])) ?>"
+                             alt="Logo systemu" style="height:48px; max-width:200px; object-fit:contain; display:block">
+                    </div>
+                    <div>
+                        <div class="small text-success mb-1"><i class="bi bi-check-circle me-1"></i>Logo aktywne: <?= e($settings['system_logo']) ?></div>
+                        <button type="submit" name="delete_logo" value="1"
+                                class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('Usunąć logo systemu?')">
+                            <i class="bi bi-trash me-1"></i>Usuń logo
+                        </button>
+                    </div>
                 </div>
                 <div class="small text-muted mb-2">Prześlij nowy plik, aby zastąpić aktualne logo.</div>
+                <?php elseif ($logoInDb && !$logoOnDisk): ?>
+                <div class="alert alert-warning small py-2 mb-2">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Logo zapisane w bazie (<code><?= e($settings['system_logo']) ?></code>),
+                    ale plik nie istnieje na dysku. Wgraj je ponownie.
+                </div>
                 <?php endif; ?>
                 <input type="file" class="form-control" name="system_logo" accept=".png,.jpg,.jpeg,.svg,.webp">
-                <div class="form-text">PNG / JPG / SVG / WebP — rekomendowana wysokość 48px, preferowane jasne logo na ciemnym tle.</div>
+                <div class="form-text">
+                    PNG / JPG / SVG / WebP — rekomendowana wysokość 48–64px, preferowane jasne logo na ciemnym tle.
+                    Logo pojawi się na stronie logowania i w pasku bocznym (zamiast ikony Shootero).
+                </div>
             </div>
         </div>
     </div>
