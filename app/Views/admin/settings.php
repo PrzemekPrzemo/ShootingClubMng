@@ -19,14 +19,13 @@
             <div class="mb-3">
                 <label class="form-label">Logo systemu</label>
                 <?php
-                $logoValue   = $settings['system_logo'] ?? '';
-                $logoInDb    = $logoValue !== '';
-                $logoIsDb    = $logoValue === 'db';   // stored as base64 in DB
-                $logoDir     = ROOT_PATH . '/storage/system/';
-                $logoOnDisk  = !$logoIsDb && $logoInDb
-                               && file_exists($logoDir . basename($logoValue));
-                $logoActive  = $logoIsDb || $logoOnDisk;
-                $dirWritable = is_dir($logoDir) && is_writable($logoDir);
+                $logoValue  = $settings['system_logo'] ?? '';
+                $logoInDb   = $logoValue !== '';
+                $logoIsDb   = $logoValue === 'db';   // stored as base64 in DB
+                $logoDir    = ROOT_PATH . '/storage/system/';
+                $logoOnDisk = !$logoIsDb && $logoInDb
+                              && file_exists($logoDir . basename($logoValue));
+                $logoActive = $logoIsDb || $logoOnDisk;
                 ?>
 
                 <?php if ($logoActive): ?>
@@ -40,8 +39,8 @@
                             <i class="bi bi-check-circle me-1"></i>
                             Logo aktywne
                             <?= $logoIsDb
-                                ? '<span class="badge bg-info text-dark ms-1">zapisane w bazie danych</span>'
-                                : '<span class="badge bg-secondary ms-1">plik na dysku</span>' ?>
+                                ? '<span class="badge bg-info text-dark ms-1">w bazie danych</span>'
+                                : '<span class="badge bg-success ms-1">plik na dysku</span>' ?>
                         </div>
                         <button type="submit" name="delete_logo" value="1"
                                 class="btn btn-sm btn-outline-danger"
@@ -58,20 +57,12 @@
                 </div>
                 <?php endif; ?>
 
-                <!-- Storage info -->
-                <?php if (!$logoIsDb): ?>
-                <div class="alert alert-<?= $dirWritable ? 'success' : 'info' ?> small py-2 mb-2">
-                    <?php if ($dirWritable): ?>
-                        <i class="bi bi-check-circle me-1"></i>
-                        Katalog <code>storage/system/</code> zapisywalny — logo zapisane jako plik.
-                        Limit upload: <strong><?= (int)ini_get('upload_max_filesize') ?>M</strong>.
-                    <?php else: ?>
-                        <i class="bi bi-info-circle me-1"></i>
-                        Katalog <code>storage/system/</code> niezapisywalny — logo zostanie zapisane
-                        <strong>w bazie danych</strong> (działa automatycznie, bez potrzeby konfiguracji serwera).
-                    <?php endif; ?>
+                <div class="alert alert-info small py-2 mb-2">
+                    <i class="bi bi-info-circle me-1"></i>
+                    System najpierw spróbuje zapisać logo jako plik w <code>storage/system/</code>.
+                    Jeśli się nie uda — zapisze automatycznie w bazie danych.
+                    Limit upload: <strong><?= (int)ini_get('upload_max_filesize') ?>M</strong>.
                 </div>
-                <?php endif; ?>
 
                 <input type="file" class="form-control" name="system_logo" accept=".png,.jpg,.jpeg,.svg,.webp">
                 <div class="form-text">
@@ -123,7 +114,7 @@
                     <label for="smtp_secure" class="form-label">Szyfrowanie</label>
                     <select class="form-select" id="smtp_secure" name="smtp_secure">
                         <?php foreach (['tls' => 'TLS', 'ssl' => 'SSL', 'none' => 'Brak'] as $v => $l): ?>
-                            <option value="<?= $v ?>" <?= ($settings['smtp_secure'] ?? 'tls') === $v ? 'selected' : '' ?>><?= $l ?></option>
+                            <option value="<?= e($v) ?>" <?= ($settings['smtp_secure'] ?? 'tls') === $v ? 'selected' : '' ?>><?= e($l) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>

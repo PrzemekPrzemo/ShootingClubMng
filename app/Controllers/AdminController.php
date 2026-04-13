@@ -334,12 +334,12 @@ class AdminController extends BaseController
             $savedToFile = false;
 
             // Attempt 1: save as file in storage/system/
+            // Use @mkdir + try to actually write (is_writable() is unreliable on Plesk/shared hosting)
             @mkdir($logoDir, 0777, true);
-            @chmod($logoDir, 0777);
-            if (is_dir($logoDir) && is_writable($logoDir)) {
+            if (is_dir($logoDir)) {
                 foreach (glob($logoDir . 'logo.*') ?: [] as $f) { @unlink($f); }
                 $dest = $logoDir . 'logo.' . $ext;
-                if (move_uploaded_file($tmpPath, $dest)) {
+                if (@move_uploaded_file($tmpPath, $dest) && file_exists($dest)) {
                     @chmod($dest, 0644);
                     $settingModel->upsert('system_logo',      'logo.' . $ext, 'Logo systemu', 'text');
                     $settingModel->upsert('system_logo_b64',  '',              'Logo base64',  'text');
@@ -350,16 +350,17 @@ class AdminController extends BaseController
 
             // Attempt 2 (fallback): store as base64 in database — no filesystem needed
             if (!$savedToFile) {
-                $raw = file_get_contents($tmpPath);
-                if ($raw === false) {
-                    Session::flash('error', 'Nie udało się odczytać przesłanego pliku.');
+                // Re-read the original temp file (move_uploaded_file may have failed but file still exists)
+                $raw = @file_get_contents($tmpPath);
+                if ($raw === false || $raw === '') {
+                    Session::flash('error', 'Nie udało się odczytać przesłanego pliku. Spróbuj ponownie.');
                     $this->redirect('admin/settings');
                 }
                 $b64 = 'data:' . $mime . ';base64,' . base64_encode($raw);
                 $settingModel->upsert('system_logo',      'db',  'Logo systemu', 'text');
                 $settingModel->upsert('system_logo_b64',  $b64,  'Logo base64',  'text');
                 $settingModel->upsert('system_logo_mime', $mime, 'Logo MIME',    'text');
-                Session::flash('warning', 'Logo zapisano w bazie danych (katalog storage/system/ niezapisywalny na serwerze). Aby zapisywać jako plik, ustaw prawa zapisu na ten katalog przez panel hostingowy.');
+                Session::flash('warning', 'Logo zapisano w bazie danych — katalog storage/system/ nie jest zapisywalny przez proces PHP (użytkownik: ' . (function_exists('posix_getpwuid') ? (posix_getpwuid(posix_geteuid())['name'] ?? 'nieznany') : get_current_user()) . '). W panelu Plesk ustaw właściciela katalogu na tego użytkownika.');
             }
         }
 
