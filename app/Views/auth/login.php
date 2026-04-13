@@ -28,7 +28,7 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
 ?>
 <div class="text-center mb-4">
     <?php if (!empty($systemBranding['logo'])): ?>
-        <img src="<?= url('admin/system-logo') ?>?v=<?= $systemBranding['logoMts'] ?? '0' ?>"
+        <img src="<?= url('system-logo') ?>?v=<?= $systemBranding['logoMts'] ?? '0' ?>"
              alt="<?= e($systemBranding['name']) ?>"
              style="height:54px; max-width:200px; object-fit:contain" class="mb-3 d-block mx-auto">
     <?php else: ?>

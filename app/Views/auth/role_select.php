@@ -2,7 +2,7 @@
     <div class="card-body p-4">
         <div class="text-center mb-4">
             <?php if (!empty($systemBranding['logo'])): ?>
-                <img src="<?= url('admin/system-logo') ?>" alt="<?= e($systemBranding['name']) ?>"
+                <img src="<?= url('system-logo') ?>" alt="<?= e($systemBranding['name']) ?>"
                      style="height:48px; max-width:180px; object-fit:contain" class="mb-2">
             <?php else: ?>
                 <i class="bi bi-bullseye text-danger" style="font-size:2.5rem"></i>

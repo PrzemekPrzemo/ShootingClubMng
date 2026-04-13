@@ -18,7 +18,7 @@ $roleColors = [
     <div class="card-body p-4">
         <div class="text-center mb-4">
             <?php if (!empty($systemBranding['logo'])): ?>
-                <img src="<?= url('admin/system-logo') ?>?v=<?= $systemBranding['logoMts'] ?? '0' ?>"
+                <img src="<?= url('system-logo') ?>?v=<?= $systemBranding['logoMts'] ?? '0' ?>"
                      alt="<?= e($systemBranding['name'] ?? 'Shootero') ?>"
                      style="height:48px;max-width:180px;object-fit:contain" class="mb-2 d-block mx-auto">
             <?php else: ?>

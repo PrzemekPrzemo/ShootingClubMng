@@ -31,7 +31,7 @@
                 <?php if ($logoActive): ?>
                 <div class="mb-2 d-flex align-items-center gap-3">
                     <div class="p-2 rounded" style="background:#0F172A;border:1px solid rgba(255,255,255,.1)">
-                        <img src="<?= url('admin/system-logo') ?>?v=<?= time() ?>"
+                        <img src="<?= url('system-logo') ?>?v=<?= time() ?>"
                              alt="Logo systemu" style="height:48px; max-width:200px; object-fit:contain; display:block">
                     </div>
                     <div>

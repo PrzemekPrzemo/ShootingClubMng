@@ -207,6 +207,7 @@ $router->get('/admin/settings',                          [\App\Controllers\Admin
 $router->post('/admin/settings',                         [\App\Controllers\AdminController::class, 'saveSettings']);
 $router->post('/admin/settings/regenerate-api-key',      [\App\Controllers\AdminController::class, 'regenerateGlobalApiKey']);
 $router->get('/admin/system-logo',                       [\App\Controllers\AdminController::class, 'serveSystemLogo']);
+$router->get('/system-logo',                             [\App\Controllers\SystemController::class, 'serveLogo']);
 $router->get('/admin/switch-club/:id',                   [\App\Controllers\AdminController::class, 'switchClub']);
 $router->get('/admin/exit-club',                         [\App\Controllers\AdminController::class, 'exitClub']);
 $router->get('/admin/impersonate/club/:clubId/user/:userId', [\App\Controllers\AdminController::class, 'impersonateClubUser']);
