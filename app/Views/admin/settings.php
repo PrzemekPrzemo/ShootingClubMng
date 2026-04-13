@@ -19,23 +19,30 @@
             <div class="mb-3">
                 <label class="form-label">Logo systemu</label>
                 <?php
-                $logoDir    = ROOT_PATH . '/storage/system/';
-                $logoInDb   = !empty($settings['system_logo']);
-                $logoOnDisk = $logoInDb && file_exists($logoDir . basename($settings['system_logo']));
-                $dirExists  = is_dir($logoDir);
-                $dirWritable= $dirExists && is_writable($logoDir);
-                $uploadOk   = (int)ini_get('upload_max_filesize');
-                $postOk     = (int)ini_get('post_max_size');
+                $logoValue   = $settings['system_logo'] ?? '';
+                $logoInDb    = $logoValue !== '';
+                $logoIsDb    = $logoValue === 'db';   // stored as base64 in DB
+                $logoDir     = ROOT_PATH . '/storage/system/';
+                $logoOnDisk  = !$logoIsDb && $logoInDb
+                               && file_exists($logoDir . basename($logoValue));
+                $logoActive  = $logoIsDb || $logoOnDisk;
+                $dirWritable = is_dir($logoDir) && is_writable($logoDir);
                 ?>
 
-                <?php if ($logoInDb && $logoOnDisk): ?>
+                <?php if ($logoActive): ?>
                 <div class="mb-2 d-flex align-items-center gap-3">
                     <div class="p-2 rounded" style="background:#0F172A;border:1px solid rgba(255,255,255,.1)">
-                        <img src="<?= url('admin/system-logo') ?>?v=<?= filemtime($logoDir . basename($settings['system_logo'])) ?>"
+                        <img src="<?= url('admin/system-logo') ?>?v=<?= time() ?>"
                              alt="Logo systemu" style="height:48px; max-width:200px; object-fit:contain; display:block">
                     </div>
                     <div>
-                        <div class="small text-success mb-1"><i class="bi bi-check-circle me-1"></i>Logo aktywne: <code><?= e($settings['system_logo']) ?></code></div>
+                        <div class="small text-success mb-1">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Logo aktywne
+                            <?= $logoIsDb
+                                ? '<span class="badge bg-info text-dark ms-1">zapisane w bazie danych</span>'
+                                : '<span class="badge bg-secondary ms-1">plik na dysku</span>' ?>
+                        </div>
                         <button type="submit" name="delete_logo" value="1"
                                 class="btn btn-sm btn-outline-danger"
                                 onclick="return confirm('Usunąć logo systemu?')">
@@ -44,35 +51,25 @@
                     </div>
                 </div>
                 <div class="small text-muted mb-2">Prześlij nowy plik, aby zastąpić aktualne logo.</div>
-                <?php elseif ($logoInDb && !$logoOnDisk): ?>
+                <?php elseif ($logoInDb && !$logoActive): ?>
                 <div class="alert alert-warning small py-2 mb-2">
                     <i class="bi bi-exclamation-triangle me-1"></i>
-                    Logo zapisane w bazie (<code><?= e($settings['system_logo']) ?></code>),
-                    ale plik nie istnieje na dysku. Wgraj ponownie.
+                    Logo zapisane w bazie, ale plik nie istnieje na dysku. Wgraj ponownie.
                 </div>
                 <?php endif; ?>
 
-                <!-- Storage diagnostics -->
-                <?php if (!$dirExists || !$dirWritable): ?>
-                <div class="alert alert-danger small py-2 mb-2">
-                    <strong><i class="bi bi-exclamation-octagon me-1"></i>Problem z katalogiem storage — to jest przyczyną braku działania uploadu.</strong><br>
-                    <?php if (!$dirExists): ?>
-                    Katalog <code><?= e($logoDir) ?></code> <strong>nie istnieje</strong>.<br>
+                <!-- Storage info -->
+                <?php if (!$logoIsDb): ?>
+                <div class="alert alert-<?= $dirWritable ? 'success' : 'info' ?> small py-2 mb-2">
+                    <?php if ($dirWritable): ?>
+                        <i class="bi bi-check-circle me-1"></i>
+                        Katalog <code>storage/system/</code> zapisywalny — logo zapisane jako plik.
+                        Limit upload: <strong><?= (int)ini_get('upload_max_filesize') ?>M</strong>.
                     <?php else: ?>
-                    Katalog istnieje, ale <strong>brak uprawnień zapisu</strong> dla procesu PHP.<br>
+                        <i class="bi bi-info-circle me-1"></i>
+                        Katalog <code>storage/system/</code> niezapisywalny — logo zostanie zapisane
+                        <strong>w bazie danych</strong> (działa automatycznie, bez potrzeby konfiguracji serwera).
                     <?php endif; ?>
-                    Wykonaj przez Plesk File Manager lub SSH:<br>
-                    <code class="d-block mt-1 p-1" style="background:rgba(0,0,0,.3);border-radius:4px">
-                        mkdir -p <?= e(ROOT_PATH) ?>/storage/system<br>
-                        chmod -R 775 <?= e(ROOT_PATH) ?>/storage<br>
-                        chown -R <?= e(get_current_user()) ?>:<?= e(get_current_user()) ?> <?= e(ROOT_PATH) ?>/storage
-                    </code>
-                </div>
-                <?php else: ?>
-                <div class="alert alert-success small py-2 mb-2">
-                    <i class="bi bi-check-circle me-1"></i>
-                    Katalog <code>storage/system/</code> istnieje i jest zapisywalny.
-                    Limit upload: <strong><?= $uploadOk ?>MB</strong>, POST: <strong><?= $postOk ?>MB</strong>.
                 </div>
                 <?php endif; ?>
 

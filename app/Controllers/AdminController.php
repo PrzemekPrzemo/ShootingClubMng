@@ -322,72 +322,73 @@ class AdminController extends BaseController
         // System logo upload
         if (!empty($_FILES['system_logo']['tmp_name']) && $_FILES['system_logo']['error'] === UPLOAD_ERR_OK) {
             $ext = strtolower(pathinfo($_FILES['system_logo']['name'], PATHINFO_EXTENSION));
-            if (in_array($ext, ['png', 'jpg', 'jpeg', 'svg', 'webp'], true)) {
-                $logoDir = ROOT_PATH . '/storage/system/';
-
-                // Ensure directory exists and is writable
-                if (!is_dir($logoDir)) {
-                    // Try 0777 first so it works regardless of server umask
-                    @mkdir($logoDir, 0777, true);
-                    if (is_dir($logoDir)) {
-                        @chmod($logoDir, 0777);
-                    }
-                }
-                if (!is_dir($logoDir) || !is_writable($logoDir)) {
-                    Session::flash('error',
-                        'Nie można zapisać logo — katalog ' . $logoDir . ' nie istnieje lub brak uprawnień zapisu. '
-                        . 'Utwórz go ręcznie przez Plesk File Manager i nadaj prawa 775.'
-                    );
-                    $this->redirect('admin/settings');
-                }
-
-                // Remove old logo files
-                foreach (glob($logoDir . 'logo.*') ?: [] as $f) {
-                    @unlink($f);
-                }
-                $dest = $logoDir . 'logo.' . $ext;
-                if (move_uploaded_file($_FILES['system_logo']['tmp_name'], $dest)) {
-                    @chmod($dest, 0644);
-                    $settingModel->upsert('system_logo', 'logo.' . $ext, 'Logo systemu', 'text');
-                } else {
-                    Session::flash('error',
-                        'Nie udało się zapisać pliku logo w ' . $dest . '. '
-                        . 'Sprawdź uprawnienia katalogu storage/system/ (potrzebne: 775).'
-                    );
-                    $this->redirect('admin/settings');
-                }
-            } else {
+            if (!in_array($ext, ['png', 'jpg', 'jpeg', 'svg', 'webp'], true)) {
                 Session::flash('error', 'Niedozwolony format pliku. Dopuszczalne: PNG, JPG, SVG, WebP.');
                 $this->redirect('admin/settings');
+            }
+
+            $tmpPath  = $_FILES['system_logo']['tmp_name'];
+            $mimeMap  = ['png'=>'image/png','jpg'=>'image/jpeg','jpeg'=>'image/jpeg','svg'=>'image/svg+xml','webp'=>'image/webp'];
+            $mime     = $mimeMap[$ext] ?? 'image/png';
+            $logoDir  = ROOT_PATH . '/storage/system/';
+            $savedToFile = false;
+
+            // Attempt 1: save as file in storage/system/
+            @mkdir($logoDir, 0777, true);
+            @chmod($logoDir, 0777);
+            if (is_dir($logoDir) && is_writable($logoDir)) {
+                foreach (glob($logoDir . 'logo.*') ?: [] as $f) { @unlink($f); }
+                $dest = $logoDir . 'logo.' . $ext;
+                if (move_uploaded_file($tmpPath, $dest)) {
+                    @chmod($dest, 0644);
+                    $settingModel->upsert('system_logo',      'logo.' . $ext, 'Logo systemu', 'text');
+                    $settingModel->upsert('system_logo_b64',  '',              'Logo base64',  'text');
+                    $settingModel->upsert('system_logo_mime', $mime,           'Logo MIME',    'text');
+                    $savedToFile = true;
+                }
+            }
+
+            // Attempt 2 (fallback): store as base64 in database — no filesystem needed
+            if (!$savedToFile) {
+                $raw = file_get_contents($tmpPath);
+                if ($raw === false) {
+                    Session::flash('error', 'Nie udało się odczytać przesłanego pliku.');
+                    $this->redirect('admin/settings');
+                }
+                $b64 = 'data:' . $mime . ';base64,' . base64_encode($raw);
+                $settingModel->upsert('system_logo',      'db',  'Logo systemu', 'text');
+                $settingModel->upsert('system_logo_b64',  $b64,  'Logo base64',  'text');
+                $settingModel->upsert('system_logo_mime', $mime, 'Logo MIME',    'text');
             }
         }
 
         // Delete logo (if requested)
         if (isset($_POST['delete_logo'])) {
             $logoDir = ROOT_PATH . '/storage/system/';
-            foreach (glob($logoDir . 'logo.*') ?: [] as $f) {
-                @unlink($f);
-            }
-            $settingModel->upsert('system_logo', '', 'Logo systemu', 'text');
+            foreach (glob($logoDir . 'logo.*') ?: [] as $f) { @unlink($f); }
+            $settingModel->upsert('system_logo',      '', 'Logo systemu', 'text');
+            $settingModel->upsert('system_logo_b64',  '', 'Logo base64',  'text');
+            $settingModel->upsert('system_logo_mime', '', 'Logo MIME',    'text');
         }
 
         Session::flash('success', 'Zapisano ustawienia globalne.');
         $this->redirect('admin/settings');
     }
 
-    /** GET /admin/system-logo — serwuje logo systemu z storage */
+    /** GET /admin/system-logo — serwuje logo systemu (plik lub base64 z DB) */
     public function serveSystemLogo(): void
     {
         $settingModel = new SettingModel();
         $fileName     = (string)($settingModel->get('system_logo', '') ?: '');
-        if ($fileName !== '') {
+
+        // Option A: logo stored as file on disk
+        if ($fileName !== '' && $fileName !== 'db') {
             $path = ROOT_PATH . '/storage/system/' . basename($fileName);
             if (file_exists($path)) {
                 $ext  = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-                $mime = ['png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'svg' => 'image/svg+xml', 'webp' => 'image/webp'][$ext] ?? 'image/png';
+                $mime = ['png'=>'image/png','jpg'=>'image/jpeg','jpeg'=>'image/jpeg','svg'=>'image/svg+xml','webp'=>'image/webp'][$ext] ?? 'image/png';
                 $mts  = filemtime($path);
                 header('Content-Type: ' . $mime);
-                // Cache 7 days keyed by mtime (url includes ?v= mtime)
                 header('Cache-Control: public, max-age=604800, immutable');
                 header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $mts) . ' GMT');
                 header('ETag: "' . $mts . '"');
@@ -395,6 +396,23 @@ class AdminController extends BaseController
                 exit;
             }
         }
+
+        // Option B: logo stored as base64 in database (fallback for servers without writable storage)
+        if ($fileName === 'db') {
+            $b64 = (string)($settingModel->get('system_logo_b64', '') ?: '');
+            if (str_starts_with($b64, 'data:')) {
+                // Parse data URI: data:<mime>;base64,<data>
+                [$meta, $data] = explode(',', $b64, 2);
+                $mime = str_replace(['data:', ';base64'], '', $meta);
+                $raw  = base64_decode($data);
+                header('Content-Type: ' . $mime);
+                header('Content-Length: ' . strlen($raw));
+                header('Cache-Control: public, max-age=86400');
+                echo $raw;
+                exit;
+            }
+        }
+
         http_response_code(404);
         exit;
     }

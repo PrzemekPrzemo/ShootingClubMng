@@ -37,11 +37,20 @@ class AuthController extends BaseController
         try {
             $sm       = new SettingModel();
             $logoFile = (string)($sm->get('system_logo', '') ?: '');
-            $logoPath = ROOT_PATH . '/storage/system/' . basename($logoFile);
-            $logoOk   = $logoFile !== '' && file_exists($logoPath);
+            $logoOk   = false;
+            $logoMts  = '0';
+            if ($logoFile === 'db') {
+                $b64    = (string)($sm->get('system_logo_b64', '') ?: '');
+                $logoOk = str_starts_with($b64, 'data:');
+                $logoMts = $logoOk ? (string)crc32($b64) : '0';
+            } elseif ($logoFile !== '') {
+                $logoPath = ROOT_PATH . '/storage/system/' . basename($logoFile);
+                $logoOk   = file_exists($logoPath);
+                $logoMts  = $logoOk ? (string)filemtime($logoPath) : '0';
+            }
             $systemBranding['name']    = $sm->get('system_name', 'Shootero') ?: 'Shootero';
             $systemBranding['logo']    = $logoOk ? $logoFile : '';
-            $systemBranding['logoMts'] = $logoOk ? (string)filemtime($logoPath) : '0';
+            $systemBranding['logoMts'] = $logoMts;
         } catch (\Throwable) {}
 
         // Detect if coming via club subdomain

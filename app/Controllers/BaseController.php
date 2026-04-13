@@ -50,14 +50,24 @@ abstract class BaseController
         $data['isSuperAdmin']  = Auth::isSuperAdmin();
         // System branding (name + logo) from global settings
         try {
-            $sm        = new \App\Models\SettingModel();
-            $logoFile  = (string)($sm->get('system_logo', '') ?: '');
-            $logoValid = $logoFile !== ''
-                && file_exists(ROOT_PATH . '/storage/system/' . basename($logoFile));
+            $sm       = new \App\Models\SettingModel();
+            $logoFile = (string)($sm->get('system_logo', '') ?: '');
+            $logoValid = false;
+            $logoMts   = '0';
+            if ($logoFile === 'db') {
+                // Logo stored in database as base64 — always valid if key exists
+                $b64 = (string)($sm->get('system_logo_b64', '') ?: '');
+                $logoValid = str_starts_with($b64, 'data:');
+                $logoMts   = $logoValid ? (string)crc32($b64) : '0';
+            } elseif ($logoFile !== '') {
+                $filePath  = ROOT_PATH . '/storage/system/' . basename($logoFile);
+                $logoValid = file_exists($filePath);
+                $logoMts   = $logoValid ? (string)filemtime($filePath) : '0';
+            }
             $data['systemBranding'] = [
                 'name'    => $sm->get('system_name', $data['appName']) ?: $data['appName'],
                 'logo'    => $logoValid ? $logoFile : '',
-                'logoMts' => $logoValid ? (string)filemtime(ROOT_PATH . '/storage/system/' . basename($logoFile)) : '0',
+                'logoMts' => $logoMts,
             ];
         } catch (\Throwable) {
             $data['systemBranding'] = ['name' => $data['appName'], 'logo' => '', 'logoMts' => '0'];
