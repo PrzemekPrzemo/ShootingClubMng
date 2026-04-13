@@ -324,19 +324,36 @@ class AdminController extends BaseController
             $ext = strtolower(pathinfo($_FILES['system_logo']['name'], PATHINFO_EXTENSION));
             if (in_array($ext, ['png', 'jpg', 'jpeg', 'svg', 'webp'], true)) {
                 $logoDir = ROOT_PATH . '/storage/system/';
-                if (!is_dir($logoDir) && !mkdir($logoDir, 0775, true)) {
-                    Session::flash('error', 'Nie można zapisać logo — katalog storage/system/ jest niedostępny do zapisu. Skontaktuj się z administratorem serwera.');
+
+                // Ensure directory exists and is writable
+                if (!is_dir($logoDir)) {
+                    // Try 0777 first so it works regardless of server umask
+                    @mkdir($logoDir, 0777, true);
+                    if (is_dir($logoDir)) {
+                        @chmod($logoDir, 0777);
+                    }
+                }
+                if (!is_dir($logoDir) || !is_writable($logoDir)) {
+                    Session::flash('error',
+                        'Nie można zapisać logo — katalog ' . $logoDir . ' nie istnieje lub brak uprawnień zapisu. '
+                        . 'Utwórz go ręcznie przez Plesk File Manager i nadaj prawa 775.'
+                    );
                     $this->redirect('admin/settings');
                 }
+
                 // Remove old logo files
                 foreach (glob($logoDir . 'logo.*') ?: [] as $f) {
                     @unlink($f);
                 }
                 $dest = $logoDir . 'logo.' . $ext;
                 if (move_uploaded_file($_FILES['system_logo']['tmp_name'], $dest)) {
+                    @chmod($dest, 0644);
                     $settingModel->upsert('system_logo', 'logo.' . $ext, 'Logo systemu', 'text');
                 } else {
-                    Session::flash('error', 'Nie udało się zapisać pliku logo. Sprawdź uprawnienia katalogu storage/system/.');
+                    Session::flash('error',
+                        'Nie udało się zapisać pliku logo w ' . $dest . '. '
+                        . 'Sprawdź uprawnienia katalogu storage/system/ (potrzebne: 775).'
+                    );
                     $this->redirect('admin/settings');
                 }
             } else {

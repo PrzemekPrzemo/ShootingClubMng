@@ -19,18 +19,23 @@
             <div class="mb-3">
                 <label class="form-label">Logo systemu</label>
                 <?php
-                // Check if logo actually exists on disk (not just in DB)
+                $logoDir    = ROOT_PATH . '/storage/system/';
                 $logoInDb   = !empty($settings['system_logo']);
-                $logoOnDisk = $logoInDb && file_exists(ROOT_PATH . '/storage/system/' . basename($settings['system_logo']));
+                $logoOnDisk = $logoInDb && file_exists($logoDir . basename($settings['system_logo']));
+                $dirExists  = is_dir($logoDir);
+                $dirWritable= $dirExists && is_writable($logoDir);
+                $uploadOk   = (int)ini_get('upload_max_filesize');
+                $postOk     = (int)ini_get('post_max_size');
                 ?>
+
                 <?php if ($logoInDb && $logoOnDisk): ?>
                 <div class="mb-2 d-flex align-items-center gap-3">
                     <div class="p-2 rounded" style="background:#0F172A;border:1px solid rgba(255,255,255,.1)">
-                        <img src="<?= url('admin/system-logo') ?>?v=<?= filemtime(ROOT_PATH . '/storage/system/' . basename($settings['system_logo'])) ?>"
+                        <img src="<?= url('admin/system-logo') ?>?v=<?= filemtime($logoDir . basename($settings['system_logo'])) ?>"
                              alt="Logo systemu" style="height:48px; max-width:200px; object-fit:contain; display:block">
                     </div>
                     <div>
-                        <div class="small text-success mb-1"><i class="bi bi-check-circle me-1"></i>Logo aktywne: <?= e($settings['system_logo']) ?></div>
+                        <div class="small text-success mb-1"><i class="bi bi-check-circle me-1"></i>Logo aktywne: <code><?= e($settings['system_logo']) ?></code></div>
                         <button type="submit" name="delete_logo" value="1"
                                 class="btn btn-sm btn-outline-danger"
                                 onclick="return confirm('Usunąć logo systemu?')">
@@ -43,13 +48,38 @@
                 <div class="alert alert-warning small py-2 mb-2">
                     <i class="bi bi-exclamation-triangle me-1"></i>
                     Logo zapisane w bazie (<code><?= e($settings['system_logo']) ?></code>),
-                    ale plik nie istnieje na dysku. Wgraj je ponownie.
+                    ale plik nie istnieje na dysku. Wgraj ponownie.
                 </div>
                 <?php endif; ?>
+
+                <!-- Storage diagnostics -->
+                <?php if (!$dirExists || !$dirWritable): ?>
+                <div class="alert alert-danger small py-2 mb-2">
+                    <strong><i class="bi bi-exclamation-octagon me-1"></i>Problem z katalogiem storage — to jest przyczyną braku działania uploadu.</strong><br>
+                    <?php if (!$dirExists): ?>
+                    Katalog <code><?= e($logoDir) ?></code> <strong>nie istnieje</strong>.<br>
+                    <?php else: ?>
+                    Katalog istnieje, ale <strong>brak uprawnień zapisu</strong> dla procesu PHP.<br>
+                    <?php endif; ?>
+                    Wykonaj przez Plesk File Manager lub SSH:<br>
+                    <code class="d-block mt-1 p-1" style="background:rgba(0,0,0,.3);border-radius:4px">
+                        mkdir -p <?= e(ROOT_PATH) ?>/storage/system<br>
+                        chmod -R 775 <?= e(ROOT_PATH) ?>/storage<br>
+                        chown -R <?= e(get_current_user()) ?>:<?= e(get_current_user()) ?> <?= e(ROOT_PATH) ?>/storage
+                    </code>
+                </div>
+                <?php else: ?>
+                <div class="alert alert-success small py-2 mb-2">
+                    <i class="bi bi-check-circle me-1"></i>
+                    Katalog <code>storage/system/</code> istnieje i jest zapisywalny.
+                    Limit upload: <strong><?= $uploadOk ?>MB</strong>, POST: <strong><?= $postOk ?>MB</strong>.
+                </div>
+                <?php endif; ?>
+
                 <input type="file" class="form-control" name="system_logo" accept=".png,.jpg,.jpeg,.svg,.webp">
                 <div class="form-text">
                     PNG / JPG / SVG / WebP — rekomendowana wysokość 48–64px, preferowane jasne logo na ciemnym tle.
-                    Logo pojawi się na stronie logowania i w pasku bocznym (zamiast ikony Shootero).
+                    Logo pojawi się na stronie logowania i w pasku bocznym.
                 </div>
             </div>
         </div>
