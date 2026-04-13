@@ -88,6 +88,11 @@ class MemberModel extends ClubScopedModel
         $this->db->prepare("DELETE FROM member_disciplines WHERE member_id = ? AND discipline_id = ?")->execute([$memberId, $disciplineId]);
     }
 
+    public function clearDisciplines(int $memberId): void
+    {
+        $this->db->prepare("DELETE FROM member_disciplines WHERE member_id = ?")->execute([$memberId]);
+    }
+
     public function createMember(array $data): int
     {
         // Auto-generate member number scoped to current club
@@ -139,6 +144,28 @@ class MemberModel extends ClubScopedModel
         $stmt->execute([$memberId]);
         $row = $stmt->fetch();
         return $row ?: null;
+    }
+
+    /**
+     * Returns the most recent license of each type for the member.
+     * Keyed by license_type, e.g. ['zawodnicza' => [...], 'patent' => [...]]
+     */
+    public function getAllLicensesByType(int $memberId): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT * FROM licenses
+            WHERE member_id = ?
+            ORDER BY license_type ASC, valid_until DESC, id DESC
+        ");
+        $stmt->execute([$memberId]);
+        $result = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $type = $row['license_type'];
+            if (!isset($result[$type])) {
+                $result[$type] = $row; // keep the latest per type
+            }
+        }
+        return $result;
     }
 
     public function getPaymentStatus(int $memberId, int $year): array

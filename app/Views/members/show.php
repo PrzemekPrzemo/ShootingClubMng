@@ -26,6 +26,14 @@
             <i class="bi bi-clock-history"></i> Historia
         </a>
         <?php endif; ?>
+        <?php if (!empty($isSuperAdmin)): ?>
+        <a href="<?= url('admin/impersonate/member/' . $member['id']) ?>"
+           class="btn btn-sm btn-outline-warning"
+           title="Zaloguj się jako ten zawodnik (portal)"
+           onclick="return confirm('Zalogować się jako <?= e(addslashes($member['first_name'] . ' ' . $member['last_name'])) ?> (portal zawodnika)?')">
+            <i class="bi bi-person-fill-gear"></i> Portal
+        </a>
+        <?php endif; ?>
         <a href="<?= url('members/' . $member['id'] . '/edit') ?>" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-pencil"></i> Edytuj
         </a>
@@ -236,26 +244,50 @@
             </div>
         </div>
 
-        <!-- Licencja -->
+        <!-- Licencje -->
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between">
-                <strong>Licencja PZSS</strong>
+                <strong>Licencje PZSS</strong>
                 <a href="<?= url('licenses/create?member_id=' . $member['id']) ?>" class="btn btn-sm btn-outline-primary py-0">
                     <i class="bi bi-plus"></i>
                 </a>
             </div>
-            <div class="card-body">
-                <?php if ($license): ?>
-                    <?php $days = days_until($license['valid_until']); ?>
-                    <p class="mb-1">Nr: <code><?= e($license['license_number']) ?></code></p>
-                    <p class="mb-0">
-                        Ważna do: <?= format_date($license['valid_until']) ?>
-                        <span class="badge bg-<?= alert_class($days, 60) ?>">
-                            <?= $days === null ? 'bezterminowa' : ($days >= 0 ? "za {$days} dni" : 'WYGASŁA') ?>
-                        </span>
-                    </p>
+            <div class="card-body p-0">
+                <?php
+                $licTypeLabels = [
+                    'zawodnicza' => 'Zawodnicza',
+                    'patent'     => 'Patent strzelecki',
+                    'myśliwska'  => 'Myśliwska',
+                    'sportowa'   => 'Sportowa',
+                ];
+                $allLicenses = $licensesByType ?? [];
+                if (empty($allLicenses) && !empty($license)) {
+                    $allLicenses['zawodnicza'] = $license;
+                }
+                ?>
+                <?php if (!empty($allLicenses)): ?>
+                <table class="table table-sm mb-0">
+                    <?php foreach ($allLicenses as $lType => $lic):
+                        $days = days_until($lic['valid_until'] ?? null); ?>
+                    <tr>
+                        <td class="ps-3 small text-muted" style="width:38%">
+                            <?= e($licTypeLabels[$lType] ?? ucfirst($lType)) ?>
+                        </td>
+                        <td>
+                            <code class="small"><?= e($lic['license_number']) ?></code>
+                        </td>
+                        <td class="text-end pe-3">
+                            <span class="badge bg-<?= alert_class($days, 60) ?>">
+                                <?php if ($days === null): ?>bezterminowa
+                                <?php elseif ($days >= 0): ?>za <?= $days ?> dni
+                                <?php else: ?>WYGASŁA<?php endif; ?>
+                            </span>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </table>
                 <?php else: ?>
-                    <p class="text-muted mb-0">Brak licencji.</p>
+                    <p class="text-muted mb-0 p-3">Brak licencji.</p>
                 <?php endif; ?>
             </div>
         </div>

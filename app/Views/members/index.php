@@ -99,6 +99,14 @@
                         </td>
                         <td class="small"><?= format_date($m['join_date']) ?></td>
                         <td class="text-end">
+                            <?php if (!empty($isSuperAdmin)): ?>
+                            <a href="<?= url('admin/impersonate/member/' . $m['id']) ?>"
+                               class="btn btn-outline-warning btn-sm py-0 me-1"
+                               title="Portal zawodnika"
+                               onclick="return confirm('Zalogować się jako <?= e(addslashes($m['last_name'] . ' ' . $m['first_name'])) ?>?')">
+                                <i class="bi bi-person-fill-gear"></i>
+                            </a>
+                            <?php endif; ?>
                             <a href="<?= url('members/' . $m['id'] . '/edit') ?>" class="btn btn-outline-secondary btn-sm py-0">
                                 <i class="bi bi-pencil"></i>
                             </a>

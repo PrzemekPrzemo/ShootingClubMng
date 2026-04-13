@@ -336,7 +336,8 @@ class MembersController extends BaseController
             'disciplines'  => $this->memberModel->getDisciplines((int)$id),
             'medical'      => $this->memberModel->getLatestMedical((int)$id),
             'examMatrix'   => $this->examModel->getExamMatrix((int)$id),
-            'license'      => $this->memberModel->getLatestLicense((int)$id),
+            'license'          => $this->memberModel->getLatestLicense((int)$id),
+            'licensesByType'   => $this->memberModel->getAllLicensesByType((int)$id),
             'payment'      => $this->memberModel->getPaymentStatus((int)$id, (int)date('Y')),
             'achievements'   => (new MemberAchievementModel())->getForMember((int)$id),
             'feeAssignment'  => (new ClubFeeConfigModel())->getAssignment((int)$id, (int)date('Y')),
@@ -412,6 +413,10 @@ class MembersController extends BaseController
         }
 
         $this->memberModel->updateMember((int)$id, $data);
+
+        // Clear and re-save disciplines (was missing from update — caused "-" display)
+        $this->memberModel->clearDisciplines((int)$id);
+        $this->saveDisciplines((int)$id);
 
         if ($changed) {
             $this->activityLog->log('member_update', 'member', (int)$id,
@@ -545,7 +550,9 @@ class MembersController extends BaseController
         if (empty($data['first_name'])) $errors[] = 'Imię jest wymagane.';
         if (empty($data['last_name']))  $errors[] = 'Nazwisko jest wymagane.';
         if (empty($data['join_date']))  $errors[] = 'Data wstąpienia jest wymagana.';
-        if (!in_array($data['member_type'], ['rekreacyjny','wyczynowy'])) {
+        // Validate member_type against available types from DB (per-club + global)
+        $validTypes = array_column((new \App\Models\MemberTypeModel())->getActive(), 'name');
+        if (!empty($data['member_type']) && !empty($validTypes) && !in_array($data['member_type'], $validTypes)) {
             $errors[] = 'Nieprawidłowy typ członkostwa.';
         }
         return $errors;

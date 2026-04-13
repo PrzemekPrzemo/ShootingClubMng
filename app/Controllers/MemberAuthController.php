@@ -34,7 +34,10 @@ class MemberAuthController
         if (MemberAuth::check()) {
             $this->redirectTo('portal');
         }
-        if (\App\Helpers\Auth::check()) {
+        // Staff users other than zawodnik get redirected to dashboard.
+        // zawodnik staff WITHOUT a member bridge gets to see portal login
+        // (redirecting them to dashboard would create an infinite loop).
+        if (\App\Helpers\Auth::check() && \App\Helpers\Auth::role() !== 'zawodnik') {
             $this->redirectTo('dashboard');
         }
         $this->renderAuth('portal/login', ['title' => 'Logowanie']);

@@ -106,9 +106,10 @@ class DashboardController extends BaseController
 
     public function index(): void
     {
-        // Zawodnik (staff role) → bridge to member portal
+        // Zawodnik (staff role) → attempt bridge to member portal
         if (Auth::role() === 'zawodnik') {
-            if (!\App\Helpers\MemberAuth::check()) {
+            $bridged = \App\Helpers\MemberAuth::check();
+            if (!$bridged) {
                 $userId  = Auth::id();
                 $clubId  = \App\Helpers\ClubContext::current();
                 $db      = \App\Helpers\Database::pdo();
@@ -129,10 +130,17 @@ class DashboardController extends BaseController
                         \App\Helpers\Session::set('member_email',          $member['email'] ?? '');
                         \App\Helpers\Session::set('member_status',         $member['status']);
                         \App\Helpers\Session::set('must_change_password',  false);
+                        $bridged = true;
                     }
                 }
             }
-            $this->redirect('portal');
+            // Only redirect to portal if bridge succeeded — prevents infinite loop
+            // when no matching member record exists for this staff user
+            if ($bridged) {
+                $this->redirect('portal');
+            }
+            // Fall through: show dashboard with a notice about missing member record
+            \App\Helpers\Session::flash('info', 'Brak powiązanego rekordu zawodnika z tym kontem. Zaloguj się do portalu osobno lub skontaktuj z administratorem.');
         }
 
         $memberModel      = new MemberModel();
