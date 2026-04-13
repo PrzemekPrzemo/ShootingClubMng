@@ -202,6 +202,42 @@ class UserModel extends BaseModel
         )->execute([$userId, $clubId]);
     }
 
+    /** Trwale usuń przypisanie użytkownika do klubu (hard DELETE z user_clubs). */
+    public function hardRemoveFromClub(int $userId, int $clubId): void
+    {
+        $this->db->prepare(
+            "DELETE FROM user_clubs WHERE user_id = ? AND club_id = ?"
+        )->execute([$userId, $clubId]);
+    }
+
+    /**
+     * Trwałe usunięcie konta użytkownika z systemu.
+     * Usuwa: user_clubs, users. Pozostawia activity_log (anonimizuje user_id → NULL).
+     * Nie można usunąć superadmina.
+     */
+    public function permanentDelete(int $userId): bool
+    {
+        $user = $this->findById($userId);
+        if (!$user || !empty($user['is_super_admin'])) {
+            return false;
+        }
+
+        // Anonimizacja logów — zachowaj historię, usuń powiązanie z userem
+        try {
+            $this->db->prepare(
+                "UPDATE activity_log SET user_id = NULL WHERE user_id = ?"
+            )->execute([$userId]);
+        } catch (\Throwable) {}
+
+        // Usuń przypisania do klubów
+        $this->db->prepare("DELETE FROM user_clubs WHERE user_id = ?")->execute([$userId]);
+
+        // Usuń konto
+        $this->db->prepare("DELETE FROM users WHERE id = ? AND is_super_admin = 0")->execute([$userId]);
+
+        return true;
+    }
+
     /** Pobierz użytkowników przypisanych do danego klubu. */
     public function getUsersForClub(int $clubId): array
     {

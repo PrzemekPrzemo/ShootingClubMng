@@ -281,7 +281,7 @@ class AdminController extends BaseController
 
     public function removeClubUser(string $clubId, string $userId): void
     {
-        $this->userModel->removeFromClub((int)$userId, (int)$clubId);
+        $this->userModel->hardRemoveFromClub((int)$userId, (int)$clubId);
         Session::flash('success', 'Użytkownik usunięty z klubu.');
         $this->redirect("admin/clubs/{$clubId}/users");
     }
@@ -631,7 +631,7 @@ class AdminController extends BaseController
         $this->redirect("admin/users/{$id}/edit");
     }
 
-    /** POST /admin/users/:id/delete */
+    /** POST /admin/users/:id/delete — dezaktywacja konta */
     public function deleteUser(string $id): void
     {
         Csrf::verify();
@@ -639,6 +639,38 @@ class AdminController extends BaseController
         if ($user && !$user['is_super_admin']) {
             $this->userModel->update((int)$id, ['is_active' => 0]);
             Session::flash('success', 'Użytkownik dezaktywowany.');
+        }
+        $this->redirect('admin/users');
+    }
+
+    /** POST /admin/users/:id/permanent-delete — trwałe usunięcie konta */
+    public function permanentDeleteUser(string $id): void
+    {
+        Csrf::verify();
+
+        $user = $this->userModel->findById((int)$id);
+        if (!$user) {
+            Session::flash('error', 'Użytkownik nie istnieje.');
+            $this->redirect('admin/users');
+        }
+        if (!empty($user['is_super_admin'])) {
+            Session::flash('error', 'Nie można usunąć konta superadmina.');
+            $this->redirect('admin/users');
+        }
+
+        // Dodatkowe zabezpieczenie: sprawdź potwierdzenie loginu
+        $confirm = trim($_POST['confirm_username'] ?? '');
+        if ($confirm !== $user['username']) {
+            Session::flash('error', 'Podany login nie zgadza się — usunięcie anulowane.');
+            $this->redirect('admin/users');
+        }
+
+        $name = $user['full_name'] ?: $user['username'];
+        if ($this->userModel->permanentDelete((int)$id)) {
+            $this->logActivity(Auth::id(), 'user_permanent_delete', 'users', (int)$id, "Trwałe usunięcie konta: {$name}");
+            Session::flash('success', "Konto użytkownika <strong>{$name}</strong> zostało trwale usunięte z systemu.");
+        } else {
+            Session::flash('error', 'Nie udało się usunąć użytkownika.');
         }
         $this->redirect('admin/users');
     }

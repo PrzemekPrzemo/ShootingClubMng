@@ -214,6 +214,7 @@ $router->post('/admin/users/create',                         [\App\Controllers\A
 $router->get('/admin/users/:id/edit',                        [\App\Controllers\AdminController::class, 'editUser']);
 $router->post('/admin/users/:id/edit',                       [\App\Controllers\AdminController::class, 'updateUser']);
 $router->post('/admin/users/:id/delete',                     [\App\Controllers\AdminController::class, 'deleteUser']);
+$router->post('/admin/users/:id/permanent-delete',           [\App\Controllers\AdminController::class, 'permanentDeleteUser']);
 $router->post('/admin/users/:userId/clubs/:clubId/remove',   [\App\Controllers\AdminController::class, 'removeUserFromClub']);
 
 // Subscriptions

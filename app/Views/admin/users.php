@@ -68,12 +68,22 @@
                         </a>
                         <?php if (empty($user['is_super_admin'])): ?>
                         <form method="post" action="<?= url("admin/users/{$user['id']}/delete") ?>" class="d-inline"
-                              onsubmit="return confirm('Dezaktywować konto <?= e($user['username']) ?>?')">
+                              onsubmit="return confirm('Dezaktywować konto <?= e(addslashes($user['username'])) ?>?')">
                             <?= csrf_field() ?>
-                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Dezaktywuj">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Dezaktywuj konto">
                                 <i class="bi bi-person-x"></i>
                             </button>
                         </form>
+                        <button type="button"
+                                class="btn btn-sm btn-danger"
+                                title="Usuń konto permanentnie"
+                                data-bs-toggle="modal"
+                                data-bs-target="#modalDelete"
+                                data-username="<?= e($user['username']) ?>"
+                                data-fullname="<?= e($user['full_name']) ?>"
+                                data-action="<?= url("admin/users/{$user['id']}/permanent-delete") ?>">
+                            <i class="bi bi-trash3"></i>
+                        </button>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -85,3 +95,60 @@
         </table>
     </div>
 </div>
+
+<!-- Modal: trwałe usunięcie konta -->
+<div class="modal fade" id="modalDelete" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:#1E2838;border:1px solid rgba(220,38,38,.4)">
+            <div class="modal-header" style="border-color:rgba(220,38,38,.3)">
+                <h5 class="modal-title text-danger">
+                    <i class="bi bi-trash3-fill me-2"></i>Trwałe usunięcie konta
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="deleteForm">
+                <?= csrf_field() ?>
+                <div class="modal-body">
+                    <div class="alert alert-danger small py-2 mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        <strong>Ta operacja jest nieodwracalna.</strong> Konto zostanie usunięte z bazy danych.
+                        Wszystkie przypisania do klubów zostaną usunięte. Historia aktywności zostanie zachowana (zanonimizowana).
+                    </div>
+                    <p class="mb-1">Usuwasz konto: <strong id="deleteFullname"></strong></p>
+                    <p class="text-muted small mb-3">Login: <code id="deleteUsernameDisplay"></code></p>
+                    <label for="confirm_username" class="form-label fw-semibold">
+                        Wpisz login użytkownika, aby potwierdzić:
+                    </label>
+                    <input type="text" class="form-control" id="confirm_username" name="confirm_username"
+                           placeholder="wpisz login..." autocomplete="off" required>
+                </div>
+                <div class="modal-footer" style="border-color:rgba(220,38,38,.3)">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="submit" class="btn btn-danger" id="btnConfirmDelete" disabled>
+                        <i class="bi bi-trash3 me-1"></i>Usuń permanentnie
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const modal = document.getElementById('modalDelete');
+    if (!modal) return;
+    modal.addEventListener('show.bs.modal', function (e) {
+        const btn = e.relatedTarget;
+        const username = btn.dataset.username;
+        document.getElementById('deleteFullname').textContent     = btn.dataset.fullname;
+        document.getElementById('deleteUsernameDisplay').textContent = username;
+        document.getElementById('deleteForm').action               = btn.dataset.action;
+        document.getElementById('confirm_username').value          = '';
+        document.getElementById('btnConfirmDelete').disabled       = true;
+    });
+    document.getElementById('confirm_username').addEventListener('input', function () {
+        const expected = document.getElementById('deleteUsernameDisplay').textContent;
+        document.getElementById('btnConfirmDelete').disabled = this.value !== expected;
+    });
+})();
+</script>
