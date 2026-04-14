@@ -50,6 +50,8 @@
                             <option value="<?= $lt['id'] ?>"
                                     data-months="<?= e($lt['validity_months'] ?? '') ?>"
                                     data-no-expiry="<?= $lt['validity_months'] === null ? '1' : '0' ?>"
+                                    data-short-code="<?= e($lt['short_code'] ?? '') ?>"
+                                    data-name="<?= e($lt['name'] ?? '') ?>"
                                     <?= $sel ? 'selected' : '' ?>>
                                 <?= e($lt['name']) ?>
                             </option>
@@ -63,7 +65,7 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Numer licencji <span class="text-danger">*</span></label>
-                    <input type="text" name="license_number" class="form-control"
+                    <input type="text" name="license_number" id="licenseNumberInput" class="form-control"
                            value="<?= e($license['license_number'] ?? '') ?>" required>
                 </div>
             </div>
@@ -242,12 +244,59 @@
     });
     searchInput.addEventListener('input', function() { searchInput.classList.remove('is-invalid'); });
 
+    /* ── Auto-detect license type from license number ── */
+
+    var licenseNumberInput = document.getElementById('licenseNumberInput');
+
+    // Keyword => match (short_code or name substring, case-insensitive)
+    var typeKeywords = [
+        { pattern: /\bPAT\b|\/PAT\//i,        match: ['PAT', 'patent'] },
+        { pattern: /\bZAW\b|\/ZAW\//i,        match: ['ZAW', 'zawodnicza'] },
+        { pattern: /\bTREN\b|\bTR\b|\/TR\//i, match: ['TREN', 'TR', 'trener'] },
+        { pattern: /\bSED\b|SĘD|\/SED\//i,    match: ['SED', 'SĘD', 'sędz'] },
+        { pattern: /\bINS\b|\/INS\//i,        match: ['INS', 'instruktor'] }
+    ];
+
+    function detectLicenseType() {
+        if (!isCreate || !licenseNumberInput || !typeSelect) return;
+        if (typeSelect.value) return; // Don't override manual selection
+
+        var num = licenseNumberInput.value.trim();
+        if (!num) return;
+
+        for (var i = 0; i < typeKeywords.length; i++) {
+            var kw = typeKeywords[i];
+            if (!kw.pattern.test(num)) continue;
+
+            for (var j = 0; j < typeSelect.options.length; j++) {
+                var opt  = typeSelect.options[j];
+                var code = (opt.dataset.shortCode || '').toLowerCase();
+                var name = (opt.dataset.name || opt.textContent || '').toLowerCase();
+
+                for (var k = 0; k < kw.match.length; k++) {
+                    var m = kw.match[k].toLowerCase();
+                    if (code === m || name.indexOf(m) !== -1) {
+                        typeSelect.value = opt.value;
+                        typeSelect.dispatchEvent(new Event('change'));
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    if (licenseNumberInput) {
+        licenseNumberInput.addEventListener('input', detectLicenseType);
+        licenseNumberInput.addEventListener('blur',  detectLicenseType);
+    }
+
     /* ── Init on load ── */
 
     if (isCreate && !validUntil.value) {
         calcValidUntil();
     }
     if (typeSelect.value) recalcType();
+    if (isCreate && licenseNumberInput && licenseNumberInput.value) detectLicenseType();
 })();
 </script>
     </div>
