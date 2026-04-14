@@ -120,69 +120,156 @@ $allRoles  = [
         </div>
     </div>
 
-    <?php if ($isEdit && isset($linkableMembers)): ?>
+    <?php if ($isEdit): ?>
     <!-- Powiązanie z zawodnikiem -->
     <div class="card mb-3">
         <div class="card-header">
             <strong><i class="bi bi-person-lines-fill"></i> Powiązany zawodnik</strong>
-            <span class="text-muted small ms-1">— pozwala zalogowanemu użytkownikowi widzieć dane swojego rekordu zawodnika</span>
         </div>
         <div class="card-body">
+
             <?php
-            $linkedId = $user['member_id'] ?? null;
-            $linkedName = '';
+            $linkedId   = (int)($user['member_id'] ?? 0);
+            $linkedInfo = null;
             if ($linkedId) {
-                foreach ($linkableMembers as $m) {
-                    if ((int)$m['id'] === (int)$linkedId) {
-                        $linkedName = $m['last_name'] . ' ' . $m['first_name'] . ' [' . $m['member_number'] . '] — ' . $m['club_name'];
-                        break;
-                    }
-                }
+                $db = \App\Helpers\Database::pdo();
+                $s  = $db->prepare(
+                    "SELECT m.id, m.first_name, m.last_name, m.member_number, m.status, c.name AS club_name
+                     FROM members m JOIN clubs c ON c.id = m.club_id WHERE m.id = ?"
+                );
+                $s->execute([$linkedId]);
+                $linkedInfo = $s->fetch() ?: null;
             }
             ?>
-            <?php if ($linkedId && $linkedName): ?>
-            <div class="alert alert-success py-2 mb-3">
-                <i class="bi bi-link-45deg"></i> Połączony z: <strong><?= e($linkedName) ?></strong>
-            </div>
-            <?php elseif ($linkedId): ?>
-            <div class="alert alert-warning py-2 mb-3">
-                <i class="bi bi-exclamation-triangle"></i> Zawodnik ID <?= (int)$linkedId ?> nie istnieje lub jest nieaktywny.
+
+            <!-- Current link status -->
+            <?php if ($linkedInfo): ?>
+            <div class="alert alert-success d-flex align-items-center gap-2 py-2 mb-3">
+                <i class="bi bi-link-45deg fs-5"></i>
+                <div>
+                    <strong><?= e($linkedInfo['last_name'] . ' ' . $linkedInfo['first_name']) ?></strong>
+                    <span class="text-muted ms-1">[<?= e($linkedInfo['member_number']) ?>]</span>
+                    — <?= e($linkedInfo['club_name']) ?>
+                    <?php if ($linkedInfo['status'] !== 'aktywny'): ?>
+                    <span class="badge bg-warning ms-1"><?= e($linkedInfo['status']) ?></span>
+                    <?php endif; ?>
+                </div>
+                <!-- Clear link button -->
+                <form method="post" action="<?= url("admin/users/{$user['id']}/edit") ?>" class="ms-auto">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="username"  value="<?= e($user['username']) ?>">
+                    <input type="hidden" name="email"     value="<?= e($user['email']) ?>">
+                    <input type="hidden" name="full_name" value="<?= e($user['full_name']) ?>">
+                    <input type="hidden" name="is_active" value="<?= (int)($user['is_active'] ?? 1) ?>">
+                    <input type="hidden" name="member_id" value="">
+                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('Odłączyć zawodnika od tego konta?')">
+                        <i class="bi bi-x-lg"></i> Odłącz
+                    </button>
+                </form>
             </div>
             <?php else: ?>
             <div class="alert alert-secondary py-2 mb-3">
-                <i class="bi bi-link-45deg text-muted"></i> Brak powiązania — mostek automatyczny przez e-mail (jeśli istnieje).
+                <i class="bi bi-link-45deg text-muted"></i>
+                Brak powiązania — mostek automatyczny przez e-mail (jeśli istnieje).
             </div>
             <?php endif; ?>
-            <form method="post" action="<?= url("admin/users/{$user['id']}/edit") ?>">
+
+            <!-- Search form -->
+            <label class="form-label fw-semibold">Szukaj zawodnika</label>
+            <div class="input-group mb-2">
+                <input type="text" id="memberSearchInput" class="form-control"
+                       placeholder="PESEL, nr członkowski lub nazwisko…"
+                       autocomplete="off">
+                <button type="button" class="btn btn-outline-primary" id="memberSearchBtn">
+                    <i class="bi bi-search"></i> Szukaj
+                </button>
+            </div>
+            <div class="form-text mb-3">Wpisz PESEL (dokładne dopasowanie), numer członkowski lub nazwisko.</div>
+
+            <!-- Results -->
+            <div id="memberSearchResults"></div>
+
+            <!-- Hidden save form — submitted by JS after selection -->
+            <form method="post" action="<?= url("admin/users/{$user['id']}/edit") ?>" id="memberLinkForm" class="d-none">
                 <?= csrf_field() ?>
                 <input type="hidden" name="username"  value="<?= e($user['username']) ?>">
                 <input type="hidden" name="email"     value="<?= e($user['email']) ?>">
                 <input type="hidden" name="full_name" value="<?= e($user['full_name']) ?>">
                 <input type="hidden" name="is_active" value="<?= (int)($user['is_active'] ?? 1) ?>">
-                <div class="row g-2 align-items-end">
-                    <div class="col">
-                        <label class="form-label">Wybierz zawodnika</label>
-                        <select name="member_id" class="form-select">
-                            <option value="">— brak powiązania —</option>
-                            <?php foreach ($linkableMembers as $m): ?>
-                            <option value="<?= (int)$m['id'] ?>"
-                                <?= (int)($user['member_id'] ?? 0) === (int)$m['id'] ? 'selected' : '' ?>>
-                                <?= e($m['last_name'] . ' ' . $m['first_name']) ?>
-                                [<?= e($m['member_number']) ?>]
-                                — <?= e($m['club_name']) ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-auto">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-link"></i> Zapisz
-                        </button>
-                    </div>
-                </div>
+                <input type="hidden" name="member_id" id="memberLinkId" value="">
             </form>
         </div>
     </div>
+
+    <script>
+    (function () {
+        var input   = document.getElementById('memberSearchInput');
+        var btn     = document.getElementById('memberSearchBtn');
+        var results = document.getElementById('memberSearchResults');
+        var form    = document.getElementById('memberLinkForm');
+        var hiddenId= document.getElementById('memberLinkId');
+        var searchUrl = <?= json_encode(url('admin/users/member-search')) ?>;
+
+        function doSearch() {
+            var q = input.value.trim();
+            if (q.length < 3) {
+                results.innerHTML = '<p class="text-muted small">Wpisz co najmniej 3 znaki.</p>';
+                return;
+            }
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+            fetch(searchUrl + '?q=' + encodeURIComponent(q))
+                .then(function(r){ return r.json(); })
+                .then(function(data) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-search"></i> Szukaj';
+                    if (!data.members || data.members.length === 0) {
+                        results.innerHTML = '<p class="text-warning small"><i class="bi bi-exclamation-circle"></i> Nie znaleziono zawodnika.</p>';
+                        return;
+                    }
+                    var html = '<div class="list-group">';
+                    data.members.forEach(function(m) {
+                        var peselBadge = m.pesel_match
+                            ? '<span class="badge bg-success ms-1"><i class="bi bi-check-circle"></i> PESEL</span>'
+                            : '';
+                        var statusBadge = m.status !== 'aktywny'
+                            ? '<span class="badge bg-warning ms-1">' + m.status + '</span>'
+                            : '';
+                        html += '<button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" data-id="' + m.id + '" data-name="' + m.full_name + '">'
+                            + '<span>'
+                            + '<strong>' + m.full_name + '</strong>'
+                            + peselBadge + statusBadge
+                            + '<span class="text-muted ms-2 small">[' + m.member_number + '] — ' + m.club_name + '</span>'
+                            + '</span>'
+                            + '<span class="badge bg-primary">Powiąż</span>'
+                            + '</button>';
+                    });
+                    html += '</div>';
+                    results.innerHTML = html;
+
+                    results.querySelectorAll('[data-id]').forEach(function(el) {
+                        el.addEventListener('click', function() {
+                            if (!confirm('Powiązać konto z zawodnikiem: ' + this.dataset.name + '?')) return;
+                            hiddenId.value = this.dataset.id;
+                            form.submit();
+                        });
+                    });
+                })
+                .catch(function() {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-search"></i> Szukaj';
+                    results.innerHTML = '<p class="text-danger small">Błąd wyszukiwania. Spróbuj ponownie.</p>';
+                });
+        }
+
+        btn.addEventListener('click', doSearch);
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); doSearch(); }
+        });
+    })();
+    </script>
     <?php endif; ?>
 
     <?php if ($isEdit && !empty($userClubs)): ?>

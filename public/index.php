@@ -215,6 +215,7 @@ $router->get('/admin/impersonate/user/:userId',             [\App\Controllers\Ad
 $router->get('/admin/impersonate/member/:memberId',          [\App\Controllers\AdminController::class, 'impersonateMember']);
 $router->get('/admin/stop-impersonation',                    [\App\Controllers\AuthController::class, 'stopImpersonation']);
 $router->get('/admin/users',                                 [\App\Controllers\AdminController::class, 'users']);
+$router->get('/admin/users/member-search',                   [\App\Controllers\AdminController::class, 'memberSearch']);
 $router->get('/admin/users/create',                          [\App\Controllers\AdminController::class, 'createUser']);
 $router->post('/admin/users/create',                         [\App\Controllers\AdminController::class, 'storeUser']);
 $router->get('/admin/users/:id/edit',                        [\App\Controllers\AdminController::class, 'editUser']);
