@@ -2,7 +2,10 @@
     <a href="<?= url('admin/dashboard') ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
     <h2 class="h4 mb-0"><i class="bi bi-shield-check"></i> Audyt bezpieczeństwa systemu</h2>
     <div class="ms-auto d-flex gap-2">
-        <a href="<?= url('admin/security/export.json') ?>" class="btn btn-sm btn-outline-success" title="Pobierz raport JSON (do udostępnienia deweloperowi)">
+        <a href="<?= url('admin/security/export.md') ?>" class="btn btn-sm btn-primary" title="Pobierz raport Markdown — wklej do rozmowy z AI">
+            <i class="bi bi-robot"></i> Eksportuj dla AI (.md)
+        </a>
+        <a href="<?= url('admin/security/export.json') ?>" class="btn btn-sm btn-outline-success" title="Pobierz raport JSON">
             <i class="bi bi-filetype-json"></i> Eksportuj JSON
         </a>
         <a href="<?= url('admin/security/export.pdf') ?>" class="btn btn-sm btn-outline-danger" title="Pobierz raport PDF">
@@ -14,8 +17,8 @@
     </div>
 </div>
 <div class="alert alert-info alert-sm py-2 mb-3 small">
-    <i class="bi bi-info-circle"></i>
-    Aby zgłosić znalezione problemy — pobierz raport <strong>JSON</strong> i prześlij go deweloperowi w celu wdrożenia poprawek.
+    <i class="bi bi-robot"></i>
+    Aby zgłosić znalezione problemy do Claude: pobierz plik <strong>.md</strong> i wklej jego zawartość do rozmowy z asystentem AI. Plik zawiera pełną listę problemów z zaleceniami w formacie Markdown.
 </div>
 
 <?php

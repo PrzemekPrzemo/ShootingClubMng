@@ -76,6 +76,97 @@ class AdminSecurityController extends BaseController
         exit;
     }
 
+    // ── Export as Markdown (for AI analysis) ─────────────────────────
+
+    public function exportMarkdown(): void
+    {
+        $checks    = $this->runAll();
+        $score     = $this->calcScore($checks);
+        $timestamp = date('Y-m-d H:i:s');
+        $cfg       = require ROOT_PATH . '/config/app.php';
+        $appVer    = $cfg['app_version'] ?? '?';
+
+        $levelEmoji = ['critical' => '🔴', 'warning' => '🟡', 'info' => '🔵'];
+
+        $lines = [];
+        $lines[] = '# Raport audytu bezpieczeństwa — ShootingClubMng';
+        $lines[] = '';
+        $lines[] = '## Metadane';
+        $lines[] = '| Klucz | Wartość |';
+        $lines[] = '|---|---|';
+        $lines[] = "| Wygenerowano | `{$timestamp}` |";
+        $lines[] = '| PHP | `' . PHP_VERSION . '` |';
+        $lines[] = "| Wersja aplikacji | `{$appVer}` |";
+        $lines[] = '| Hostname | `' . (gethostname() ?: 'unknown') . '` |';
+        $lines[] = '';
+        $lines[] = '## Wynik ogólny';
+        $lines[] = "- **Wynik:** {$score['pct']}%";
+        $lines[] = "- **Krytyczne:** {$score['critical']}";
+        $lines[] = "- **Ostrzeżenia:** {$score['warnings']}";
+        $lines[] = "- **Zaliczone:** {$score['passed']}/{$score['total']}";
+        $lines[] = '';
+
+        // Issues only section — most useful for AI
+        $hasIssues = false;
+        foreach ($checks as $items) {
+            foreach ($items as $item) {
+                if (!$item['pass']) { $hasIssues = true; break 2; }
+            }
+        }
+
+        if ($hasIssues) {
+            $lines[] = '## Znalezione problemy';
+            $lines[] = '';
+            foreach ($checks as $group => $items) {
+                $fails = array_filter($items, fn($c) => !$c['pass']);
+                if (empty($fails)) continue;
+                $lines[] = "### {$group}";
+                $lines[] = '';
+                foreach ($fails as $item) {
+                    $emoji = $levelEmoji[$item['level']] ?? '⚪';
+                    $level = strtoupper($item['level']);
+                    $lines[] = "- {$emoji} **[{$level}]** {$item['name']}";
+                    $lines[] = "  - *Zalecenie:* {$item['suggestion']}";
+                }
+                $lines[] = '';
+            }
+        } else {
+            $lines[] = '## Znalezione problemy';
+            $lines[] = '';
+            $lines[] = '_Brak problemów — wszystkie sprawdzenia zaliczone._';
+            $lines[] = '';
+        }
+
+        // Full checklist
+        $lines[] = '## Pełna lista sprawdzeń';
+        $lines[] = '';
+        foreach ($checks as $group => $items) {
+            $lines[] = "### {$group}";
+            $lines[] = '';
+            foreach ($items as $item) {
+                $icon = $item['pass'] ? '✅' : ($levelEmoji[$item['level']] ?? '❌');
+                $line = "{$icon} {$item['name']}";
+                if (!$item['pass']) {
+                    $line .= " — _{$item['suggestion']}_";
+                }
+                $lines[] = "- {$line}";
+            }
+            $lines[] = '';
+        }
+
+        $lines[] = '---';
+        $lines[] = '_Analiza statyczna lokalna — bez połączeń zewnętrznych._';
+
+        $content  = implode("\n", $lines);
+        $filename = 'security_audit_' . date('Y-m-d_His') . '.md';
+
+        header('Content-Type: text/markdown; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-cache');
+        echo $content;
+        exit;
+    }
+
     // ── Export as PDF ─────────────────────────────────────────────────
 
     public function exportPdf(): void

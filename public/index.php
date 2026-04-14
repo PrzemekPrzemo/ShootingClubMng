@@ -239,6 +239,7 @@ $router->get('/subscription',                          [\App\Controllers\Subscri
 $router->get('/admin/security',             [\App\Controllers\AdminSecurityController::class, 'index']);
 $router->get('/admin/security/export.json', [\App\Controllers\AdminSecurityController::class, 'exportJson']);
 $router->get('/admin/security/export.pdf',  [\App\Controllers\AdminSecurityController::class, 'exportPdf']);
+$router->get('/admin/security/export.md',   [\App\Controllers\AdminSecurityController::class, 'exportMarkdown']);
 
 // Online payments — master admin view
 $router->get('/admin/online-payments',               [\App\Controllers\PaymentGatewayController::class, 'adminIndex']);
