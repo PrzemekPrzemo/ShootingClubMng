@@ -258,12 +258,15 @@
     var licenseNumberInput = document.getElementById('licenseNumberInput');
 
     // Keyword => match (short_code or name substring, case-insensitive)
+    // Order matters — more specific patterns (LS-) must come before less specific (L-)
     var typeKeywords = [
-        { pattern: /\bPAT\b|\/PAT\//i,        match: ['PAT', 'patent'] },
-        { pattern: /\bZAW\b|\/ZAW\//i,        match: ['ZAW', 'zawodnicza'] },
-        { pattern: /\bTREN\b|\bTR\b|\/TR\//i, match: ['TREN', 'TR', 'trener'] },
-        { pattern: /\bSED\b|SĘD|\/SED\//i,    match: ['SED', 'SĘD', 'sędz'] },
-        { pattern: /\bINS\b|\/INS\//i,        match: ['INS', 'instruktor'] }
+        { pattern: /^LS-/i,                     match: ['SED', 'SĘD', 'sędz'] },
+        { pattern: /^L-/i,                      match: ['ZAW', 'zawodnicza'] },
+        { pattern: /\bPAT\b|\/PAT\//i,          match: ['PAT', 'patent'] },
+        { pattern: /\bZAW\b|\/ZAW\//i,          match: ['ZAW', 'zawodnicza'] },
+        { pattern: /\bTREN\b|\bTR\b|\/TR\//i,   match: ['TREN', 'TR', 'trener'] },
+        { pattern: /\bSED\b|SĘD|\/SED\//i,      match: ['SED', 'SĘD', 'sędz'] },
+        { pattern: /\bINS\b|\/INS\//i,          match: ['INS', 'instruktor'] }
     ];
 
     function detectLicenseType() {
