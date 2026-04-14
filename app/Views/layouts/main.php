@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl" data-bs-theme="dark">
+<html lang="pl" data-bs-theme="dark" id="htmlRoot">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -528,6 +528,9 @@ $__brandText       = $__hasClubCtx
         </div>
         <button class="sb-collapse-btn" id="desktopCollapse" title="Zwiń sidebar">
             <i class="bi bi-chevron-left"></i>
+        </button>
+        <button type="button" class="sb-action-btn" id="themeToggleBtn" title="Przełącz tryb jasny/ciemny">
+            <i class="bi bi-moon-stars" id="themeIcon"></i>
         </button>
         <a href="<?= url('2fa/setup') ?>" class="sb-action-btn" title="Ustawienia 2FA">
             <i class="bi bi-shield-lock"></i>

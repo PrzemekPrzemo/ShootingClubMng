@@ -6,7 +6,7 @@ intro: `
 <h1>Shooting club management system</h1>
 <p class="lead">Shootero is a complete system for managing athletes, licenses, competitions, trainings and club finances at shooting clubs.</p>
 <div class="cards">
-  <div class="card"><div class="card-icon">👥</div><h3>6 user types</h3><p>Super admin, club administrator, board, instructor, judge and athlete — each with dedicated permissions.</p></div>
+  <div class="card"><div class="card-icon">👥</div><h3>5 user types</h3><p>Club administrator, board, instructor, judge and athlete — each with dedicated permissions.</p></div>
   <div class="card"><div class="card-icon">🏆</div><h3>Competition management</h3><p>Create competitions, online registration, start-list generator with CSV import, PDF protocols.</p></div>
   <div class="card"><div class="card-icon">💰</div><h3>Club finances</h3><p>Membership fees, PZSS fees, online payments (Przelewy24), configurable fee tariff per class.</p></div>
   <div class="card"><div class="card-icon">🎯</div><h3>Athlete portal</h3><p>Every athlete has their own panel for managing data, medical exams and sign-ups.</p></div>

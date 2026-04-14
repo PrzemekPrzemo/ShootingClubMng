@@ -4,6 +4,39 @@
 
 'use strict';
 
+// Theme toggle (light / dark)
+(function () {
+    function applyTheme(theme) {
+        const root = document.getElementById('htmlRoot') || document.documentElement;
+        root.setAttribute('data-bs-theme', theme);
+        const icon = document.getElementById('themeIcon');
+        if (icon) {
+            icon.className = theme === 'dark' ? 'bi bi-moon-stars' : 'bi bi-sun';
+        }
+        try { localStorage.setItem('bs-theme', theme); } catch (e) {}
+    }
+
+    // Apply saved theme on load (before DOMContentLoaded to avoid flash)
+    try {
+        const saved = localStorage.getItem('bs-theme');
+        if (saved === 'light' || saved === 'dark') applyTheme(saved);
+    } catch (e) {}
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const btn = document.getElementById('themeToggleBtn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                const root = document.getElementById('htmlRoot') || document.documentElement;
+                const current = root.getAttribute('data-bs-theme') || 'dark';
+                applyTheme(current === 'dark' ? 'light' : 'dark');
+            });
+            // Ensure icon reflects current state on load
+            const current = (document.getElementById('htmlRoot') || document.documentElement).getAttribute('data-bs-theme') || 'dark';
+            applyTheme(current);
+        }
+    });
+})();
+
 // Auto-dismiss alerts after 5s
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.alert.alert-success, .alert.alert-info').forEach(function (el) {
