@@ -446,6 +446,7 @@ $__brandText       = $__hasClubCtx
             ['icon' => 'megaphone',            'label' => 'Reklamy',        'url' => 'admin/ads',          'match' => '/admin/ads'],
             ['icon' => 'gear',                 'label' => 'Ustawienia',     'url' => 'admin/settings',     'match' => '/admin/settings'],
             ['icon' => 'cash-coin',            'label' => 'Płatności P24',  'url' => 'admin/online-payments', 'match' => '/admin/online-payments'],
+            ['icon' => 'list-ol',              'label' => 'Listy startowe', 'url' => 'startlist',           'match' => '/startlist'],
             ['icon' => 'shield-check',         'label' => 'Bezpieczeństwo', 'url' => 'admin/security',     'match' => '/admin/security'],
             ['icon' => 'cloud-arrow-down',     'label' => 'Kopie zapasowe', 'url' => 'admin/backups',      'match' => '/admin/backups'],
         ];

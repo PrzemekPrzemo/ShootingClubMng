@@ -16,8 +16,12 @@ class StartListController extends BaseController
     {
         parent::__construct();
         $this->requireLogin();
-        $this->requireRole(['admin', 'zarzad', 'instruktor']);
-        $this->requireClubContext();
+        if (Auth::isSuperAdmin()) {
+            // Super admin can use startlist without club context
+        } else {
+            $this->requireRole(['admin', 'zarzad', 'instruktor']);
+            $this->requireClubContext();
+        }
         $this->model = new StartListModel();
     }
 
@@ -52,7 +56,7 @@ class StartListController extends BaseController
             Session::flash('error', implode('<br>', $errors));
             $this->redirect('startlist/create');
         }
-        $data['club_id']    = $this->currentClub();
+        $data['club_id']    = \App\Helpers\ClubContext::current();
         $data['created_by'] = Auth::id();
         $id = $this->model->createGenerator($data);
         Session::flash('success', 'Generator utworzony. Dodaj dyscypliny w kroku 2.');
