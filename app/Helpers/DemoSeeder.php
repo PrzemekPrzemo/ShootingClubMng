@@ -135,13 +135,14 @@ class DemoSeeder
 
         $ids  = [];
         $year = date('Y');
-        // Determine starting sequence for member_number within this club
+        // member_number is UNIQUE across ALL clubs — query global max to avoid collisions
         $lastNum = $db->prepare(
-            "SELECT member_number FROM members WHERE member_number LIKE ? AND club_id = ? ORDER BY id DESC LIMIT 1"
+            "SELECT MAX(CAST(SUBSTRING(member_number, 7) AS UNSIGNED))
+             FROM members WHERE member_number LIKE ?"
         );
-        $lastNum->execute(["KS{$year}%", $cid]);
-        $lastVal = $lastNum->fetchColumn();
-        $seq = $lastVal ? ((int)substr($lastVal, 6) + 1) : 1;
+        $lastNum->execute(["KS{$year}____"]);
+        $maxSeq = (int)$lastNum->fetchColumn();
+        $seq = $maxSeq + 1;
 
         foreach ($people as $p) {
             $memberNumber = sprintf('KS%s%04d', $year, $seq++);
