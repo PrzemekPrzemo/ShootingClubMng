@@ -63,6 +63,18 @@
                     <dd class="col-sm-8"><?= format_date($member['birth_date']) ?></dd>
                     <dt class="col-sm-4">PESEL</dt>
                     <dd class="col-sm-8"><?= e($member['pesel'] ?? '—') ?></dd>
+                    <?php if ($idCardMasked !== null || $idExpiryYear !== null): ?>
+                    <dt class="col-sm-4">Dowód osobisty</dt>
+                    <dd class="col-sm-8">
+                        <?php if ($idCardMasked !== null): ?>
+                        <code><?= e($idCardMasked) ?></code>
+                        <?php endif; ?>
+                        <?php if ($idExpiryYear !== null): ?>
+                        <span class="text-muted small ms-2">ważny do: <?= e($idExpiryYear) ?></span>
+                        <?php endif; ?>
+                        <i class="bi bi-lock-fill text-muted ms-1" title="Dane zaszyfrowane"></i>
+                    </dd>
+                    <?php endif; ?>
                     <dt class="col-sm-4">Płeć</dt>
                     <dd class="col-sm-8"><?= $member['gender'] === 'M' ? 'Mężczyzna' : ($member['gender'] === 'K' ? 'Kobieta' : '—') ?></dd>
                     <dt class="col-sm-4">Kategoria wiekowa</dt>

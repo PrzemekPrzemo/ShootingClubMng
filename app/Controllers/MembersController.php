@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Helpers\Auth;
+use App\Helpers\Crypto;
 use App\Helpers\Csrf;
 use App\Helpers\MemberAuth;
 use App\Helpers\Session;
@@ -330,6 +331,22 @@ class MembersController extends BaseController
             $this->redirect('members');
         }
 
+        // Decrypt id_card fields — pass masked versions to the view
+        $idCardNumber  = Crypto::decrypt($member['id_card_number'] ?? null);
+        $idCardExpiry  = Crypto::decrypt($member['id_card_expiry'] ?? null);
+
+        // Mask: first + last character only; for expiry: year only
+        $idCardMasked  = null;
+        $idExpiryYear  = null;
+        if ($idCardNumber !== null && strlen($idCardNumber) >= 2) {
+            $idCardMasked = mb_substr($idCardNumber, 0, 1)
+                . str_repeat('*', max(1, mb_strlen($idCardNumber) - 2))
+                . mb_substr($idCardNumber, -1);
+        }
+        if ($idCardExpiry !== null && strlen($idCardExpiry) >= 4) {
+            $idExpiryYear = substr($idCardExpiry, 0, 4);
+        }
+
         $this->render('members/show', [
             'title'        => $member['first_name'] . ' ' . $member['last_name'],
             'member'       => $member,
@@ -341,6 +358,8 @@ class MembersController extends BaseController
             'payment'      => $this->memberModel->getPaymentStatus((int)$id, (int)date('Y')),
             'achievements'   => (new MemberAchievementModel())->getForMember((int)$id),
             'feeAssignment'  => (new ClubFeeConfigModel())->getAssignment((int)$id, (int)date('Y')),
+            'idCardMasked'   => $idCardMasked,
+            'idExpiryYear'   => $idExpiryYear,
         ]);
     }
 
@@ -354,6 +373,14 @@ class MembersController extends BaseController
 
         $judgeModel  = new JudgeLicenseModel();
         $judgeAll    = $judgeModel->getForMember((int)$id);
+
+        // Decrypt sensitive fields so the form can pre-fill them
+        if (!empty($member['id_card_number'])) {
+            $member['id_card_number'] = Crypto::decrypt($member['id_card_number']) ?? '';
+        }
+        if (!empty($member['id_card_expiry'])) {
+            $member['id_card_expiry'] = Crypto::decrypt($member['id_card_expiry']) ?? '';
+        }
 
         $this->render('members/form', [
             'title'         => 'Edytuj zawodnika',
@@ -605,6 +632,10 @@ class MembersController extends BaseController
             'status'          => $_POST['status'] ?? 'aktywny',
             'notes'                  => trim($_POST['notes'] ?? '') ?: null,
             'firearm_permit_number'  => trim($_POST['firearm_permit_number'] ?? '') ?: null,
+            'id_card_number'         => ($raw = trim($_POST['id_card_number'] ?? '')) !== ''
+                                            ? Crypto::encrypt($raw) : null,
+            'id_card_expiry'         => ($rawExp = trim($_POST['id_card_expiry'] ?? '')) !== ''
+                                            ? Crypto::encrypt($rawExp) : null,
             'created_by'             => Auth::id(),
         ];
     }
@@ -621,6 +652,93 @@ class MembersController extends BaseController
             $errors[] = 'Nieprawidłowy typ członkostwa.';
         }
         return $errors;
+    }
+
+    // ----------------------------------------------------------------
+    // Weapons report
+    // ----------------------------------------------------------------
+
+    public function weaponsReport(): void
+    {
+        $this->requireRole(['admin', 'zarzad']);
+
+        $clubId  = \App\Helpers\ClubContext::current();
+        $db      = \App\Helpers\Database::pdo();
+
+        // Load all active members for the selection list
+        $stmt = $db->prepare(
+            "SELECT id, last_name, first_name, member_number
+             FROM members
+             WHERE club_id = ?
+             ORDER BY last_name, first_name"
+        );
+        $stmt->execute([$clubId]);
+        $members = $stmt->fetchAll();
+
+        $this->render('members/weapons_report', [
+            'title'   => 'Raport broni zawodników',
+            'members' => $members,
+        ]);
+    }
+
+    public function weaponsReportPdf(): void
+    {
+        $this->requireRole(['admin', 'zarzad']);
+        \App\Helpers\Csrf::verify();
+
+        $clubId   = \App\Helpers\ClubContext::current();
+        $db       = \App\Helpers\Database::pdo();
+        $clubName = current_club_name('Klub Strzelecki');
+
+        $selectedIds = $_POST['member_ids'] ?? [];
+        $allMembers  = !empty($_POST['all_members']);
+
+        if ($allMembers || empty($selectedIds)) {
+            // Generate for all members of the club
+            $stmt = $db->prepare(
+                "SELECT m.last_name, m.first_name, m.pesel, m.firearm_permit_number,
+                        mw.name AS weapon_name, mw.type, mw.caliber,
+                        mw.manufacturer, mw.serial_number, mw.permit_number AS mw_permit
+                 FROM members m
+                 INNER JOIN member_weapons mw ON mw.member_id = m.id AND mw.is_active = 1
+                 WHERE m.club_id = ?
+                 ORDER BY m.last_name, m.first_name, mw.type, mw.name"
+            );
+            $stmt->execute([$clubId]);
+        } else {
+            // Validate and filter selected IDs to this club
+            $ids = array_map('intval', (array)$selectedIds);
+            $ids = array_filter($ids, fn($i) => $i > 0);
+            if (empty($ids)) {
+                \App\Helpers\Session::flash('error', 'Nie wybrano żadnych zawodników.');
+                $this->redirect('members/weapons-report');
+            }
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $stmt = $db->prepare(
+                "SELECT m.last_name, m.first_name, m.pesel, m.firearm_permit_number,
+                        mw.name AS weapon_name, mw.type, mw.caliber,
+                        mw.manufacturer, mw.serial_number, mw.permit_number AS mw_permit
+                 FROM members m
+                 INNER JOIN member_weapons mw ON mw.member_id = m.id AND mw.is_active = 1
+                 WHERE m.club_id = ? AND m.id IN ({$placeholders})
+                 ORDER BY m.last_name, m.first_name, mw.type, mw.name"
+            );
+            $stmt->execute(array_merge([$clubId], $ids));
+        }
+
+        $rows = $stmt->fetchAll();
+
+        $typeLabels = ['pistolet' => 'Pistolet', 'karabin' => 'Karabin', 'strzelba' => 'Strzelba', 'inne' => 'Inne'];
+
+        $html = $this->renderToString('pdf/weapons_report', [
+            'rows'       => $rows,
+            'clubName'   => $clubName,
+            'typeLabels' => $typeLabels,
+            'generatedAt' => date('Y-m-d H:i'),
+        ]);
+
+        $filename = 'raport_broni_' . date('Y-m-d') . '.pdf';
+        \App\Helpers\PdfHelper::send($html, $filename, 'A4-L');
     }
 
     public function memberCard(string $id): void

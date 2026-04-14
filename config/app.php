@@ -11,6 +11,10 @@ return [
     'locale'      => 'pl_PL',
     'base_url'    => '',      // auto-detected in Router; override if needed
 
+    // Encryption key — used by App\Helpers\Crypto for AES-256-CBC field encryption.
+    // CHANGE THIS on every installation. Min 32 random characters recommended.
+    'encryption_key' => getenv('APP_ENCRYPTION_KEY') ?: 'ShooteroDefaultKey2024!ChangeMe!',
+
     // Session
     'session_lifetime' => 7200,  // seconds
 

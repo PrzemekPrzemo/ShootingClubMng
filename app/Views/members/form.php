@@ -180,6 +180,32 @@
                     <textarea name="notes" class="form-control" rows="3"><?= e(old('notes', $member['notes'] ?? '')) ?></textarea>
                 </div>
             </div>
+
+            <!-- Dowód osobisty (zaszyfrowane) -->
+            <div class="card mb-3">
+                <div class="card-header d-flex align-items-center gap-2">
+                    <strong>Dowód osobisty</strong>
+                    <span class="badge bg-secondary ms-auto"><i class="bi bi-lock-fill"></i> Szyfrowane</span>
+                </div>
+                <div class="card-body">
+                    <div class="form-text mb-3">Dane opcjonalne. Szyfrowane w bazie danych — widoczny tylko pierwszy i ostatni znak po zapisaniu.</div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Numer i seria dowodu</label>
+                            <input type="text" name="id_card_number" class="form-control"
+                                   value="<?= e(old('id_card_number', $member['id_card_number'] ?? '')) ?>"
+                                   placeholder="np. ABC 123456"
+                                   autocomplete="off">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Data ważności dowodu</label>
+                            <input type="date" name="id_card_expiry" class="form-control"
+                                   value="<?= e(old('id_card_expiry', $member['id_card_expiry'] ?? '')) ?>">
+                            <div class="form-text">W widoku zawodnika widoczny będzie tylko rok.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Sidebar -->
