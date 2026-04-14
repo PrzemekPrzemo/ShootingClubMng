@@ -247,4 +247,88 @@ class EquipmentController extends BaseController
         if (empty($data['name'])) $errors[] = 'Nazwa broni jest wymagana.';
         return $errors;
     }
+
+    // ── Member weapon — PESEL search (JSON) ──────────────────────────
+
+    public function memberSearch(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        $pesel  = trim($_GET['pesel'] ?? '');
+        $clubId = ClubContext::current();
+
+        if (strlen($pesel) < 5 || !$clubId) {
+            echo json_encode(['member' => null, 'error' => 'Podaj PESEL.']);
+            exit;
+        }
+
+        $db   = \App\Helpers\Database::pdo();
+        $stmt = $db->prepare(
+            "SELECT id, first_name, last_name, member_number, status, firearm_permit_number
+             FROM members
+             WHERE pesel = ? AND club_id = ?
+             LIMIT 1"
+        );
+        $stmt->execute([$pesel, $clubId]);
+        $row = $stmt->fetch();
+
+        if (!$row) {
+            echo json_encode(['member' => null, 'error' => 'Nie znaleziono zawodnika w tym klubie.']);
+            exit;
+        }
+
+        echo json_encode(['member' => [
+            'id'             => (int)$row['id'],
+            'full_name'      => $row['last_name'] . ' ' . $row['first_name'],
+            'member_number'  => $row['member_number'],
+            'status'         => $row['status'],
+            'permit_number'  => $row['firearm_permit_number'] ?? '',
+        ]]);
+        exit;
+    }
+
+    // ── Member weapon — store (POST) ──────────────────────────────────
+
+    public function storeMemberWeapon(): void
+    {
+        Csrf::verify();
+
+        $memberId = (int)($_POST['member_id'] ?? 0);
+        $clubId   = ClubContext::current();
+
+        if (!$memberId || !$clubId) {
+            Session::flash('error', 'Brak danych zawodnika.');
+            $this->redirect('equipment/weapons/create');
+        }
+
+        // Ownership check — member must belong to current club
+        $db   = \App\Helpers\Database::pdo();
+        $stmt = $db->prepare("SELECT id FROM members WHERE id = ? AND club_id = ?");
+        $stmt->execute([$memberId, $clubId]);
+        if (!$stmt->fetch()) {
+            Session::flash('error', 'Zawodnik nie należy do tego klubu.');
+            $this->redirect('equipment/weapons/create');
+        }
+
+        $name = trim($_POST['mw_name'] ?? '');
+        if (empty($name)) {
+            Session::flash('error', 'Nazwa broni zawodnika jest wymagana.');
+            $this->redirect('equipment/weapons/create');
+        }
+
+        $this->memberWeaponModel->create([
+            'member_id'     => $memberId,
+            'name'          => $name,
+            'type'          => $_POST['mw_type'] ?? 'inne',
+            'caliber'       => trim($_POST['mw_caliber'] ?? '') ?: null,
+            'manufacturer'  => trim($_POST['mw_manufacturer'] ?? '') ?: null,
+            'serial_number' => trim($_POST['mw_serial_number'] ?? '') ?: null,
+            'permit_number' => trim($_POST['mw_permit_number'] ?? '') ?: null,
+            'notes'         => trim($_POST['mw_notes'] ?? '') ?: null,
+            'is_active'     => 1,
+            'created_by'    => Auth::id(),
+        ]);
+
+        Session::flash('success', 'Broń zawodnika została dodana i jest widoczna w jego portalu.');
+        $this->redirect('equipment/weapons/create');
+    }
 }

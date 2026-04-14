@@ -107,6 +107,98 @@ $action = $isEdit
         </div>
     </div>
 
+    <?php if (!$isEdit): ?>
+    <!-- ── Dodaj broń zawodnika ──────────────────────────────────── -->
+    <div class="col-md-5">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <strong><i class="bi bi-person-bounding-box"></i> Dodaj broń zawodnika</strong>
+                <div class="small fw-normal opacity-75 mt-1">Wyszukaj zawodnika po PESEL, a broń pojawi się w jego portalu.</div>
+            </div>
+            <div class="card-body">
+
+                <!-- PESEL search -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">PESEL zawodnika</label>
+                    <div class="input-group">
+                        <input type="text" id="peselInput" class="form-control"
+                               placeholder="Wpisz PESEL…" maxlength="11" inputmode="numeric"
+                               autocomplete="off">
+                        <button type="button" class="btn btn-outline-primary" id="peselSearchBtn">
+                            <i class="bi bi-search"></i> Szukaj
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Member result -->
+                <div id="memberResult" class="mb-3" style="display:none">
+                    <div class="alert alert-success py-2 d-flex align-items-center gap-2 mb-0">
+                        <i class="bi bi-person-check fs-5"></i>
+                        <div>
+                            <strong id="memberName"></strong>
+                            <span class="text-muted small ms-1" id="memberNumber"></span>
+                            <span id="memberStatusBadge" class="badge ms-1"></span>
+                        </div>
+                    </div>
+                </div>
+                <div id="memberError" class="alert alert-warning py-2 mb-3" style="display:none"></div>
+
+                <!-- Weapon form — shown after member found -->
+                <form method="post" action="<?= url('equipment/member-weapons') ?>" id="memberWeaponForm" style="display:none">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="member_id" id="memberIdInput" value="">
+
+                    <div class="row g-2">
+                        <div class="col-md-8">
+                            <label class="form-label">Nazwa / model <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="mw_name" required
+                                   placeholder="np. Walther P99, CZ 75">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Typ</label>
+                            <select class="form-select" name="mw_type">
+                                <?php foreach (\App\Models\MemberWeaponModel::$TYPES as $k => $v): ?>
+                                <option value="<?= e($k) ?>"><?= e($v) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Kaliber</label>
+                            <input type="text" class="form-control" name="mw_caliber"
+                                   placeholder="np. 9mm, .22 LR">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Producent</label>
+                            <input type="text" class="form-control" name="mw_manufacturer"
+                                   placeholder="np. Glock, CZ">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Numer seryjny</label>
+                            <input type="text" class="form-control" name="mw_serial_number">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nr pozwolenia</label>
+                            <input type="text" class="form-control" name="mw_permit_number"
+                                   id="mwPermitNumber" placeholder="Nr decyzji">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Uwagi</label>
+                            <input type="text" class="form-control" name="mw_notes"
+                                   placeholder="Opcjonalnie">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-plus-circle"></i> Dodaj broń zawodnika
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <?php if ($isEdit): ?>
     <div class="col-md-5">
         <!-- Current assignment -->
@@ -208,3 +300,74 @@ $action = $isEdit
     </div>
     <?php endif; ?>
 </div>
+
+<?php if (!$isEdit): ?>
+<script>
+(function () {
+    var peselInput   = document.getElementById('peselInput');
+    var searchBtn    = document.getElementById('peselSearchBtn');
+    var memberResult = document.getElementById('memberResult');
+    var memberError  = document.getElementById('memberError');
+    var memberForm   = document.getElementById('memberWeaponForm');
+    var memberIdIn   = document.getElementById('memberIdInput');
+    var memberName   = document.getElementById('memberName');
+    var memberNumber = document.getElementById('memberNumber');
+    var memberStatus = document.getElementById('memberStatusBadge');
+    var permitField  = document.getElementById('mwPermitNumber');
+    var searchUrl    = <?= json_encode(url('equipment/member-search')) ?>;
+
+    function reset() {
+        memberResult.style.display = 'none';
+        memberError.style.display  = 'none';
+        memberForm.style.display   = 'none';
+        memberIdIn.value = '';
+    }
+
+    function doSearch() {
+        var pesel = peselInput.value.trim();
+        if (pesel.length < 5) return;
+        reset();
+        searchBtn.disabled = true;
+        searchBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        fetch(searchUrl + '?pesel=' + encodeURIComponent(pesel))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                searchBtn.disabled = false;
+                searchBtn.innerHTML = '<i class="bi bi-search"></i> Szukaj';
+                if (data.error || !data.member) {
+                    memberError.textContent = data.error || 'Nie znaleziono zawodnika.';
+                    memberError.style.display = '';
+                    return;
+                }
+                var m = data.member;
+                memberIdIn.value = m.id;
+                memberName.textContent   = m.full_name;
+                memberNumber.textContent = '[' + m.member_number + ']';
+                if (m.status !== 'aktywny') {
+                    memberStatus.textContent = m.status;
+                    memberStatus.className   = 'badge bg-warning ms-1';
+                } else {
+                    memberStatus.textContent = '';
+                }
+                if (m.permit_number && permitField) {
+                    permitField.value = m.permit_number;
+                }
+                memberResult.style.display = '';
+                memberForm.style.display   = '';
+            })
+            .catch(function() {
+                searchBtn.disabled = false;
+                searchBtn.innerHTML = '<i class="bi bi-search"></i> Szukaj';
+                memberError.textContent = 'Błąd połączenia. Spróbuj ponownie.';
+                memberError.style.display = '';
+            });
+    }
+
+    searchBtn.addEventListener('click', doSearch);
+    peselInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); doSearch(); }
+    });
+})();
+</script>
+<?php endif; ?>

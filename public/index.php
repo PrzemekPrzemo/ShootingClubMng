@@ -377,6 +377,8 @@ $router->get('/competitions/:id/scorecards/print',                [\App\Controll
 
 // Equipment
 $router->get('/equipment',                             [\App\Controllers\EquipmentController::class, 'index']);
+$router->get('/equipment/member-search',               [\App\Controllers\EquipmentController::class, 'memberSearch']);
+$router->post('/equipment/member-weapons',             [\App\Controllers\EquipmentController::class, 'storeMemberWeapon']);
 $router->get('/equipment/weapons/create',              [\App\Controllers\EquipmentController::class, 'createWeapon']);
 $router->post('/equipment/weapons/create',             [\App\Controllers\EquipmentController::class, 'storeWeapon']);
 $router->get('/equipment/:id/edit',                    [\App\Controllers\EquipmentController::class, 'editWeapon']);
