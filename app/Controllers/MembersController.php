@@ -297,6 +297,7 @@ class MembersController extends BaseController
         }
 
         $data = $this->collectFormData();
+        $data['created_by'] = Auth::id();
         $errors = $this->validate($data);
 
         if ($errors) {
@@ -621,7 +622,7 @@ class MembersController extends BaseController
 
     private function collectFormData(): array
     {
-        return [
+        $data = [
             'first_name'      => trim($_POST['first_name'] ?? ''),
             'last_name'       => trim($_POST['last_name'] ?? ''),
             'pesel'           => trim($_POST['pesel'] ?? '') ?: null,
@@ -640,12 +641,17 @@ class MembersController extends BaseController
             'status'          => $_POST['status'] ?? 'aktywny',
             'notes'                  => trim($_POST['notes'] ?? '') ?: null,
             'firearm_permit_number'  => trim($_POST['firearm_permit_number'] ?? '') ?: null,
-            'id_card_number'         => ($raw = trim($_POST['id_card_number'] ?? '')) !== ''
-                                            ? Crypto::encrypt($raw) : null,
-            'id_card_expiry'         => ($rawExp = trim($_POST['id_card_expiry'] ?? '')) !== ''
-                                            ? Crypto::encrypt($rawExp) : null,
-            'created_by'             => Auth::id(),
         ];
+
+        // Optional encrypted fields (may not exist in DB if migration not applied)
+        $rawIdCard  = trim($_POST['id_card_number'] ?? '');
+        $rawExpiry  = trim($_POST['id_card_expiry'] ?? '');
+        if ($rawIdCard !== '' || $rawExpiry !== '' || isset($_POST['id_card_number'])) {
+            $data['id_card_number'] = $rawIdCard !== '' ? Crypto::encrypt($rawIdCard) : null;
+            $data['id_card_expiry'] = $rawExpiry !== '' ? Crypto::encrypt($rawExpiry) : null;
+        }
+
+        return $data;
     }
 
     private function validate(array $data): array
