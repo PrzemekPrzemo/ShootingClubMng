@@ -1,10 +1,18 @@
 <div class="d-flex align-items-center mb-3 gap-2">
     <h2 class="h4 mb-0"><i class="bi bi-person-badge"></i> Rejestr sędziów</h2>
+    <span class="badge bg-secondary"><?= count($judges ?? []) ?> licencji</span>
     <?php if (in_array($authUser['role'], ['admin','zarzad'])): ?>
     <a href="<?= url('judges/create') ?>" class="btn btn-sm btn-danger ms-auto">
         <i class="bi bi-plus-lg"></i> Dodaj licencję
     </a>
     <?php endif; ?>
+</div>
+
+<div class="alert alert-info py-2 small">
+    <i class="bi bi-info-circle"></i>
+    Rejestr pokazuje wszystkie licencje sędziowskie przypisane do zawodników.
+    Ikona <i class="bi bi-person-check text-success"></i> oznacza, że sędzia posiada także konto użytkownika
+    z możliwością logowania.
 </div>
 
 <!-- Filtry -->
@@ -69,6 +77,12 @@
                             <?= e($j['last_name']) ?> <?= e($j['first_name']) ?>
                         </a>
                         <small class="text-muted"><?= e($j['member_number']) ?></small>
+                        <?php if (!empty($j['user_id'])): ?>
+                            <i class="bi bi-person-check text-success ms-1" title="Posiada konto użytkownika: <?= e($j['user_username'] ?? '') ?>"></i>
+                        <?php endif; ?>
+                        <?php if (($j['member_status'] ?? 'aktywny') !== 'aktywny'): ?>
+                            <span class="badge bg-secondary ms-1"><?= e($j['member_status']) ?></span>
+                        <?php endif; ?>
                     </td>
                     <td class="text-center">
                         <span class="badge bg-dark"><?= e($j['judge_class']) ?></span>

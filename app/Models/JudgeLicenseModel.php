@@ -11,10 +11,11 @@ class JudgeLicenseModel extends BaseModel
         $where  = ['1=1'];
         $params = [];
 
-        // Scope to current club (via member's club_id) when context is set
+        // Scope to current club (via member's club_id) when context is set.
+        // Also include judges where the member has no club assigned (legacy data).
         $clubId = \App\Helpers\ClubContext::current();
         if ($clubId !== null) {
-            $where[]  = 'm.club_id = ?';
+            $where[]  = '(m.club_id = ? OR m.club_id IS NULL)';
             $params[] = $clubId;
         }
 
@@ -40,12 +41,14 @@ class JudgeLicenseModel extends BaseModel
         $whereClause = implode(' AND ', $where);
         $stmt = $this->db->prepare("
             SELECT jl.*,
-                   m.first_name, m.last_name, m.member_number,
+                   m.first_name, m.last_name, m.member_number, m.status AS member_status,
                    d.name AS discipline_name,
+                   u.id AS user_id, u.username AS user_username,
                    DATEDIFF(jl.valid_until, CURDATE()) AS days_left
             FROM judge_licenses jl
             JOIN members m ON m.id = jl.member_id
             LEFT JOIN disciplines d ON d.id = jl.discipline_id
+            LEFT JOIN users u ON u.member_id = m.id
             WHERE {$whereClause}
             ORDER BY jl.valid_until ASC, m.last_name, m.first_name
         ");
