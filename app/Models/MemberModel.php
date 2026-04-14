@@ -46,6 +46,40 @@ class MemberModel extends ClubScopedModel
         return $this->paginate($sql, $params, $page, $perPage);
     }
 
+    /**
+     * Find which page a member appears on in the default listing (sorted by last_name, first_name).
+     */
+    public function findPageFor(int $memberId, int $perPage = 25): int
+    {
+        $clubId = $this->clubId();
+        $where  = ['1=1'];
+        $params = [];
+
+        if ($clubId !== null) {
+            $where[]  = 'm.club_id = ?';
+            $params[] = $clubId;
+        }
+
+        $whereClause = implode(' AND ', $where);
+
+        // Get the member's sort values
+        $stmt = $this->db->prepare("SELECT last_name, first_name FROM members WHERE id = ?");
+        $stmt->execute([$memberId]);
+        $member = $stmt->fetch();
+        if (!$member) return 1;
+
+        // Count how many members come before this one in sort order
+        $countSql = "SELECT COUNT(*) FROM members m
+                     WHERE {$whereClause}
+                       AND (m.last_name < ? OR (m.last_name = ? AND m.first_name < ?))";
+        $countParams = array_merge($params, [$member['last_name'], $member['last_name'], $member['first_name']]);
+        $stmt = $this->db->prepare($countSql);
+        $stmt->execute($countParams);
+        $position = (int)$stmt->fetchColumn();
+
+        return (int)floor($position / $perPage) + 1;
+    }
+
     public function getWithDetails(int $id): ?array
     {
         $clubId    = $this->clubId();

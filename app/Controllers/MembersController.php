@@ -466,7 +466,9 @@ class MembersController extends BaseController
             header('Location: ' . $redirectAfter);
             exit;
         }
-        $this->redirect("members/{$id}");
+
+        $page = $this->memberModel->findPageFor((int)$id);
+        $this->redirect('members' . ($page > 1 ? '?page=' . $page : ''));
     }
 
     public function destroy(string $id): void
