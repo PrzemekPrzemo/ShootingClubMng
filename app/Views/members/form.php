@@ -3,9 +3,10 @@
     <h2 class="h4 mb-0"><?= e($title) ?></h2>
 </div>
 
-<form method="post" enctype="multipart/form-data"
+<form method="post" enctype="multipart/form-data" id="memberForm"
       action="<?= $mode === 'create' ? url('members/create') : url('members/' . $member['id'] . '/edit') ?>">
     <?= csrf_field() ?>
+    <input type="hidden" name="redirect_after" id="redirectAfter" value="">
 
     <div class="row g-4">
         <!-- Podstawowe dane -->
@@ -293,7 +294,7 @@
                     <strong><i class="bi bi-card-checklist me-1 text-primary"></i>Licencja zawodnicza</strong>
                     <?php if ($mode === 'edit'): ?>
                     <a href="<?= url('licenses/create?member_id=' . (int)$member['id']) ?>"
-                       class="btn btn-sm btn-outline-primary py-0" title="Dodaj licencję zawodniczą">
+                       class="btn btn-sm btn-outline-primary py-0 save-first" title="Dodaj licencję zawodniczą">
                         <i class="bi bi-plus"></i>
                     </a>
                     <?php endif; ?>
@@ -310,12 +311,12 @@
                                 <?= $daysLic === null ? 'bezterminowa' : ($daysLic >= 0 ? "za {$daysLic} dni" : 'WYGASŁA') ?>
                             </span>
                         </p>
-                        <a href="<?= url('licenses/create?member_id=' . (int)$member['id']) ?>" class="small">
+                        <a href="<?= url('licenses/create?member_id=' . (int)$member['id']) ?>" class="small save-first">
                             <i class="bi bi-plus-circle"></i> Dodaj kolejną
                         </a>
                     <?php else: ?>
                         <p class="text-muted small mb-1">Brak licencji zawodniczej.</p>
-                        <a href="<?= url('licenses/create?member_id=' . (int)$member['id']) ?>" class="btn btn-sm btn-outline-primary w-100">
+                        <a href="<?= url('licenses/create?member_id=' . (int)$member['id']) ?>" class="btn btn-sm btn-outline-primary w-100 save-first">
                             <i class="bi bi-plus"></i> Dodaj licencję
                         </a>
                     <?php endif; ?>
@@ -328,7 +329,7 @@
                     <strong><i class="bi bi-person-badge me-1 text-info"></i>Licencja sędziowska</strong>
                     <?php if ($mode === 'edit'): ?>
                     <a href="<?= url('judges/create?member_id=' . (int)$member['id']) ?>"
-                       class="btn btn-sm btn-outline-info py-0" title="Dodaj licencję sędziowską">
+                       class="btn btn-sm btn-outline-info py-0 save-first" title="Dodaj licencję sędziowską">
                         <i class="bi bi-plus"></i>
                     </a>
                     <?php endif; ?>
@@ -350,16 +351,16 @@
                                 <?= $daysJl === null ? 'bezterminowa' : ($daysJl >= 0 ? "za {$daysJl} dni" : 'WYGASŁA') ?>
                             </span>
                         </p>
-                        <a href="<?= url('judges/' . (int)$judgeLicense['id'] . '/edit') ?>" class="small">
+                        <a href="<?= url('judges/' . (int)$judgeLicense['id'] . '/edit') ?>" class="small save-first">
                             <i class="bi bi-pencil"></i> Edytuj
                         </a>
                         &nbsp;|&nbsp;
-                        <a href="<?= url('judges/create?member_id=' . (int)$member['id']) ?>" class="small">
+                        <a href="<?= url('judges/create?member_id=' . (int)$member['id']) ?>" class="small save-first">
                             <i class="bi bi-plus-circle"></i> Dodaj kolejną
                         </a>
                     <?php else: ?>
                         <p class="text-muted small mb-1">Brak licencji sędziowskiej.</p>
-                        <a href="<?= url('judges/create?member_id=' . (int)$member['id']) ?>" class="btn btn-sm btn-outline-info w-100">
+                        <a href="<?= url('judges/create?member_id=' . (int)$member['id']) ?>" class="btn btn-sm btn-outline-info w-100 save-first">
                             <i class="bi bi-plus"></i> Dodaj licencję sędziowską
                         </a>
                     <?php endif; ?>
@@ -412,6 +413,19 @@
         </div>
     </div>
 </template>
+
+<script>
+// Auto-save: clicking license/judge links saves the form first, then navigates
+document.querySelectorAll('.save-first').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        var form = document.getElementById('memberForm');
+        if (!form) return;
+        document.getElementById('redirectAfter').value = this.href;
+        form.submit();
+    });
+});
+</script>
 
 <script>
 document.getElementById('addDisciplineBtn').addEventListener('click', function() {

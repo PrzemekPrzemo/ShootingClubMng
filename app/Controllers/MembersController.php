@@ -460,6 +460,12 @@ class MembersController extends BaseController
         }
 
         Session::flash('success', 'Dane zawodnika zostały zaktualizowane.');
+
+        $redirectAfter = trim($_POST['redirect_after'] ?? '');
+        if ($redirectAfter && str_starts_with($redirectAfter, url(''))) {
+            header('Location: ' . $redirectAfter);
+            exit;
+        }
         $this->redirect("members/{$id}");
     }
 
