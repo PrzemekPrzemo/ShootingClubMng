@@ -310,6 +310,7 @@ $router->get('/members/:id',            [\App\Controllers\MembersController::cla
 $router->get('/members/:id/edit',       [\App\Controllers\MembersController::class, 'edit']);
 $router->post('/members/:id/edit',      [\App\Controllers\MembersController::class, 'update']);
 $router->post('/members/:id/delete',    [\App\Controllers\MembersController::class, 'destroy']);
+$router->post('/members/:id/purge',     [\App\Controllers\MembersController::class, 'purge']);
 
 // Medical Exams
 $router->get('/members/:member_id/exams',            [\App\Controllers\MedicalExamsController::class, 'index']);

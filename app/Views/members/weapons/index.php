@@ -6,20 +6,89 @@
         <i class="bi bi-shield-lock"></i>
         Broń osobista — <?= e($member['full_name']) ?>
     </h2>
-    <a href="<?= url('members/' . (int)$member['id'] . '/weapons/create') ?>" class="btn btn-danger btn-sm ms-auto">
+    <button class="btn btn-danger btn-sm ms-auto" type="button"
+            data-bs-toggle="collapse" data-bs-target="#addWeaponForm">
         <i class="bi bi-plus-lg"></i> Dodaj broń
-    </a>
+    </button>
 </div>
 
 <?php if (!empty($member['firearm_permit_number'])): ?>
 <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
     <i class="bi bi-card-text fs-5"></i>
-    <div>
-        <strong>Numer pozwolenia na broń:</strong> <?= e($member['firearm_permit_number']) ?>
-    </div>
+    <div><strong>Numer pozwolenia na broń:</strong> <?= e($member['firearm_permit_number']) ?></div>
 </div>
 <?php endif; ?>
 
+<!-- Inline add form -->
+<div class="collapse mb-4" id="addWeaponForm">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <strong><i class="bi bi-plus-circle"></i> Dodaj broń — <?= e($member['full_name']) ?></strong>
+        </div>
+        <div class="card-body">
+            <form method="post" action="<?= url('members/' . (int)$member['id'] . '/weapons') ?>">
+                <?= csrf_field() ?>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Nazwa / model <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" required
+                               placeholder="np. Glock 17, CZ 75">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Typ</label>
+                        <select class="form-select" name="type">
+                            <?php foreach ($types as $k => $v): ?>
+                            <option value="<?= e($k) ?>"><?= e($v) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Kaliber</label>
+                        <input type="text" class="form-control" name="caliber" placeholder="np. 9mm">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Producent</label>
+                        <input type="text" class="form-control" name="manufacturer"
+                               placeholder="np. Glock, CZ, H&K">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Numer seryjny</label>
+                        <input type="text" class="form-control" name="serial_number"
+                               placeholder="Nr seryjny">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Nr pozwolenia</label>
+                        <input type="text" class="form-control" name="permit_number"
+                               placeholder="Nr decyzji">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Uwagi</label>
+                        <input type="text" class="form-control" name="notes"
+                               placeholder="Opcjonalne uwagi">
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="is_active"
+                                   id="newWeaponActive" value="1" checked>
+                            <label class="form-check-label" for="newWeaponActive">
+                                Broń aktywna (w posiadaniu)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-plus-circle"></i> Dodaj broń
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary"
+                            data-bs-toggle="collapse" data-bs-target="#addWeaponForm">Anuluj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Weapon list -->
 <div class="card">
     <div class="card-body p-0">
         <?php if (empty($weapons)): ?>
@@ -85,6 +154,13 @@
                         </form>
                     </td>
                 </tr>
+                <?php if (!empty($w['notes'])): ?>
+                <tr class="<?= $w['is_active'] ? '' : 'table-secondary text-muted' ?>">
+                    <td colspan="7" class="small text-muted pt-0 pb-2">
+                        <i class="bi bi-chat-left-text"></i> <?= e($w['notes']) ?>
+                    </td>
+                </tr>
+                <?php endif; ?>
                 <?php endforeach; ?>
             </tbody>
         </table>

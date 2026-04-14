@@ -33,6 +33,14 @@
            onclick="return confirm('Zalogować się jako <?= e(addslashes($member['first_name'] . ' ' . $member['last_name'])) ?> (portal zawodnika)?')">
             <i class="bi bi-person-fill-gear"></i> Portal
         </a>
+        <form method="post" action="<?= url('members/' . $member['id'] . '/purge') ?>"
+              class="d-inline"
+              onsubmit="return confirm('TRWAŁE USUNIĘCIE zawodnika <?= e(addslashes($member['first_name'] . ' ' . $member['last_name'])) ?>.\n\nUsuniętych danych nie można przywrócić. Kontynuować?')">
+            <?= csrf_field() ?>
+            <button type="submit" class="btn btn-sm btn-danger" title="Trwale usuń zawodnika z systemu">
+                <i class="bi bi-trash3-fill"></i> Usuń trwale
+            </button>
+        </form>
         <?php endif; ?>
         <a href="<?= url('members/' . $member['id'] . '/edit') ?>" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-pencil"></i> Edytuj

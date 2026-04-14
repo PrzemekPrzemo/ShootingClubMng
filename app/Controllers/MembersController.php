@@ -458,6 +458,71 @@ class MembersController extends BaseController
         $this->redirect('members');
     }
 
+    // ── Permanent (hard) delete — super admin only ────────────────────
+
+    public function purge(string $id): void
+    {
+        Csrf::verify();
+        if (!Auth::isSuperAdmin()) {
+            Session::flash('error', 'Brak uprawnień. Tylko super admin może trwale usunąć zawodnika.');
+            $this->redirect('members/' . $id);
+        }
+
+        $member = $this->memberModel->findById((int)$id);
+        if (!$member) {
+            Session::flash('error', 'Zawodnik nie istnieje.');
+            $this->redirect('members');
+        }
+
+        $db = \App\Helpers\Database::pdo();
+        try {
+            $db->beginTransaction();
+
+            // Delete related records in dependency order
+            $tables = [
+                'license_disciplines' => "DELETE ld FROM license_disciplines ld
+                                          JOIN licenses l ON l.id = ld.license_id
+                                          WHERE l.member_id = ?",
+                'licenses'            => "DELETE FROM licenses WHERE member_id = ?",
+                'member_weapons'      => "DELETE FROM member_weapons WHERE member_id = ?",
+                'competition_entries' => "DELETE FROM competition_entries WHERE member_id = ?",
+                'training_attendees'  => "DELETE FROM training_attendees WHERE member_id = ?",
+                'medical_exams'       => "DELETE FROM medical_exams WHERE member_id = ?",
+                'member_achievements' => "DELETE FROM member_achievements WHERE member_id = ?",
+                'member_consents'     => "DELETE FROM member_consents WHERE member_id = ?",
+                'member_fee_assignments' => "DELETE FROM member_fee_assignments WHERE member_id = ?",
+                'judge_licenses'      => "DELETE FROM judge_licenses WHERE member_id = ?",
+                'notifications'       => "DELETE FROM notifications WHERE member_id = ?",
+                'activity_log'        => "DELETE FROM activity_log WHERE entity_type = 'member' AND entity_id = ?",
+            ];
+
+            foreach ($tables as $table => $sql) {
+                try {
+                    $db->prepare($sql)->execute([(int)$id]);
+                } catch (\Throwable) {
+                    // Table may not exist — skip silently
+                }
+            }
+
+            // Delete portal auth token if exists
+            try {
+                $db->prepare("DELETE FROM member_portal_users WHERE member_id = ?")->execute([(int)$id]);
+            } catch (\Throwable) {}
+
+            // Finally delete the member
+            $db->prepare("DELETE FROM members WHERE id = ?")->execute([(int)$id]);
+            $db->commit();
+
+            Session::flash('success', "Zawodnik {$member['first_name']} {$member['last_name']} został trwale usunięty z systemu.");
+            $this->redirect('members');
+
+        } catch (\Throwable $e) {
+            $db->rollBack();
+            Session::flash('error', 'Nie można usunąć zawodnika: ' . $e->getMessage());
+            $this->redirect('members/' . $id);
+        }
+    }
+
     // ── History ───────────────────────────────────────────────────────
 
     public function history(string $id): void
