@@ -89,7 +89,7 @@
                 <tbody>
                 <?php foreach ($result['data'] as $p): ?>
                     <?php $isMonthly = !empty($p['period_month']); ?>
-                    <tr<?= $isMonthly ? ' class="table-warning"' : '' ?>>
+                    <tr>
                         <td class="small"><?= format_date($p['payment_date']) ?></td>
                         <td>
                             <a href="<?= url('members/' . $p['member_id']) ?>" class="text-decoration-none">
@@ -97,15 +97,12 @@
                             </a>
                         </td>
                         <td class="small"><?= e($p['type_name']) ?></td>
-                        <td class="fw-semibold text-success"><?= format_money($p['amount']) ?></td>
-                        <td class="small"><?= e($p['method']) ?></td>
-                        <td class="small">
-                            <?php if ($isMonthly): ?>
-                                <span class="badge bg-warning text-dark"><?= $p['period_year'] ?>/<?= str_pad($p['period_month'], 2, '0', STR_PAD_LEFT) ?></span>
-                            <?php else: ?>
-                                <?= $p['period_year'] ?>
-                            <?php endif; ?>
+                        <td class="fw-semibold <?= $isMonthly ? 'text-warning' : 'text-success' ?>"
+                            <?= $isMonthly ? 'title="Wpłata miesięczna (nie roczna)"' : '' ?>>
+                            <?= format_money($p['amount']) ?>
                         </td>
+                        <td class="small"><?= e($p['method']) ?></td>
+                        <td class="small"><?= $p['period_year'] ?><?= $p['period_month'] ? ('/' . str_pad($p['period_month'], 2, '0', STR_PAD_LEFT)) : '' ?></td>
                         <td class="small text-muted"><?= e($p['reference'] ?? '—') ?></td>
                         <td class="text-end">
                             <a href="<?= url('finances/' . $p['id'] . '/edit') ?>" class="btn btn-outline-secondary btn-sm py-0">
@@ -130,7 +127,7 @@
     </div>
 </div>
 <p class="text-muted small mt-2 mb-0">
-    <span class="badge bg-warning text-dark">RRRR/MM</span>
+    <span class="text-warning fw-semibold">żółta kwota</span>
     — wpłaty miesięczne (nie roczne)
 </p>
 <?php if ($result['last_page'] > 1): ?>
