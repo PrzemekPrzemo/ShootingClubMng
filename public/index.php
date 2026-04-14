@@ -336,8 +336,9 @@ $router->post('/members/:member_id/exams/:id/delete',[\App\Controllers\MedicalEx
 
 // Licenses
 $router->get('/licenses',               [\App\Controllers\LicensesController::class, 'index']);
-$router->get('/licenses/create',        [\App\Controllers\LicensesController::class, 'create']);
-$router->post('/licenses/create',       [\App\Controllers\LicensesController::class, 'store']);
+$router->get('/licenses/create',              [\App\Controllers\LicensesController::class, 'create']);
+$router->post('/licenses/create',             [\App\Controllers\LicensesController::class, 'store']);
+$router->get('/licenses/confirm-duplicate',   [\App\Controllers\LicensesController::class, 'confirmDuplicate']);
 $router->get('/licenses/:id/edit',      [\App\Controllers\LicensesController::class, 'edit']);
 $router->post('/licenses/:id/edit',     [\App\Controllers\LicensesController::class, 'update']);
 $router->post('/licenses/:id/delete',   [\App\Controllers\LicensesController::class, 'destroy']);

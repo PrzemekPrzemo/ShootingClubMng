@@ -69,6 +69,18 @@ class LicensesController extends BaseController
     {
         Csrf::verify();
 
+        // Handle confirm-page actions first (extend / replace)
+        $action = $_POST['force_action'] ?? '';
+        if ($action === 'extend' && !empty($_POST['existing_id'])) {
+            $this->doExtend((int)$_POST['existing_id']);
+            return;
+        }
+        if ($action === 'replace' && !empty($_POST['existing_id'])) {
+            $data = $this->collectData();
+            $this->doReplace((int)$_POST['existing_id'], $data);
+            return;
+        }
+
         $data   = $this->collectData();
         $errors = $this->validate($data);
         if ($errors) {
@@ -76,11 +88,90 @@ class LicensesController extends BaseController
             $this->redirect('licenses/create');
         }
 
+        // Check for existing license of the same type
+        $existing = $this->licenseModel->findExisting($data['member_id'], $data['license_type_id']);
+        if ($existing) {
+            Session::set('pending_license', $data);
+            $this->redirect('licenses/confirm-duplicate?existing_id=' . $existing['id']);
+            return;
+        }
+
         $disciplineIds = $data['_discipline_ids'];
         unset($data['_no_expiry'], $data['_discipline_ids']);
         $newId = $this->licenseModel->create($data);
         $this->licenseModel->saveDisciplines($newId, $disciplineIds);
         Session::flash('success', 'Licencja została dodana.');
+        if (!empty($data['member_id'])) {
+            $this->redirect('members/' . $data['member_id'] . '/edit');
+        } else {
+            $this->redirect('licenses');
+        }
+    }
+
+    public function confirmDuplicate(): void
+    {
+        $existingId = (int)($_GET['existing_id'] ?? 0);
+        $existing   = $this->licenseModel->getWithMember($existingId);
+        $pending    = Session::get('pending_license');
+
+        if (!$existing || !$pending) {
+            Session::flash('error', 'Brak danych do potwierdzenia.');
+            $this->redirect('licenses/create');
+        }
+
+        $this->render('licenses/confirm_duplicate', [
+            'title'    => 'Licencja już istnieje',
+            'existing' => $existing,
+            'pending'  => $pending,
+        ]);
+    }
+
+    private function doExtend(int $existingId): void
+    {
+        $existing = $this->licenseModel->findById($existingId);
+        if (!$existing) {
+            Session::flash('error', 'Licencja nie istnieje.');
+            $this->redirect('licenses');
+            return;
+        }
+
+        // Extend to end of current year (or next year if already past)
+        $currentEnd = $existing['valid_until'] ? strtotime($existing['valid_until']) : 0;
+        $endOfYear  = strtotime(date('Y') . '-12-31');
+        $newEnd     = $currentEnd >= $endOfYear
+            ? date('Y', strtotime('+1 year')) . '-12-31'
+            : date('Y') . '-12-31';
+
+        $this->licenseModel->updateLicense($existingId, [
+            'valid_until' => $newEnd,
+            'status'      => 'aktywna',
+        ]);
+
+        Session::remove('pending_license');
+        Session::flash('success', 'Licencja została przedłużona do ' . date('d.m.Y', strtotime($newEnd)) . '.');
+        if (!empty($existing['member_id'])) {
+            $this->redirect('members/' . $existing['member_id'] . '/edit');
+        } else {
+            $this->redirect('licenses');
+        }
+    }
+
+    private function doReplace(int $existingId, array $data): void
+    {
+        $existing = $this->licenseModel->findById($existingId);
+        if (!$existing) {
+            Session::flash('error', 'Licencja nie istnieje.');
+            $this->redirect('licenses');
+            return;
+        }
+
+        $disciplineIds = $data['_discipline_ids'];
+        unset($data['_no_expiry'], $data['_discipline_ids'], $data['created_by']);
+        $this->licenseModel->updateLicense($existingId, $data);
+        $this->licenseModel->saveDisciplines($existingId, $disciplineIds);
+
+        Session::remove('pending_license');
+        Session::flash('success', 'Licencja została zastąpiona nowymi danymi.');
         if (!empty($data['member_id'])) {
             $this->redirect('members/' . $data['member_id'] . '/edit');
         } else {

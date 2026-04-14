@@ -122,6 +122,25 @@ class LicenseModel extends BaseModel
         return $map;
     }
 
+    /**
+     * Find existing license of the same type for a member.
+     */
+    public function findExisting(int $memberId, ?int $licenseTypeId): ?array
+    {
+        if (!$licenseTypeId) return null;
+        $stmt = $this->db->prepare(
+            "SELECT l.*, lt.name AS type_name
+             FROM licenses l
+             LEFT JOIN license_types lt ON lt.id = l.license_type_id
+             WHERE l.member_id = ? AND l.license_type_id = ?
+             ORDER BY l.valid_until DESC
+             LIMIT 1"
+        );
+        $stmt->execute([$memberId, $licenseTypeId]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
     public function getExpiring(int $days = 60): array
     {
         $stmt = $this->db->prepare("
