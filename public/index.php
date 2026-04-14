@@ -556,6 +556,33 @@ $router->get('/calendar/events/:id/edit',            [\App\Controllers\CalendarC
 $router->post('/calendar/events/:id/edit',           [\App\Controllers\CalendarController::class, 'updateEvent']);
 $router->post('/calendar/events/:id/delete',         [\App\Controllers\CalendarController::class, 'destroyEvent']);
 
+// Start List Generator
+$router->get('/startlist',                                     [\App\Controllers\StartListController::class, 'index']);
+$router->get('/startlist/create',                              [\App\Controllers\StartListController::class, 'create']);
+$router->post('/startlist/create',                             [\App\Controllers\StartListController::class, 'store']);
+$router->get('/startlist/:id',                                 [\App\Controllers\StartListController::class, 'show']);
+$router->get('/startlist/:id/edit',                            [\App\Controllers\StartListController::class, 'edit']);
+$router->post('/startlist/:id/edit',                           [\App\Controllers\StartListController::class, 'update']);
+$router->post('/startlist/:id/delete',                         [\App\Controllers\StartListController::class, 'destroy']);
+$router->get('/startlist/:id/disciplines',                     [\App\Controllers\StartListController::class, 'disciplines']);
+$router->post('/startlist/:id/disciplines/add',                [\App\Controllers\StartListController::class, 'addDiscipline']);
+$router->post('/startlist/:id/disciplines/:did/edit',          [\App\Controllers\StartListController::class, 'updateDiscipline']);
+$router->post('/startlist/:id/disciplines/:did/delete',        [\App\Controllers\StartListController::class, 'deleteDiscipline']);
+$router->get('/startlist/:id/combos',                          [\App\Controllers\StartListController::class, 'combos']);
+$router->post('/startlist/:id/combos/add',                     [\App\Controllers\StartListController::class, 'addCombo']);
+$router->post('/startlist/:id/combos/:cid/edit',               [\App\Controllers\StartListController::class, 'updateCombo']);
+$router->post('/startlist/:id/combos/:cid/delete',             [\App\Controllers\StartListController::class, 'deleteCombo']);
+$router->get('/startlist/:id/age-categories',                  [\App\Controllers\StartListController::class, 'ageCategories']);
+$router->post('/startlist/:id/age-categories/add',             [\App\Controllers\StartListController::class, 'addAgeCategory']);
+$router->post('/startlist/:id/age-categories/:cid/edit',       [\App\Controllers\StartListController::class, 'updateAgeCategory']);
+$router->post('/startlist/:id/age-categories/:cid/delete',     [\App\Controllers\StartListController::class, 'deleteAgeCategory']);
+$router->get('/startlist/:id/import',                          [\App\Controllers\StartListController::class, 'importForm']);
+$router->post('/startlist/:id/import',                         [\App\Controllers\StartListController::class, 'importProcess']);
+$router->get('/startlist/:id/import/template',                 [\App\Controllers\StartListController::class, 'importTemplate']);
+$router->post('/startlist/:id/generate',                       [\App\Controllers\StartListController::class, 'generate']);
+$router->get('/startlist/:id/preview',                         [\App\Controllers\StartListController::class, 'preview']);
+$router->get('/startlist/:id/export.pdf',                      [\App\Controllers\StartListController::class, 'exportPdf']);
+
 // Trainings
 $router->get('/trainings',                           [\App\Controllers\TrainingsController::class, 'index']);
 $router->get('/trainings/create',                    [\App\Controllers\TrainingsController::class, 'create']);

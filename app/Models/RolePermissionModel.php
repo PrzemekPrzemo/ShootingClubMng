@@ -13,6 +13,7 @@ class RolePermissionModel extends BaseModel
         'licenses'      => ['label' => 'Licencje',        'icon' => 'card-checklist',          'url' => 'licenses'],
         'finances'      => ['label' => 'Finanse',         'icon' => 'cash-stack',              'url' => 'finances'],
         'competitions'  => ['label' => 'Zawody',          'icon' => 'trophy',                  'url' => 'competitions'],
+        'startlist'     => ['label' => 'Listy startowe',  'icon' => 'list-ol',                 'url' => 'startlist'],
         'judges'        => ['label' => 'Sędziowie',       'icon' => 'person-badge',            'url' => 'judges'],
         'club_fees'     => ['label' => 'Opłaty PZSS',    'icon' => 'bank',                    'url' => 'club-fees'],
         'equipment'     => ['label' => 'Sprzęt',          'icon' => 'tools',                   'url' => 'equipment'],
@@ -33,9 +34,9 @@ class RolePermissionModel extends BaseModel
 
     /** Fallback when role_permissions table doesn't exist yet */
     public const DEFAULTS = [
-        'admin'      => ['dashboard','members','licenses','finances','competitions','judges','club_fees','equipment','trainings','announcements','calendar','reports','config','security'],
-        'zarzad'     => ['dashboard','members','licenses','finances','competitions','judges','club_fees','equipment','trainings','announcements','calendar','reports','config'],
-        'instruktor' => ['dashboard','members','licenses','competitions','equipment','trainings','calendar','reports'],
+        'admin'      => ['dashboard','members','licenses','finances','competitions','startlist','judges','club_fees','equipment','trainings','announcements','calendar','reports','config','security'],
+        'zarzad'     => ['dashboard','members','licenses','finances','competitions','startlist','judges','club_fees','equipment','trainings','announcements','calendar','reports','config'],
+        'instruktor' => ['dashboard','members','licenses','competitions','startlist','equipment','trainings','calendar','reports'],
         'sędzia'     => ['dashboard','competitions','calendar'],
     ];
 
