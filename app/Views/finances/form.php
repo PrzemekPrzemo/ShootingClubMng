@@ -9,19 +9,45 @@
     <div class="card-body">
         <form method="post" action="<?= $mode === 'create' ? url('finances/create') : url('finances/' . $payment['id'] . '/edit') ?>">
             <?= csrf_field() ?>
+            <?php
+                $preselMember = null;
+                if (!empty($payment['member_id'])) {
+                    foreach ($members as $m) {
+                        if ($m['id'] == $payment['member_id']) { $preselMember = $m; break; }
+                    }
+                } elseif (!empty($preselected)) {
+                    $preselMember = $preselected;
+                }
+            ?>
+            <input type="hidden" name="member_id" id="memberIdHidden"
+                   value="<?= e($preselMember['id'] ?? '') ?>" required>
             <div class="mb-3">
                 <label class="form-label">Zawodnik <span class="text-danger">*</span></label>
-                <select name="member_id" id="memberSelect" class="form-select" required>
-                    <option value="">— wybierz —</option>
-                    <?php foreach ($members as $m): ?>
-                        <?php $sel = ($payment['member_id'] ?? $preselected['id'] ?? '') == $m['id']; ?>
-                        <option value="<?= $m['id'] ?>"
-                                data-class-id="<?= e($m['member_class_id'] ?? '') ?>"
-                                <?= $sel ? 'selected':'' ?>>
-                            <?= e($m['full_name']) ?> [<?= e($m['member_number']) ?>]
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+
+                <?php if ($preselMember): ?>
+                <div id="memberBadge" class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-primary fs-6 fw-normal px-3 py-2">
+                        <i class="bi bi-person-fill me-1"></i>
+                        <?= e($preselMember['last_name'] . ' ' . $preselMember['first_name']) ?>
+                        [<?= e($preselMember['member_number']) ?>]
+                    </span>
+                    <?php if ($mode === 'create'): ?>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="clearMemberBtn" title="Zmień zawodnika">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                    <?php endif; ?>
+                </div>
+                <div id="memberSearchArea" style="display:none">
+                <?php else: ?>
+                <div id="memberBadge" class="d-flex align-items-center gap-2 mb-2" style="display:none!important"></div>
+                <div id="memberSearchArea">
+                <?php endif; ?>
+                    <input type="text" id="memberSearchInput" class="form-control"
+                           placeholder="Wpisz nazwisko (min. 3 litery) lub cyfry PESEL…"
+                           autocomplete="off">
+                    <div id="memberSearchResults" class="list-group mt-1" style="display:none; max-height:220px; overflow-y:auto; position:relative; z-index:10;"></div>
+                    <div class="form-text text-muted">Wyszukaj zawodnika po nazwisku lub numerze PESEL.</div>
+                </div>
             </div>
             <div class="mb-3">
                 <label class="form-label">Typ opłaty <span class="text-danger">*</span></label>
@@ -120,7 +146,92 @@
 
 <script>
 (function () {
-    const memberSel  = document.getElementById('memberSelect');
+    // ── Member live-search ────────────────────────────────────────────────────
+    const memberIdHidden   = document.getElementById('memberIdHidden');
+    const memberSearchInput= document.getElementById('memberSearchInput');
+    const memberSearchRes  = document.getElementById('memberSearchResults');
+    const memberBadge      = document.getElementById('memberBadge');
+    const memberSearchArea = document.getElementById('memberSearchArea');
+    const clearMemberBtn   = document.getElementById('clearMemberBtn');
+
+    let selectedClassId = '<?= e($preselMember['member_class_id'] ?? '') ?>';
+    let searchTimer = null;
+
+    function showBadge(id, label, classId) {
+        memberIdHidden.value = id;
+        selectedClassId = classId || '';
+        memberBadge.style.removeProperty('display');
+        memberBadge.innerHTML =
+            '<span class="badge bg-primary fs-6 fw-normal px-3 py-2">'
+          + '<i class="bi bi-person-fill me-1"></i>' + label + '</span>'
+          + '<button type="button" class="btn btn-sm btn-outline-secondary" id="clearMemberBtn2" title="Zmień zawodnika">'
+          + '<i class="bi bi-x-lg"></i></button>';
+        document.getElementById('clearMemberBtn2').addEventListener('click', clearMember);
+        memberSearchArea.style.display = 'none';
+        memberSearchRes.style.display  = 'none';
+        memberSearchInput.value = '';
+        fetchSuggested();
+    }
+
+    function clearMember() {
+        memberIdHidden.value = '';
+        selectedClassId = '';
+        memberBadge.style.display = 'none';
+        memberSearchArea.style.display = '';
+        memberSearchInput.focus();
+        hint.style.display = 'none';
+    }
+
+    if (clearMemberBtn) {
+        clearMemberBtn.addEventListener('click', clearMember);
+    }
+
+    if (memberSearchInput) {
+        memberSearchInput.addEventListener('input', function () {
+            clearTimeout(searchTimer);
+            const q = this.value.trim();
+            if (q.length < 2) {
+                memberSearchRes.style.display = 'none';
+                return;
+            }
+            searchTimer = setTimeout(function () {
+                fetch('<?= url('finances/member-search') ?>?q=' + encodeURIComponent(q))
+                    .then(r => r.json())
+                    .then(data => {
+                        memberSearchRes.innerHTML = '';
+                        if (!data.results || data.results.length === 0) {
+                            memberSearchRes.innerHTML = '<div class="list-group-item text-muted small">Brak wyników</div>';
+                            memberSearchRes.style.display = '';
+                            return;
+                        }
+                        data.results.forEach(function (m) {
+                            const item = document.createElement('button');
+                            item.type = 'button';
+                            item.className = 'list-group-item list-group-item-action';
+                            item.innerHTML = '<strong>' + m.full_name + '</strong>'
+                                           + ' <span class="text-muted small">[' + m.member_number + ']</span>';
+                            item.addEventListener('click', function () {
+                                showBadge(m.id,
+                                    m.full_name + ' [' + m.member_number + ']',
+                                    m.member_class_id);
+                            });
+                            memberSearchRes.appendChild(item);
+                        });
+                        memberSearchRes.style.display = '';
+                    })
+                    .catch(() => { memberSearchRes.style.display = 'none'; });
+            }, 250);
+        });
+
+        // Close dropdown on outside click
+        document.addEventListener('click', function (e) {
+            if (!memberSearchArea.contains(e.target)) {
+                memberSearchRes.style.display = 'none';
+            }
+        });
+    }
+
+    // ── Suggested amount ─────────────────────────────────────────────────────
     const typeSel    = document.getElementById('paymentTypeSelect');
     const yearField  = document.getElementById('periodYear');
     const amountFld  = document.getElementById('amountField');
@@ -131,17 +242,13 @@
     let lastSuggested = null;
 
     function fetchSuggested() {
-        const typeId  = typeSel.value;
-        const year    = yearField.value || '<?= date('Y') ?>';
+        const typeId = typeSel.value;
+        const year   = yearField.value || '<?= date('Y') ?>';
 
-        if (!typeId) { hint.style.display = 'none'; return; }
-
-        // Get member_class_id from selected member option
-        const memberOpt = memberSel.options[memberSel.selectedIndex];
-        const classId   = memberOpt ? (memberOpt.dataset.classId || '') : '';
+        if (!typeId || !memberIdHidden.value) { hint.style.display = 'none'; return; }
 
         const url = '<?= url('api/fee-rate') ?>?type_id=' + encodeURIComponent(typeId)
-                  + '&class_id=' + encodeURIComponent(classId)
+                  + '&class_id=' + encodeURIComponent(selectedClassId)
                   + '&year='    + encodeURIComponent(year);
 
         fetch(url)
@@ -152,7 +259,6 @@
                     hintVal.textContent = parseFloat(data.amount).toFixed(2).replace('.', ',') + ' PLN';
                     hint.style.display = '';
 
-                    // Auto-fill if amount field is empty
                     if (!amountFld.value || amountFld.value === '0') {
                         amountFld.value = lastSuggested;
                         hint.style.display = 'none';
@@ -173,10 +279,9 @@
     });
 
     typeSel.addEventListener('change',  fetchSuggested);
-    memberSel.addEventListener('change', fetchSuggested);
     yearField.addEventListener('change', fetchSuggested);
 
-    // Trigger on load if editing
-    if (typeSel.value) fetchSuggested();
+    // Trigger on load if editing (member already selected)
+    if (typeSel.value && memberIdHidden.value) fetchSuggested();
 })();
 </script>

@@ -347,6 +347,7 @@ $router->post('/licenses/:id/delete',   [\App\Controllers\LicensesController::cl
 
 // Finances
 $router->get('/finances',               [\App\Controllers\FinancesController::class, 'index']);
+$router->get('/finances/member-search',  [\App\Controllers\FinancesController::class, 'memberSearch']);
 $router->get('/finances/create',        [\App\Controllers\FinancesController::class, 'create']);
 $router->post('/finances/create',       [\App\Controllers\FinancesController::class, 'store']);
 $router->get('/finances/:id/edit',      [\App\Controllers\FinancesController::class, 'edit']);

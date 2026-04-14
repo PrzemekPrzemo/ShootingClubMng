@@ -31,7 +31,7 @@ class FinancesController extends BaseController
             'payment_type_id' => $_GET['payment_type_id'] ?? '',
         ];
         $page   = max(1, (int)($_GET['page'] ?? 1));
-        $result = $this->paymentModel->search($filters, $page);
+        $result = $this->paymentModel->search($filters, $page, 30);
 
         $this->render('finances/index', [
             'title'       => 'Finanse',
@@ -42,6 +42,58 @@ class FinancesController extends BaseController
             'paymentTypes'  => $this->paymentModel->getPaymentTypes(),
             'currentYear'   => $year,
         ]);
+    }
+
+    public function memberSearch(): void
+    {
+        $q       = trim($_GET['q'] ?? '');
+        $clubId  = \App\Helpers\ClubContext::current();
+
+        if (mb_strlen($q) < 2) {
+            header('Content-Type: application/json');
+            echo json_encode(['results' => []]);
+            return;
+        }
+
+        $db = \App\Helpers\Database::pdo();
+
+        if (ctype_digit($q)) {
+            // PESEL / member number search — digits only
+            $sql = "SELECT id, first_name, last_name, member_number, member_class_id
+                    FROM members
+                    WHERE status = 'aktywny'
+                      AND (pesel LIKE ? OR member_number LIKE ?)";
+            $params = [$q . '%', $q . '%'];
+        } else {
+            // Name search
+            $sql = "SELECT id, first_name, last_name, member_number, member_class_id
+                    FROM members
+                    WHERE status = 'aktywny'
+                      AND (last_name LIKE ? OR first_name LIKE ? OR CONCAT(first_name,' ',last_name) LIKE ?)";
+            $like   = $q . '%';
+            $params = [$like, $like, '%' . $q . '%'];
+        }
+
+        if ($clubId !== null) {
+            $sql    .= ' AND club_id = ?';
+            $params[] = $clubId;
+        }
+
+        $sql .= ' ORDER BY last_name, first_name LIMIT 20';
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $results = array_map(fn($r) => [
+            'id'              => (int)$r['id'],
+            'full_name'       => $r['last_name'] . ' ' . $r['first_name'],
+            'member_number'   => $r['member_number'],
+            'member_class_id' => $r['member_class_id'] ?? '',
+        ], $rows);
+
+        header('Content-Type: application/json');
+        echo json_encode(['results' => $results]);
     }
 
     public function debts(): void

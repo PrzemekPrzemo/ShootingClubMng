@@ -122,4 +122,53 @@
         </div>
     </div>
 </div>
-<p class="text-muted small mt-2">Łącznie: <?= $result['total'] ?> wpłat</p>
+<?php
+$totalPages   = $result['last_page']    ?? 1;
+$currentPage  = $result['current_page'] ?? 1;
+$totalRecords = $result['total']        ?? 0;
+
+// Build query string without 'page'
+$queryParts = array_filter([
+    'q'               => $filters['q'],
+    'payment_type_id' => $filters['payment_type_id'],
+    'year'            => $filters['year'],
+    'member_id'       => $filters['member_id'] ?? '',
+]);
+$baseQuery = http_build_query($queryParts);
+$sep = $baseQuery ? '&' : '';
+?>
+<div class="d-flex justify-content-between align-items-center mt-2">
+    <p class="text-muted small mb-0">Łącznie: <?= $totalRecords ?> wpłat</p>
+    <?php if ($totalPages > 1): ?>
+    <nav>
+        <ul class="pagination pagination-sm mb-0">
+            <li class="page-item <?= $currentPage <= 1 ? 'disabled' : '' ?>">
+                <a class="page-link" href="<?= url('finances?' . $baseQuery . $sep . 'page=' . ($currentPage - 1)) ?>">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            <?php
+            $start = max(1, $currentPage - 2);
+            $end   = min($totalPages, $currentPage + 2);
+            if ($start > 1): ?>
+                <li class="page-item"><a class="page-link" href="<?= url('finances?' . $baseQuery . $sep . 'page=1') ?>">1</a></li>
+                <?php if ($start > 2): ?><li class="page-item disabled"><span class="page-link">…</span></li><?php endif; ?>
+            <?php endif; ?>
+            <?php for ($p = $start; $p <= $end; $p++): ?>
+                <li class="page-item <?= $p === $currentPage ? 'active' : '' ?>">
+                    <a class="page-link" href="<?= url('finances?' . $baseQuery . $sep . 'page=' . $p) ?>"><?= $p ?></a>
+                </li>
+            <?php endfor; ?>
+            <?php if ($end < $totalPages): ?>
+                <?php if ($end < $totalPages - 1): ?><li class="page-item disabled"><span class="page-link">…</span></li><?php endif; ?>
+                <li class="page-item"><a class="page-link" href="<?= url('finances?' . $baseQuery . $sep . 'page=' . $totalPages) ?>"><?= $totalPages ?></a></li>
+            <?php endif; ?>
+            <li class="page-item <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
+                <a class="page-link" href="<?= url('finances?' . $baseQuery . $sep . 'page=' . ($currentPage + 1)) ?>">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <?php endif; ?>
+</div>
