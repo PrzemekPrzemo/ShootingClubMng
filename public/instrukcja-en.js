@@ -70,38 +70,6 @@ login: `
 </ul>
 `,
 
-superadmin: `
-<h1>Super Admin (masteradmin)</h1>
-<p class="lead">System owner. Manages all clubs, users and global configuration.</p>
-<h2>Admin dashboard</h2>
-<div class="screen"><div class="screen-header"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
-<span class="screen-url">portal.shootero.pl/admin/dashboard</span></div>
-<div class="screen-body">
-  <div class="sim-nav"><span class="sim-nav-item active">📊 Dashboard</span><span class="sim-nav-item">🏢 Clubs</span><span class="sim-nav-item">👥 Users</span><span class="sim-nav-item">📚 Dictionaries</span><span class="sim-nav-item">📋 Start lists</span><span class="sim-nav-item">⚙ Settings</span></div>
-  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1rem;">
-    <div class="sim-card"><div style="font-size:.8rem;color:#94a3b8;">Active clubs</div><div style="font-size:1.8rem;color:#D4A373;font-weight:700;">12</div></div>
-    <div class="sim-card"><div style="font-size:.8rem;color:#94a3b8;">Athletes</div><div style="font-size:1.8rem;color:#D4A373;font-weight:700;">487</div></div>
-    <div class="sim-card"><div style="font-size:.8rem;color:#94a3b8;">Competitions this year</div><div style="font-size:1.8rem;color:#D4A373;font-weight:700;">34</div></div>
-    <div class="sim-card"><div style="font-size:.8rem;color:#94a3b8;">Payments this month</div><div style="font-size:1.8rem;color:#D4A373;font-weight:700;">127</div></div>
-  </div>
-</div></div>
-<h2>Full module list</h2>
-<table class="matrix">
-<tr><th>Module</th><th>URL</th><th>Description</th></tr>
-<tr><td>Dashboard</td><td><code>/admin/dashboard</code></td><td>Stats, club list</td></tr>
-<tr><td>Clubs</td><td><code>/admin/clubs</code></td><td>Manage clubs</td></tr>
-<tr><td>Users</td><td><code>/admin/users</code></td><td>All system users</td></tr>
-<tr><td>Dictionaries</td><td><code>/config/disciplines</code></td><td>Disciplines, member types, classes</td></tr>
-<tr><td>Demo</td><td><code>/admin/demos</code></td><td>Demo account management</td></tr>
-<tr><td>Subscriptions</td><td><code>/admin/subscriptions</code></td><td>Club plans, limits</td></tr>
-<tr><td>Analytics</td><td><code>/admin/analytics</code></td><td>Usage statistics</td></tr>
-<tr><td>Start lists</td><td><code>/startlist</code></td><td>Standalone — club commissions</td></tr>
-<tr><td>Security</td><td><code>/admin/security</code></td><td>Audits, activity logs</td></tr>
-<tr><td>Backups</td><td><code>/admin/backups</code></td><td>Database backups</td></tr>
-</table>
-<div class="info-box"><strong>💡 Tip:</strong> To manage a specific club, use <strong>Clubs → Manage</strong>. The system will set club context and show full club menu. Exit via <strong>Admin panel</strong> button at the bottom.</div>
-`,
-
 admin: `
 <h1>Club Administrator</h1>
 <p class="lead">Full control over your club — athletes, finances, competitions, configuration.</p>

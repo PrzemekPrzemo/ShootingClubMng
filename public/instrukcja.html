@@ -32,7 +32,6 @@
     <a href="#login" class="nav-link" data-target="login" data-i18n="nav_login">Logowanie</a>
 
     <div class="nav-section" data-i18n="nav_roles">Role</div>
-    <a href="#superadmin" class="nav-link" data-target="superadmin" data-i18n="nav_superadmin">Super Admin</a>
     <a href="#admin" class="nav-link" data-target="admin" data-i18n="nav_admin">Administrator klubu</a>
     <a href="#zarzad" class="nav-link" data-target="zarzad" data-i18n="nav_zarzad">Zarząd</a>
     <a href="#instruktor" class="nav-link" data-target="instruktor" data-i18n="nav_instruktor">Instruktor</a>
@@ -155,64 +154,6 @@
         <li><strong>Zawodnik:</strong> <code>/portal/reset-password</code> (wymaga e-mail + PESEL)</li>
         <li><strong>Pracownik:</strong> kontakt z administratorem klubu</li>
       </ul>
-    </section>
-    <section id="superadmin" class="page" data-section="superadmin">
-      <h1>Super Admin (masteradmin)</h1>
-      <p class="lead">Właściciel systemu. Zarządza wszystkimi klubami, użytkownikami i konfiguracją globalną.</p>
-
-      <h2>Dashboard admina</h2>
-      <div class="screen">
-        <div class="screen-header">
-          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
-          <span class="screen-url">portal.shootero.pl/admin/dashboard</span>
-        </div>
-        <div class="screen-body">
-          <div class="sim-nav">
-            <span class="sim-nav-item active">📊 Dashboard</span>
-            <span class="sim-nav-item">🏢 Kluby</span>
-            <span class="sim-nav-item">👥 Użytkownicy</span>
-            <span class="sim-nav-item">📚 Słowniki</span>
-            <span class="sim-nav-item">📋 Listy startowe</span>
-            <span class="sim-nav-item">⚙ Ustawienia</span>
-          </div>
-          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1rem;">
-            <div class="sim-card"><div style="font-size:.8rem;color:#94a3b8;">Klubów aktywnych</div><div style="font-size:1.8rem;color:#D4A373;font-weight:700;">12</div></div>
-            <div class="sim-card"><div style="font-size:.8rem;color:#94a3b8;">Zawodników</div><div style="font-size:1.8rem;color:#D4A373;font-weight:700;">487</div></div>
-            <div class="sim-card"><div style="font-size:.8rem;color:#94a3b8;">Zawodów w tym roku</div><div style="font-size:1.8rem;color:#D4A373;font-weight:700;">34</div></div>
-            <div class="sim-card"><div style="font-size:.8rem;color:#94a3b8;">Wpłat w tym miesiącu</div><div style="font-size:1.8rem;color:#D4A373;font-weight:700;">127</div></div>
-          </div>
-          <div class="sim-card">
-            <div class="sim-card-header">Lista klubów</div>
-            <table class="sim-table">
-              <thead><tr><th>Klub</th><th>Subdomena</th><th>Zawodników</th><th>Plan</th><th></th></tr></thead>
-              <tbody>
-                <tr><td>Strzelcy Wrocław</td><td>wroclaw</td><td>43</td><td><span class="sim-badge success">Pro</span></td><td><button class="sim-btn secondary">Zarządzaj</button></td></tr>
-                <tr><td>KS Tarcza Kraków</td><td>tarcza-krk</td><td>78</td><td><span class="sim-badge success">Pro</span></td><td><button class="sim-btn secondary">Zarządzaj</button></td></tr>
-                <tr><td>Sniper Poznań</td><td>sniper</td><td>22</td><td><span class="sim-badge info">Basic</span></td><td><button class="sim-btn secondary">Zarządzaj</button></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <h2>Pełna lista modułów</h2>
-      <table class="matrix">
-        <tr><th>Moduł</th><th>URL</th><th>Opis</th></tr>
-        <tr><td>Dashboard</td><td><code>/admin/dashboard</code></td><td>Statystyki, lista klubów</td></tr>
-        <tr><td>Kluby</td><td><code>/admin/clubs</code></td><td>Zarządzanie klubami</td></tr>
-        <tr><td>Użytkownicy</td><td><code>/admin/users</code></td><td>Wszyscy użytkownicy systemu</td></tr>
-        <tr><td>Słowniki</td><td><code>/config/disciplines</code></td><td>Dyscypliny, typy członków, klasy</td></tr>
-        <tr><td>Demo</td><td><code>/admin/demos</code></td><td>Zarządzanie kontami demo</td></tr>
-        <tr><td>Subskrypcje</td><td><code>/admin/subscriptions</code></td><td>Plany klubów, limity</td></tr>
-        <tr><td>Analityka</td><td><code>/admin/analytics</code></td><td>Statystyki użycia</td></tr>
-        <tr><td>Listy startowe</td><td><code>/startlist</code></td><td>Niezależne zlecenia dla klubów</td></tr>
-        <tr><td>Bezpieczeństwo</td><td><code>/admin/security</code></td><td>Audyty, logi aktywności</td></tr>
-        <tr><td>Kopie zapasowe</td><td><code>/admin/backups</code></td><td>Backupy bazy</td></tr>
-      </table>
-
-      <div class="info-box">
-        <strong>💡 Wskazówka:</strong> Aby zarządzać konkretnym klubem, przejdź przez <strong>Kluby → Zarządzaj</strong>. System ustawi kontekst klubu i pokaże pełne menu klubowe. Wyjdziesz przyciskiem <strong>Panel admina</strong> na dole menu.
-      </div>
     </section>
     <section id="admin" class="page" data-section="admin">
       <h1>Administrator klubu</h1>
