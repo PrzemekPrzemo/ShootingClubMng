@@ -135,24 +135,37 @@ class DemoSeeder
 
         $ids  = [];
         $year = date('Y');
-        // member_number is UNIQUE across ALL clubs — query global max to avoid collisions
-        $lastNum = $db->prepare(
+        // member_number is UNIQUE globally — seed starting seq from the global max
+        $maxStmt = $db->prepare(
             "SELECT MAX(CAST(SUBSTRING(member_number, 7) AS UNSIGNED))
              FROM members WHERE member_number LIKE ?"
         );
-        $lastNum->execute(["KS{$year}____"]);
-        $maxSeq = (int)$lastNum->fetchColumn();
-        $seq = $maxSeq + 1;
+        $maxStmt->execute(["KS{$year}%"]);
+        $seq = (int)$maxStmt->fetchColumn() + 1;
 
         foreach ($people as $p) {
-            $memberNumber = sprintf('KS%s%04d', $year, $seq++);
-            $db->prepare(
-                "INSERT INTO members
-                    (club_id, first_name, last_name, gender, birth_date, pesel, email, phone,
-                     member_number, status, join_date)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'aktywny', CURDATE())"
-            )->execute([$cid, $p[0], $p[1], $p[2], $p[3], $p[4], $p[5], $p[6], $memberNumber]);
-            $ids[] = (int)$db->lastInsertId();
+            // Retry loop: skip any number that's already taken (handles race conditions
+            // and leftover rows from partially-failed previous seedings)
+            $inserted = false;
+            while (!$inserted) {
+                $memberNumber = sprintf('KS%s%04d', $year, $seq++);
+                try {
+                    $db->prepare(
+                        "INSERT INTO members
+                            (club_id, first_name, last_name, gender, birth_date, pesel, email, phone,
+                             member_number, status, join_date)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'aktywny', CURDATE())"
+                    )->execute([$cid, $p[0], $p[1], $p[2], $p[3], $p[4], $p[5], $p[6], $memberNumber]);
+                    $ids[]    = (int)$db->lastInsertId();
+                    $inserted = true;
+                } catch (\PDOException $e) {
+                    // Only swallow duplicate-member_number errors; rethrow everything else
+                    if (str_contains($e->getMessage(), 'member_number')) {
+                        continue; // bump seq and try next number
+                    }
+                    throw $e;
+                }
+            }
         }
 
         // Give first 4 members portal accounts (Anna, Marek, Katarzyna, Piotr W.)
