@@ -29,6 +29,13 @@ class LicensesController extends BaseController
 
     public function index(): void
     {
+        // Judge licenses are stored in a separate table — redirect to dedicated page
+        $type = strtolower(trim($_GET['license_type'] ?? ''));
+        if (in_array($type, ['sedziowska', 'sędziowska', 'sed', 'sedzia', 'sędzia'], true)) {
+            $this->redirect('judges');
+            return;
+        }
+
         $filters = [
             'q'            => trim($_GET['q'] ?? ''),
             'license_type' => $_GET['license_type'] ?? '',

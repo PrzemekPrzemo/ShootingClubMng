@@ -1,8 +1,13 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="h4 mb-0"><i class="bi bi-card-checklist"></i> Licencje PZSS</h2>
-    <a href="<?= url('licenses/create') ?>" class="btn btn-danger btn-sm">
-        <i class="bi bi-plus-lg"></i> Dodaj licencję
-    </a>
+    <div class="d-flex gap-2">
+        <a href="<?= url('judges') ?>" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-person-badge"></i> Licencje sędziowskie
+        </a>
+        <a href="<?= url('licenses/create') ?>" class="btn btn-danger btn-sm">
+            <i class="bi bi-plus-lg"></i> Dodaj licencję
+        </a>
+    </div>
 </div>
 
 <form method="get" action="<?= url('licenses') ?>" class="card mb-3">
