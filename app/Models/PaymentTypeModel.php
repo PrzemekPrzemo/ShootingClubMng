@@ -145,11 +145,21 @@ class PaymentTypeModel extends ClubScopedModel
      */
     public function upsertRate(int $paymentTypeId, ?int $memberClassId, int $year, float $amount, int $updatedBy): void
     {
-        $this->db->prepare("
-            INSERT INTO fee_rates (payment_type_id, member_class_id, year, amount, updated_by)
-            VALUES (?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE amount = VALUES(amount), updated_by = VALUES(updated_by)
-        ")->execute([$paymentTypeId, $memberClassId ?: null, $year, $amount, $updatedBy]);
+        try {
+            $this->db->prepare("
+                INSERT INTO fee_rates (payment_type_id, member_class_id, year, amount, updated_by)
+                VALUES (?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE amount = VALUES(amount), updated_by = VALUES(updated_by)
+            ")->execute([$paymentTypeId, $memberClassId, $year, $amount, $updatedBy]);
+        } catch (\PDOException $e) {
+            throw new \PDOException(
+                $e->getMessage() . ' | Table: fee_rates | Values: payment_type_id=' . $paymentTypeId
+                . ', member_class_id=' . ($memberClassId ?? 'NULL')
+                . ', year=' . $year . ', amount=' . $amount
+                . ', updated_by=' . $updatedBy,
+                0, $e
+            );
+        }
     }
 
     /**

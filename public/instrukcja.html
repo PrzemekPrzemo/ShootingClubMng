@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-i18n="title">Instrukcja obsługi — Shootero</title>
+<link rel="stylesheet" href="instrukcja.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">●</span>
+    <strong>Shootero</strong>
+    <span class="tag" data-i18n="brand_tag">Instrukcja obsługi</span>
+  </div>
+  <div class="top-actions">
+    <div class="lang-toggle">
+      <button class="lang-btn active" data-lang="pl">PL</button>
+      <button class="lang-btn" data-lang="en">EN</button>
+    </div>
+    <a class="demo-link" href="https://portal.shootero.pl/demo?token=5fe8f35414dc82d72ddc64b7fd58621d" target="_blank" data-i18n="demo_link">
+      ▶ Otwórz demo
+    </a>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="nav-section" data-i18n="nav_intro">Wstęp</div>
+    <a href="#intro" class="nav-link active" data-target="intro" data-i18n="nav_about">O systemie</a>
+    <a href="#login" class="nav-link" data-target="login" data-i18n="nav_login">Logowanie</a>
+
+    <div class="nav-section" data-i18n="nav_roles">Role</div>
+    <a href="#superadmin" class="nav-link" data-target="superadmin" data-i18n="nav_superadmin">Super Admin</a>
+    <a href="#admin" class="nav-link" data-target="admin" data-i18n="nav_admin">Administrator klubu</a>
+    <a href="#zarzad" class="nav-link" data-target="zarzad" data-i18n="nav_zarzad">Zarząd</a>
+    <a href="#instruktor" class="nav-link" data-target="instruktor" data-i18n="nav_instruktor">Instruktor</a>
+    <a href="#sedzia" class="nav-link" data-target="sedzia" data-i18n="nav_sedzia">Sędzia</a>
+    <a href="#zawodnik" class="nav-link" data-target="zawodnik" data-i18n="nav_zawodnik">Zawodnik</a>
+
+    <div class="nav-section" data-i18n="nav_scenarios">Scenariusze</div>
+    <a href="#new-member" class="nav-link" data-target="new-member" data-i18n="nav_new_member">Nowy zawodnik</a>
+    <a href="#add-license" class="nav-link" data-target="add-license" data-i18n="nav_add_license">Dodanie licencji</a>
+    <a href="#payment" class="nav-link" data-target="payment" data-i18n="nav_payment">Rejestracja wpłaty</a>
+    <a href="#competition" class="nav-link" data-target="competition" data-i18n="nav_competition">Zawody + listy</a>
+    <a href="#security" class="nav-link" data-target="security" data-i18n="nav_security">2FA i hasła</a>
+  </nav>
+
+  <main class="content">
+    <section id="intro" class="page active" data-section="intro">
+      <h1>System zarządzania klubem strzeleckim</h1>
+      <p class="lead">Shootero to kompletny system do prowadzenia ewidencji zawodników, licencji, zawodów, treningów i finansów klubu strzeleckiego.</p>
+
+      <div class="cards">
+        <div class="card">
+          <div class="card-icon">👥</div>
+          <h3>6 rodzajów użytkowników</h3>
+          <p>Super admin, administrator klubu, zarząd, instruktor, sędzia i zawodnik — każdy z dedykowanymi uprawnieniami.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🏆</div>
+          <h3>Zarządzanie zawodami</h3>
+          <p>Tworzenie zawodów, zapisy online, generator list startowych z importem CSV, protokoły PDF.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">💰</div>
+          <h3>Finanse klubu</h3>
+          <p>Składki, opłaty PZSS, płatności online (Przelewy24), taryfikator fee_rates per klasa.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🎯</div>
+          <h3>Portal zawodnika</h3>
+          <p>Każdy zawodnik ma własny panel do zarządzania swoimi danymi, badaniami i zapisami.</p>
+        </div>
+      </div>
+
+      <h2>Jak korzystać z tej instrukcji</h2>
+      <ol>
+        <li>Wybierz z menu po lewej swoją rolę w systemie</li>
+        <li>Zobacz zrzuty symulujące rzeczywiste ekrany</li>
+        <li>Przejdź do sekcji <strong>Scenariusze</strong> aby zobaczyć typowe workflow'y krok po kroku</li>
+        <li>Otwórz demo: <a href="https://portal.shootero.pl/demo?token=5fe8f35414dc82d72ddc64b7fd58621d" target="_blank">portal.shootero.pl/demo</a></li>
+      </ol>
+    </section>
+
+    <!-- Pozostałe sekcje zostaną dodane w kolejnych plikach -->
+    <section id="login" class="page" data-section="login">
+      <h1>Logowanie do systemu</h1>
+      <p class="lead">System ma dwa ekrany logowania - oba akceptują zarówno pracowników klubu jak i zawodników.</p>
+
+      <div class="info-box">
+        <strong>💡 Dobra wiadomość:</strong> Nie musisz pamiętać który adres jest dla kogo. Oba działają dla wszystkich.
+      </div>
+
+      <h2>A. Uniwersalny ekran logowania</h2>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/auth/login</span>
+        </div>
+        <div class="screen-body" style="max-width:400px; margin:0 auto;">
+          <div style="text-align:center; margin-bottom:1.5rem;">
+            <div style="font-size:2.5rem; color:#D4A373;">●</div>
+            <h3 style="margin-top:.5rem;">SHOOTERO</h3>
+          </div>
+          <div class="sim-field">
+            <label class="sim-label">Login</label>
+            <input type="text" class="sim-input" placeholder="Login, e-mail, PESEL lub nr licencji" readonly>
+            <div style="font-size:.7rem; color:#64748b; margin-top:.25rem;">
+              Zawodnicy: zaloguj się e-mailem / PESEL (hasło przy pierwszym logowaniu = PESEL)
+            </div>
+          </div>
+          <div class="sim-field">
+            <label class="sim-label">Hasło</label>
+            <input type="password" class="sim-input" value="••••••••" readonly>
+          </div>
+          <button class="sim-btn" style="width:100%; padding:.75rem;">Zaloguj się</button>
+        </div>
+      </div>
+
+      <h2>B. Portal z przełącznikiem</h2>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/portal/login</span>
+        </div>
+        <div class="screen-body" style="max-width:400px; margin:0 auto;">
+          <div style="display:flex; gap:.25rem; margin-bottom:1rem;">
+            <button class="sim-btn" style="flex:1;">👤 Zawodnik</button>
+            <button class="sim-btn secondary" style="flex:1;">🛡 Zarządzanie</button>
+          </div>
+          <div class="sim-field">
+            <label class="sim-label">Adres e-mail</label>
+            <input type="email" class="sim-input" value="jan@example.pl" readonly>
+          </div>
+          <div class="sim-field">
+            <label class="sim-label">Hasło</label>
+            <input type="password" class="sim-input" placeholder="Hasło lub PESEL (pierwsze logowanie)" readonly>
+          </div>
+          <button class="sim-btn" style="width:100%; padding:.75rem;">Zaloguj się</button>
+        </div>
+      </div>
+
+      <h2>Pierwsze logowanie zawodnika</h2>
+      <div class="steps">
+        <div class="step"><div class="step-content"><h4>Wejdź na /portal/login</h4><p>Albo uniwersalny /auth/login</p></div></div>
+        <div class="step"><div class="step-content"><h4>Login = e-mail, PESEL lub nr licencji</h4><p>Dowolna z tych wartości z Twojego profilu</p></div></div>
+        <div class="step"><div class="step-content"><h4>Hasło = własny PESEL</h4><p>11 cyfr Twojego PESEL</p></div></div>
+        <div class="step"><div class="step-content"><h4>Zmień hasło</h4><p>Min. 8 znaków, nie może być PESEL</p></div></div>
+      </div>
+
+      <h2>Reset hasła</h2>
+      <ul>
+        <li><strong>Zawodnik:</strong> <code>/portal/reset-password</code> (wymaga e-mail + PESEL)</li>
+        <li><strong>Pracownik:</strong> kontakt z administratorem klubu</li>
+      </ul>
+    </section>
+    <section id="superadmin" class="page" data-section="superadmin">
+      <h1>Super Admin (masteradmin)</h1>
+      <p class="lead">Właściciel systemu. Zarządza wszystkimi klubami, użytkownikami i konfiguracją globalną.</p>
+
+      <h2>Dashboard admina</h2>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/admin/dashboard</span>
+        </div>
+        <div class="screen-body">
+          <div class="sim-nav">
+            <span class="sim-nav-item active">📊 Dashboard</span>
+            <span class="sim-nav-item">🏢 Kluby</span>
+            <span class="sim-nav-item">👥 Użytkownicy</span>
+            <span class="sim-nav-item">📚 Słowniki</span>
+            <span class="sim-nav-item">📋 Listy startowe</span>
+            <span class="sim-nav-item">⚙ Ustawienia</span>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1rem;">
+            <div class="sim-card"><div style="font-size:.8rem;color:#94a3b8;">Klubów aktywnych</div><div style="font-size:1.8rem;color:#D4A373;font-weight:700;">12</div></div>
+            <div class="sim-card"><div style="font-size:.8rem;color:#94a3b8;">Zawodników</div><div style="font-size:1.8rem;color:#D4A373;font-weight:700;">487</div></div>
+            <div class="sim-card"><div style="font-size:.8rem;color:#94a3b8;">Zawodów w tym roku</div><div style="font-size:1.8rem;color:#D4A373;font-weight:700;">34</div></div>
+            <div class="sim-card"><div style="font-size:.8rem;color:#94a3b8;">Wpłat w tym miesiącu</div><div style="font-size:1.8rem;color:#D4A373;font-weight:700;">127</div></div>
+          </div>
+          <div class="sim-card">
+            <div class="sim-card-header">Lista klubów</div>
+            <table class="sim-table">
+              <thead><tr><th>Klub</th><th>Subdomena</th><th>Zawodników</th><th>Plan</th><th></th></tr></thead>
+              <tbody>
+                <tr><td>Strzelcy Wrocław</td><td>wroclaw</td><td>43</td><td><span class="sim-badge success">Pro</span></td><td><button class="sim-btn secondary">Zarządzaj</button></td></tr>
+                <tr><td>KS Tarcza Kraków</td><td>tarcza-krk</td><td>78</td><td><span class="sim-badge success">Pro</span></td><td><button class="sim-btn secondary">Zarządzaj</button></td></tr>
+                <tr><td>Sniper Poznań</td><td>sniper</td><td>22</td><td><span class="sim-badge info">Basic</span></td><td><button class="sim-btn secondary">Zarządzaj</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <h2>Pełna lista modułów</h2>
+      <table class="matrix">
+        <tr><th>Moduł</th><th>URL</th><th>Opis</th></tr>
+        <tr><td>Dashboard</td><td><code>/admin/dashboard</code></td><td>Statystyki, lista klubów</td></tr>
+        <tr><td>Kluby</td><td><code>/admin/clubs</code></td><td>Zarządzanie klubami</td></tr>
+        <tr><td>Użytkownicy</td><td><code>/admin/users</code></td><td>Wszyscy użytkownicy systemu</td></tr>
+        <tr><td>Słowniki</td><td><code>/config/disciplines</code></td><td>Dyscypliny, typy członków, klasy</td></tr>
+        <tr><td>Demo</td><td><code>/admin/demos</code></td><td>Zarządzanie kontami demo</td></tr>
+        <tr><td>Subskrypcje</td><td><code>/admin/subscriptions</code></td><td>Plany klubów, limity</td></tr>
+        <tr><td>Analityka</td><td><code>/admin/analytics</code></td><td>Statystyki użycia</td></tr>
+        <tr><td>Listy startowe</td><td><code>/startlist</code></td><td>Niezależne zlecenia dla klubów</td></tr>
+        <tr><td>Bezpieczeństwo</td><td><code>/admin/security</code></td><td>Audyty, logi aktywności</td></tr>
+        <tr><td>Kopie zapasowe</td><td><code>/admin/backups</code></td><td>Backupy bazy</td></tr>
+      </table>
+
+      <div class="info-box">
+        <strong>💡 Wskazówka:</strong> Aby zarządzać konkretnym klubem, przejdź przez <strong>Kluby → Zarządzaj</strong>. System ustawi kontekst klubu i pokaże pełne menu klubowe. Wyjdziesz przyciskiem <strong>Panel admina</strong> na dole menu.
+      </div>
+    </section>
+    <section id="admin" class="page" data-section="admin">
+      <h1>Administrator klubu</h1>
+      <p class="lead">Pełna kontrola nad własnym klubem — zawodnicy, finanse, zawody, konfiguracja.</p>
+
+      <h2>Dashboard klubu</h2>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/dashboard</span>
+        </div>
+        <div class="screen-body">
+          <div class="sim-nav" style="flex-wrap:wrap;">
+            <span class="sim-nav-item active">Dashboard</span>
+            <span class="sim-nav-item">Zawodnicy</span>
+            <span class="sim-nav-item">Licencje</span>
+            <span class="sim-nav-item">Finanse</span>
+            <span class="sim-nav-item">Zawody</span>
+            <span class="sim-nav-item">Listy startowe</span>
+            <span class="sim-nav-item">Sędziowie</span>
+            <span class="sim-nav-item">Opłaty PZSS</span>
+            <span class="sim-nav-item">Sprzęt</span>
+            <span class="sim-nav-item">Treningi</span>
+            <span class="sim-nav-item">Kalendarz</span>
+            <span class="sim-nav-item">Raporty</span>
+            <span class="sim-nav-item">Konfiguracja</span>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem;">
+            <div class="sim-card"><div style="color:#94a3b8; font-size:.85rem;">Zawodników aktywnych</div><div style="font-size:1.8rem; color:#D4A373; font-weight:700;">78</div></div>
+            <div class="sim-card"><div style="color:#94a3b8; font-size:.85rem;">Składki zebrane 2026</div><div style="font-size:1.8rem; color:#4ade80; font-weight:700;">23 450 zł</div></div>
+            <div class="sim-card"><div style="color:#94a3b8; font-size:.85rem;">Wygasające licencje (30 dni)</div><div style="font-size:1.8rem; color:#fbbf24; font-weight:700;">4</div></div>
+          </div>
+        </div>
+      </div>
+
+      <h2>Uprawnienia administratora</h2>
+      <p>Administrator klubu ma dostęp do <strong>wszystkich 15 modułów</strong> w swoim klubie:</p>
+      <ul>
+        <li>Dashboard, Zawodnicy, Licencje, Finanse</li>
+        <li>Zawody, Listy startowe, Sędziowie, Opłaty PZSS</li>
+        <li>Sprzęt, Treningi, Ogłoszenia, Kalendarz</li>
+        <li>Raporty, Konfiguracja, Bezpieczeństwo</li>
+      </ul>
+
+      <div class="info-box">
+        <strong>💡 Konfiguracja uprawnień:</strong> W <code>Konfiguracja → Uprawnienia ról</code> możesz dostosować co widzi Zarząd, Instruktor i Sędzia.
+      </div>
+    </section>
+    <section id="zarzad" class="page" data-section="zarzad">
+      <h1>Zarząd klubu</h1>
+      <p class="lead">Członkowie zarządu mają dostęp do wszystkich modułów klubu <strong>poza</strong> sekcją Bezpieczeństwo.</p>
+
+      <h2>Co widzi Zarząd</h2>
+      <table class="matrix">
+        <tr><th>Moduł</th><th>Uprawnienia</th></tr>
+        <tr><td>Dashboard</td><td class="yes">✓ Pełny</td></tr>
+        <tr><td>Zawodnicy</td><td class="yes">✓ Dodawanie, edycja, usuwanie</td></tr>
+        <tr><td>Licencje</td><td class="yes">✓ Pełne zarządzanie</td></tr>
+        <tr><td>Finanse</td><td class="yes">✓ Wpłaty, raporty, zaległości</td></tr>
+        <tr><td>Zawody</td><td class="yes">✓ Tworzenie, wyniki, protokoły</td></tr>
+        <tr><td>Sędziowie</td><td class="yes">✓ Rejestr sędziów</td></tr>
+        <tr><td>Opłaty PZSS</td><td class="yes">✓ Zarządzanie składkami</td></tr>
+        <tr><td>Sprzęt</td><td class="yes">✓ Broń klubowa i zawodników</td></tr>
+        <tr><td>Treningi, Ogłoszenia, Kalendarz</td><td class="yes">✓ Pełny</td></tr>
+        <tr><td>Raporty</td><td class="yes">✓ Export danych</td></tr>
+        <tr><td>Konfiguracja</td><td class="yes">✓ Ustawienia klubu</td></tr>
+        <tr><td>Bezpieczeństwo</td><td class="no">✗ Tylko Administrator</td></tr>
+      </table>
+
+      <h2>Typowe zadania zarządu</h2>
+      <ul>
+        <li>Przeglądanie finansów klubu i zaległości składek</li>
+        <li>Zatwierdzanie dokumentów (badania lekarskie, licencje)</li>
+        <li>Komunikacja: ogłoszenia dla wszystkich zawodników</li>
+        <li>Generowanie raportów finansowych dla PZSS</li>
+        <li>Nadzór nad strategią rozwoju klubu</li>
+      </ul>
+    </section>
+    <section id="instruktor" class="page" data-section="instruktor">
+      <h1>Instruktor</h1>
+      <p class="lead">Trenerzy i instruktorzy. Pracują ze swoimi zawodnikami - treningi, zawody, sprzęt.</p>
+
+      <h2>Menu instruktora</h2>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/dashboard</span>
+        </div>
+        <div class="screen-body">
+          <div class="sim-nav">
+            <span class="sim-nav-item active">Dashboard</span>
+            <span class="sim-nav-item">Zawodnicy</span>
+            <span class="sim-nav-item">Licencje</span>
+            <span class="sim-nav-item">Zawody</span>
+            <span class="sim-nav-item">Listy startowe</span>
+            <span class="sim-nav-item">Sprzęt</span>
+            <span class="sim-nav-item">Treningi</span>
+            <span class="sim-nav-item">Kalendarz</span>
+            <span class="sim-nav-item">Raporty</span>
+          </div>
+          <p style="color:#94a3b8; margin-top:1rem;">Brak dostępu do: Finanse, Opłaty PZSS, Sędziowie, Konfiguracja, Bezpieczeństwo</p>
+        </div>
+      </div>
+
+      <h2>Typowe zadania instruktora</h2>
+      <h3>Planowanie treningu</h3>
+      <div class="steps">
+        <div class="step"><div class="step-content"><h4>Wejdź w Treningi</h4><p><code>/trainings/create</code></p></div></div>
+        <div class="step"><div class="step-content"><h4>Data, godzina, czas trwania</h4><p>Ustaw parametry treningu</p></div></div>
+        <div class="step"><div class="step-content"><h4>Dyscyplina</h4><p>Wybierz typ treningu</p></div></div>
+        <div class="step"><div class="step-content"><h4>Przypisani zawodnicy</h4><p>Zapiszą się sami przez portal</p></div></div>
+      </div>
+
+      <h3>Wpisanie wyników zawodów</h3>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/competitions/15/results</span>
+        </div>
+        <div class="screen-body">
+          <div class="sim-card">
+            <div class="sim-card-header">Pistolet pneumatyczny 40 strzałów</div>
+            <table class="sim-table">
+              <thead><tr><th>Zawodnik</th><th>Seria 1</th><th>Seria 2</th><th>Seria 3</th><th>Seria 4</th><th>Suma</th></tr></thead>
+              <tbody>
+                <tr><td>Kowalski Jan</td><td>94</td><td>97</td><td>95</td><td>96</td><td><strong style="color:#4ade80;">382</strong></td></tr>
+                <tr><td>Nowak Anna</td><td>91</td><td>93</td><td>94</td><td>92</td><td><strong>370</strong></td></tr>
+                <tr><td>Wójcik Piotr</td><td>88</td><td>90</td><td>89</td><td>91</td><td><strong>358</strong></td></tr>
+              </tbody>
+            </table>
+            <button class="sim-btn" style="margin-top:1rem;">Zapisz wyniki</button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="sedzia" class="page" data-section="sedzia">
+      <h1>Sędzia</h1>
+      <p class="lead">Minimalne menu - dostęp tylko do zawodów i kalendarza.</p>
+
+      <h2>Co widzi sędzia</h2>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/dashboard</span>
+        </div>
+        <div class="screen-body">
+          <div class="sim-nav">
+            <span class="sim-nav-item active">Dashboard</span>
+            <span class="sim-nav-item">Zawody</span>
+            <span class="sim-nav-item">Kalendarz</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Typowe zadania sędziego</h2>
+      <ul>
+        <li>Wpisywanie wyników zawodów (<code>/competitions/{id}/results</code>)</li>
+        <li>Wpisywanie serii strzałów dla konkurencji (<code>/competitions/{id}/events/{eid}/series</code>)</li>
+        <li>Generowanie rankingu klasyfikacyjnego</li>
+        <li>Export protokołów PDF</li>
+      </ul>
+
+      <div class="info-box">
+        <strong>ℹ Sędzia klubu vs licencja sędziowska:</strong> W systemie istnieje różnica między <strong>rolą systemową</strong> <code>sędzia</code> (pozwala zalogować się i wpisywać wyniki) a <strong>licencją sędziowską PZSS</strong> (dokument w rejestrze <code>/judges</code>). Zawodnik może mieć licencję PZSS bez konta użytkownika, i vice versa.
+      </div>
+
+      <h2>Rejestr sędziów klubu</h2>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/judges</span>
+        </div>
+        <div class="screen-body">
+          <div class="sim-card">
+            <div class="sim-card-header">Rejestr sędziów <span class="sim-badge info">3 licencji</span></div>
+            <table class="sim-table">
+              <thead><tr><th>Zawodnik</th><th>Klasa</th><th>Dyscyplina</th><th>Nr licencji</th><th>Ważna do</th><th>Opłata PomZSS</th></tr></thead>
+              <tbody>
+                <tr><td>Kowalski Jan 👤</td><td><span class="sim-badge info">II</span></td><td>Pistolet</td><td>LS-123/2024</td><td>31.12.2026 <span class="sim-badge success">za 260 dni</span></td><td><span class="sim-badge success">✓ 2026</span></td></tr>
+                <tr><td>Nowak Anna</td><td><span class="sim-badge info">III</span></td><td>Karabin</td><td>LS-456/2024</td><td>31.12.2026 <span class="sim-badge success">za 260 dni</span></td><td><span class="sim-badge danger">Niezapłacona</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="zawodnik" class="page" data-section="zawodnik">
+      <h1>Zawodnik (portal)</h1>
+      <p class="lead">Każdy członek klubu ma swój portal gdzie zarządza swoimi danymi, badaniami, zapisuje się na zawody i opłaca składki.</p>
+
+      <h2>Dashboard portalu zawodnika</h2>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/portal</span>
+        </div>
+        <div class="screen-body">
+          <div class="sim-nav">
+            <span class="sim-nav-item active">🏠 Dashboard</span>
+            <span class="sim-nav-item">👤 Profil</span>
+            <span class="sim-nav-item">🏥 Badania</span>
+            <span class="sim-nav-item">🏆 Zawody</span>
+            <span class="sim-nav-item">📊 Wyniki</span>
+            <span class="sim-nav-item">💰 Składki</span>
+            <span class="sim-nav-item">🔫 Broń</span>
+            <span class="sim-nav-item">🎯 Treningi</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div class="sim-card">
+              <div class="sim-card-header">Najbliższe zawody</div>
+              <p style="font-size:.9rem;">🏆 <strong>Mistrzostwa Polski - Bydgoszcz</strong><br><span style="color:#94a3b8;">12 czerwca 2026</span></p>
+              <button class="sim-btn" style="font-size:.85rem;">Zapisz się</button>
+            </div>
+            <div class="sim-card">
+              <div class="sim-card-header">Status dokumentów</div>
+              <p>Licencja zawodnicza <span class="sim-badge success">Aktywna</span></p>
+              <p>Badanie lekarskie <span class="sim-badge warning">wygasa za 23 dni</span></p>
+              <p>Składka 2026 <span class="sim-badge danger">Do zapłaty</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2>Funkcje portalu</h2>
+      <table class="matrix">
+        <tr><th>Sekcja</th><th>URL</th><th>Co robi</th></tr>
+        <tr><td>Dashboard</td><td><code>/portal</code></td><td>Strona główna ze skrótami</td></tr>
+        <tr><td>Profil</td><td><code>/portal/profile</code></td><td>Podgląd swoich danych</td></tr>
+        <tr><td>Edycja kontaktu</td><td><code>/portal/profile/edit</code></td><td>Telefon, adres (tylko)</td></tr>
+        <tr><td>Badania lekarskie</td><td><code>/portal/exams</code></td><td>Upload PDF/JPG/PNG (max 5MB)</td></tr>
+        <tr><td>Zawody</td><td><code>/portal/competitions</code></td><td>Lista dostępnych zawodów</td></tr>
+        <tr><td>Zapisy</td><td><code>/portal/competitions/{id}/register</code></td><td>Wybór konkurencji</td></tr>
+        <tr><td>Wyniki</td><td><code>/portal/results</code></td><td>Historia wyników</td></tr>
+        <tr><td>Składki</td><td><code>/portal/fees</code></td><td>Zaległości + Przelewy24</td></tr>
+        <tr><td>Moja broń</td><td><code>/portal/weapons</code></td><td>Rejestr własnej broni</td></tr>
+        <tr><td>Treningi</td><td><code>/portal/trainings</code></td><td>Zapisy/wypisy</td></tr>
+        <tr><td>Zmiana hasła</td><td><code>/portal/change-password</code></td><td>Zmień swoje hasło</td></tr>
+      </table>
+
+      <h2>Pierwsze logowanie</h2>
+      <div class="steps">
+        <div class="step"><div class="step-content"><h4>Otwórz /portal/login</h4><p>Podaj adres administratorowi klubu — otrzymasz link</p></div></div>
+        <div class="step"><div class="step-content"><h4>Login = e-mail, PESEL lub nr licencji</h4><p>Cokolwiek z Twojego profilu w klubie</p></div></div>
+        <div class="step"><div class="step-content"><h4>Hasło = własny PESEL</h4><p>11 cyfr PESEL</p></div></div>
+        <div class="step"><div class="step-content"><h4>System wymusi zmianę hasła</h4><p>Min. 8 znaków, nie może być PESEL</p></div></div>
+      </div>
+
+      <div class="info-box">
+        <strong>⚠ Status blokuje logowanie:</strong> Jeśli Twój status w klubie to <em>zawieszony</em> lub <em>wykreślony</em>, nie zalogujesz się. Kontakt z biurem klubu.
+      </div>
+    </section>
+    <section id="new-member" class="page" data-section="new-member">
+      <h1>Scenariusz: Dodanie nowego zawodnika</h1>
+      <p class="lead">Krok po kroku: od utworzenia rekordu do pierwszego logowania zawodnika.</p>
+
+      <div class="steps">
+        <div class="step"><div class="step-content"><h4>Admin: <code>/members/create</code></h4><p>Kliknij "+ Dodaj zawodnika" na liście zawodników</p></div></div>
+        <div class="step"><div class="step-content"><h4>Wypełnij podstawowe dane</h4><p>Imię, nazwisko, PESEL, e-mail, data urodzenia, typ członkostwa</p></div></div>
+        <div class="step"><div class="step-content"><h4>Zapisz</h4><p>System wygeneruje automatyczny numer członkowski (np. KS20260042)</p></div></div>
+        <div class="step"><div class="step-content"><h4>W edycji: dodaj dyscypliny</h4><p>Kliknij "+ Dodaj", wybierz dyscyplinę, klasę i instruktora</p></div></div>
+        <div class="step"><div class="step-content"><h4>Dodaj licencję zawodniczą</h4><p>Sekcja "Licencja zawodnicza" → "+ Dodaj licencję". Numer L- → auto-wykrywa typ. Data ważności auto = 31.12 bieżącego roku</p></div></div>
+        <div class="step"><div class="step-content"><h4>Wyślij zawodnikowi adres portalu</h4><p>Link: <code>portal.shootero.pl/portal/login</code>. Login = e-mail, hasło = PESEL</p></div></div>
+        <div class="step"><div class="step-content"><h4>Zawodnik zmienia hasło i uzupełnia dane</h4><p>Telefon, adres, wrzuca badania lekarskie</p></div></div>
+      </div>
+
+      <h2>Formularz dodawania zawodnika</h2>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/members/create</span>
+        </div>
+        <div class="screen-body">
+          <div class="sim-card">
+            <div class="sim-card-header">Dane osobowe</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+              <div class="sim-field"><label class="sim-label">Imię *</label><input class="sim-input" value="Jan" readonly></div>
+              <div class="sim-field"><label class="sim-label">Nazwisko *</label><input class="sim-input" value="Kowalski" readonly></div>
+              <div class="sim-field"><label class="sim-label">PESEL</label><input class="sim-input" value="90050512345" readonly></div>
+              <div class="sim-field"><label class="sim-label">Data urodzenia</label><input class="sim-input" value="05.05.1990" readonly></div>
+              <div class="sim-field"><label class="sim-label">E-mail</label><input class="sim-input" value="jan.kowalski@example.pl" readonly></div>
+              <div class="sim-field"><label class="sim-label">Telefon</label><input class="sim-input" value="+48 500 123 456" readonly></div>
+            </div>
+          </div>
+          <div class="sim-card">
+            <div class="sim-card-header">Dyscypliny <button class="sim-btn">+ Dodaj</button></div>
+            <table class="sim-table">
+              <thead><tr><th>Dyscyplina</th><th>Klasa</th><th>Instruktor</th><th>Od</th><th></th></tr></thead>
+              <tbody>
+                <tr><td>Pistolet sportowy</td><td><span class="sim-badge info">B</span></td><td>Nowak Piotr</td><td>14.04.2026</td><td>🗑</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <button class="sim-btn">✓ Zapisz</button>
+          <button class="sim-btn secondary">Anuluj</button>
+        </div>
+      </div>
+    </section>
+    <section id="add-license" class="page" data-section="add-license">
+      <h1>Scenariusz: Dodanie licencji zawodnikowi</h1>
+      <p class="lead">System automatycznie rozpoznaje typ licencji, ustawia datę ważności i wykrywa duplikaty.</p>
+
+      <h2>Formularz dodawania licencji</h2>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/licenses/create?member_id=34</span>
+        </div>
+        <div class="screen-body">
+          <div class="sim-card">
+            <div class="sim-field"><label class="sim-label">Zawodnik *</label><input class="sim-input" value="Kowalski Jan [KS20260042]" readonly></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+              <div class="sim-field"><label class="sim-label">Typ licencji *</label><select class="sim-select" disabled><option>Patent strzelecki (wykryto z numeru)</option></select></div>
+              <div class="sim-field"><label class="sim-label">Numer licencji *</label><input class="sim-input" value="69704/PAT/05/2021" readonly></div>
+              <div class="sim-field"><label class="sim-label">Data wydania *</label><input class="sim-input" value="14.04.2026" readonly></div>
+              <div class="sim-field"><label class="sim-label">Ważna do *</label><input class="sim-input" value="Patent = bezterminowa" readonly></div>
+            </div>
+            <div class="sim-field"><label class="sim-label">Dyscypliny</label>
+              <span class="sim-badge info">Pistolet</span> <span class="sim-badge info">Karabin</span>
+            </div>
+            <button class="sim-btn">Dodaj licencję</button>
+          </div>
+        </div>
+      </div>
+
+      <h2>Automatyczne wykrywanie typu</h2>
+      <table class="matrix">
+        <tr><th>Numer licencji</th><th>Wykryty typ</th><th>Data ważności</th></tr>
+        <tr><td><code>69704/PAT/05/2021</code></td><td>Patent</td><td>Bezterminowa</td></tr>
+        <tr><td><code>L-12345</code></td><td>Zawodnicza</td><td>31.12.2026</td></tr>
+        <tr><td><code>LS-123/2024</code></td><td>Sędziowska</td><td>31.12.2026</td></tr>
+        <tr><td><code>TR-789/2024</code></td><td>Trenerska</td><td>31.12.2026</td></tr>
+      </table>
+
+      <h2>Wykrywanie duplikatów</h2>
+      <div class="info-box">
+        <strong>💡 Uwaga:</strong> Jeśli zawodnik już ma licencję tego samego typu, system wyświetli ekran potwierdzenia.
+      </div>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/licenses/confirm-duplicate</span>
+        </div>
+        <div class="screen-body">
+          <div class="info-box" style="background:rgba(234,179,8,.1); border-left-color:#eab308;">
+            <strong>⚠ Zawodnik Kowalski Jan</strong> posiada już licencję tego typu:<br>
+            Numer: <code>L-12345</code> · Ważna do: 31.12.2025 <span class="sim-badge danger">WYGASŁA</span>
+          </div>
+          <button class="sim-btn" style="display:block; width:100%; margin-bottom:.5rem; text-align:left; background:#22c55e; color:#fff;">
+            🔄 <strong>Przedłuż obecną licencję</strong><br>
+            <small>Data ważności zostanie ustawiona na 31.12.2026. Pozostałe dane bez zmian.</small>
+          </button>
+          <button class="sim-btn warning" style="display:block; width:100%; margin-bottom:.5rem; text-align:left;">
+            ♻ <strong>Zastąp obecną licencję nowymi danymi</strong><br>
+            <small>Istniejąca licencja zostanie nadpisana.</small>
+          </button>
+          <button class="sim-btn secondary" style="display:block; width:100%;">✗ Anuluj — wróć do formularza</button>
+        </div>
+      </div>
+    </section>
+    <section id="payment" class="page" data-section="payment">
+      <h1>Scenariusz: Rejestracja wpłaty</h1>
+      <p class="lead">Szybkie dodawanie wpłat z wyszukiwarką zawodnika i taryfikatorem.</p>
+
+      <h2>Formularz wpłaty</h2>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/finances/create</span>
+        </div>
+        <div class="screen-body">
+          <div class="sim-card" style="max-width:500px;">
+            <div class="sim-card-header">Nowa wpłata</div>
+            <div class="sim-field">
+              <label class="sim-label">Zawodnik *</label>
+              <input class="sim-input" placeholder="Wpisz min. 3 litery nazwiska lub PESEL..." value="Kow" readonly>
+              <div style="background:#1e2838; border:1px solid rgba(255,255,255,.1); margin-top:.25rem; border-radius:4px;">
+                <div style="padding:.5rem; border-bottom:1px solid rgba(255,255,255,.05); background:rgba(212,163,115,.1);"><strong>Kowalski Jan</strong> [KS20260042]</div>
+                <div style="padding:.5rem; border-bottom:1px solid rgba(255,255,255,.05);">Kowalska Anna [KS20260087]</div>
+                <div style="padding:.5rem;">Kowal Piotr [KS20250012]</div>
+              </div>
+            </div>
+            <div class="sim-field"><label class="sim-label">Typ opłaty *</label>
+              <select class="sim-select" disabled>
+                <option>Składka roczna (Składki członkowskie)</option>
+              </select>
+            </div>
+            <div class="sim-field">
+              <label class="sim-label">Kwota (zł) *</label>
+              <input class="sim-input" value="600,00" readonly>
+              <div style="font-size:.8rem; color:#4ade80; margin-top:.25rem;">💡 Sugerowana kwota: 600,00 PLN (klasa B) · <a href="#">Zastosuj</a></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+              <div class="sim-field"><label class="sim-label">Metoda</label><select class="sim-select" disabled><option>Przelew</option></select></div>
+              <div class="sim-field"><label class="sim-label">Data wpłaty *</label><input class="sim-input" value="14.04.2026" readonly></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+              <div class="sim-field"><label class="sim-label">Rok okresu *</label><input class="sim-input" value="2026" readonly></div>
+              <div class="sim-field"><label class="sim-label">Miesiąc (opcja)</label><select class="sim-select" disabled><option>— roczna —</option></select></div>
+            </div>
+            <div class="sim-field"><label class="sim-label">Nr ref.</label><input class="sim-input" value="TRF/2026/04/1234" readonly></div>
+            <button class="sim-btn danger">Zarejestruj wpłatę</button>
+          </div>
+        </div>
+      </div>
+
+      <h2>Lista wpłat z paginacją</h2>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/finances</span>
+        </div>
+        <div class="screen-body">
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem; margin-bottom:1rem;">
+            <div class="sim-card"><div style="color:#94a3b8; font-size:.8rem;">Łącznie 2026</div><div style="font-size:1.4rem; color:#4ade80; font-weight:700;">23 450 zł</div></div>
+            <div class="sim-card"><div style="color:#94a3b8; font-size:.8rem;">Składka roczna</div><div style="font-size:1.2rem;">18 600 zł <small style="color:#94a3b8;">(31 wpłat)</small></div></div>
+            <div class="sim-card"><div style="color:#94a3b8; font-size:.8rem;">PZSS</div><div style="font-size:1.2rem;">4 200 zł <small style="color:#94a3b8;">(14 wpłat)</small></div></div>
+          </div>
+          <table class="sim-table">
+            <thead><tr><th>Data</th><th>Zawodnik</th><th>Typ</th><th>Kwota</th><th>Metoda</th></tr></thead>
+            <tbody>
+              <tr><td>14.04.2026</td><td>Kowalski Jan</td><td>Składka roczna</td><td style="color:#4ade80;"><strong>600,00 zł</strong></td><td>przelew</td></tr>
+              <tr><td>13.04.2026</td><td>Nowak Anna</td><td>Składka PZSS</td><td style="color:#4ade80;"><strong>300,00 zł</strong></td><td>gotówka</td></tr>
+              <tr><td>13.04.2026</td><td>Wójcik Piotr</td><td>Składka roczna</td><td style="color:#4ade80;"><strong>600,00 zł</strong></td><td>karta</td></tr>
+            </tbody>
+          </table>
+          <nav style="display:flex; justify-content:center; gap:.25rem; margin-top:1rem;">
+            <button class="sim-btn secondary" style="padding:.25rem .5rem;">1</button>
+            <button class="sim-btn" style="padding:.25rem .5rem;">2</button>
+            <button class="sim-btn secondary" style="padding:.25rem .5rem;">3</button>
+            <button class="sim-btn secondary" style="padding:.25rem .5rem;">4</button>
+          </nav>
+          <p style="color:#94a3b8; font-size:.85rem; text-align:center;">Łącznie: 89 wpłat</p>
+        </div>
+      </div>
+    </section>
+    <section id="competition" class="page" data-section="competition">
+      <h1>Scenariusz: Zawody i listy startowe</h1>
+      <p class="lead">Od utworzenia zawodów, przez zapisy zawodników, po wygenerowanie list startowych i protokół PDF.</p>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="step1">1. Zawody</button>
+        <button class="tab-btn" data-tab="step2">2. Zapisy</button>
+        <button class="tab-btn" data-tab="step3">3. Listy startowe</button>
+        <button class="tab-btn" data-tab="step4">4. Wyniki + PDF</button>
+      </div>
+
+      <div class="tab-content active" data-tab="step1">
+        <h2>Utworzenie zawodów</h2>
+        <div class="screen">
+          <div class="screen-header">
+            <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+            <span class="screen-url">portal.shootero.pl/competitions/create</span>
+          </div>
+          <div class="screen-body">
+            <div class="sim-card">
+              <div class="sim-field"><label class="sim-label">Nazwa</label><input class="sim-input" value="Mistrzostwa Klubu 2026" readonly></div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div class="sim-field"><label class="sim-label">Data</label><input class="sim-input" value="12.06.2026" readonly></div>
+                <div class="sim-field"><label class="sim-label">Miejsce</label><input class="sim-input" value="Strzelnica Klubowa" readonly></div>
+              </div>
+              <div class="sim-field"><label class="sim-label">Status</label>
+                <select class="sim-select" disabled><option>Otwarte (zapisy aktywne)</option></select>
+              </div>
+              <button class="sim-btn">Utwórz zawody</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" data-tab="step2">
+        <h2>Zapisy zawodników przez portal</h2>
+        <div class="screen">
+          <div class="screen-header">
+            <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+            <span class="screen-url">portal.shootero.pl/portal/competitions/15/register</span>
+          </div>
+          <div class="screen-body">
+            <h3>Mistrzostwa Klubu 2026</h3>
+            <p style="color:#94a3b8;">12 czerwca 2026 · Strzelnica Klubowa</p>
+            <div class="sim-card">
+              <div class="sim-card-header">Wybierz konkurencje</div>
+              <label style="display:block; padding:.5rem; background:rgba(212,163,115,.1); border-radius:4px; margin-bottom:.5rem;">
+                <input type="checkbox" checked disabled> Pistolet pneumatyczny 40 strzałów · 30 zł
+              </label>
+              <label style="display:block; padding:.5rem;">
+                <input type="checkbox" disabled> Karabin pneumatyczny 60 strzałów · 40 zł
+              </label>
+              <label style="display:block; padding:.5rem;">
+                <input type="checkbox" checked disabled> Pistolet sportowy 30+30 · 50 zł
+              </label>
+            </div>
+            <button class="sim-btn">Zapisz się (80 zł)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" data-tab="step3">
+        <h2>Generator list startowych</h2>
+        <div class="screen">
+          <div class="screen-header">
+            <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+            <span class="screen-url">portal.shootero.pl/startlist/5</span>
+          </div>
+          <div class="screen-body">
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:.5rem; margin-bottom:1rem;">
+              <div class="sim-card" style="padding:.5rem;"><div style="color:#94a3b8; font-size:.75rem;">1. Parametry</div><div style="color:#4ade80;">✓ Gotowe</div></div>
+              <div class="sim-card" style="padding:.5rem;"><div style="color:#94a3b8; font-size:.75rem;">2. Dyscypliny</div><div style="color:#4ade80;">✓ 3 dyscypliny</div></div>
+              <div class="sim-card" style="padding:.5rem;"><div style="color:#94a3b8; font-size:.75rem;">3. Import CSV</div><div style="color:#4ade80;">✓ 45 zawodników</div></div>
+            </div>
+            <button class="sim-btn">🎯 Wygeneruj listy startowe</button>
+            <div class="sim-card" style="margin-top:1rem;">
+              <div class="sim-card-header">Zmiana 1 · 10:00-10:30 · Pistolet pneumatyczny</div>
+              <table class="sim-table">
+                <thead><tr><th>Tor</th><th>Zawodnik</th><th>Klub</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td>Kowalski Jan</td><td>KS Tarcza</td></tr>
+                  <tr><td>2</td><td>Nowak Anna</td><td>KS Tarcza</td></tr>
+                  <tr><td>3</td><td>Wójcik Piotr</td><td>Strzelcy WRO</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" data-tab="step4">
+        <h2>Protokół wyników</h2>
+        <div class="screen">
+          <div class="screen-header">
+            <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+            <span class="screen-url">portal.shootero.pl/competitions/15/protocol</span>
+          </div>
+          <div class="screen-body">
+            <div class="sim-card">
+              <div class="sim-card-header">🏆 Ranking końcowy</div>
+              <table class="sim-table">
+                <thead><tr><th>Miejsce</th><th>Zawodnik</th><th>Klub</th><th>Wynik</th></tr></thead>
+                <tbody>
+                  <tr><td>🥇 1</td><td><strong>Kowalski Jan</strong></td><td>KS Tarcza</td><td><strong style="color:#4ade80;">382</strong></td></tr>
+                  <tr><td>🥈 2</td><td>Nowak Anna</td><td>KS Tarcza</td><td>370</td></tr>
+                  <tr><td>🥉 3</td><td>Wójcik Piotr</td><td>Strzelcy WRO</td><td>358</td></tr>
+                </tbody>
+              </table>
+              <div style="margin-top:1rem;">
+                <button class="sim-btn">📄 Pobierz protokół PDF</button>
+                <button class="sim-btn secondary">Export CSV</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="security" class="page" data-section="security">
+      <h1>Bezpieczeństwo (2FA, hasła)</h1>
+      <p class="lead">Dwuskładnikowe uwierzytelnianie i zmiana hasła.</p>
+
+      <h2>Konfiguracja 2FA</h2>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/2fa/setup</span>
+        </div>
+        <div class="screen-body">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+            <div>
+              <h3>🔒 Dwuskładnikowe uwierzytelnianie</h3>
+              <div class="sim-card">
+                <p style="text-align:center; color:#94a3b8;">Zeskanuj aplikacją Google Authenticator / Authy:</p>
+                <div style="background:#fff; width:160px; height:160px; margin:1rem auto; display:flex; align-items:center; justify-content:center; border-radius:4px;">
+                  <div style="color:#000; font-family:monospace; font-size:.7rem;">[QR kod]</div>
+                </div>
+                <hr style="border-color:rgba(255,255,255,.1);">
+                <p style="color:#94a3b8; font-size:.85rem;">Lub wpisz klucz ręcznie:</p>
+                <code style="display:block; text-align:center; padding:.5rem; background:rgba(0,0,0,.3); border-radius:4px;">JBSWY3DPEHPK3PXP</code>
+                <div class="sim-field" style="margin-top:1rem;">
+                  <label class="sim-label">Kod weryfikacyjny</label>
+                  <input class="sim-input" value="123456" style="text-align:center; letter-spacing:4px; font-size:1.2rem;" readonly>
+                </div>
+                <button class="sim-btn" style="width:100%;">✓ Aktywuj 2FA</button>
+              </div>
+            </div>
+            <div>
+              <h3>🔑 Zmiana hasła</h3>
+              <div class="sim-card">
+                <div class="sim-field"><label class="sim-label">Aktualne hasło</label><input type="password" class="sim-input" value="••••••••" readonly></div>
+                <div class="sim-field"><label class="sim-label">Nowe hasło</label><input type="password" class="sim-input" value="••••••••••" readonly></div>
+                <div class="sim-field"><label class="sim-label">Powtórz nowe hasło</label><input type="password" class="sim-input" value="••••••••••" readonly></div>
+                <button class="sim-btn">Zmień hasło</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2>Kody zapasowe</h2>
+      <div class="info-box">
+        <strong>💡 Ważne:</strong> Po aktywacji 2FA zapisz 8 kodów zapasowych w bezpiecznym miejscu. Pozwalają zalogować się gdy nie masz dostępu do aplikacji (np. zgubiony telefon).
+      </div>
+      <div class="screen">
+        <div class="screen-header">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="screen-url">portal.shootero.pl/2fa/backup-codes</span>
+        </div>
+        <div class="screen-body">
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:.5rem;">
+            <code style="padding:.5rem; background:rgba(0,0,0,.3); border-radius:4px; text-align:center;">A3B2-C4D5</code>
+            <code style="padding:.5rem; background:rgba(0,0,0,.3); border-radius:4px; text-align:center;">E6F7-G8H9</code>
+            <code style="padding:.5rem; background:rgba(0,0,0,.3); border-radius:4px; text-align:center;">J0K1-L2M3</code>
+            <code style="padding:.5rem; background:rgba(0,0,0,.3); border-radius:4px; text-align:center;">N4O5-P6Q7</code>
+            <code style="padding:.5rem; background:rgba(0,0,0,.3); border-radius:4px; text-align:center;">R8S9-T0U1</code>
+            <code style="padding:.5rem; background:rgba(0,0,0,.3); border-radius:4px; text-align:center;">V2W3-X4Y5</code>
+            <code style="padding:.5rem; background:rgba(0,0,0,.3); border-radius:4px; text-align:center;">Z6A7-B8C9</code>
+            <code style="padding:.5rem; background:rgba(0,0,0,.3); border-radius:4px; text-align:center;">D0E1-F2G3</code>
+          </div>
+        </div>
+      </div>
+
+      <h2>Limity logowania</h2>
+      <ul>
+        <li><strong>5 nieudanych prób w 15 minut</strong> → blokada IP</li>
+        <li>Po czasie blokady licznik się resetuje</li>
+        <li>Dotyczy zarówno logowania pracowników jak i zawodników</li>
+      </ul>
+
+      <h2>Reset hasła</h2>
+      <table class="matrix">
+        <tr><th>Kto</th><th>Jak</th></tr>
+        <tr><td>Zawodnik</td><td><code>/portal/reset-password</code> — e-mail + PESEL</td></tr>
+        <tr><td>Pracownik klubu</td><td>Kontakt z administratorem klubu</td></tr>
+        <tr><td>Administrator klubu</td><td>Kontakt z super adminem systemu</td></tr>
+        <tr><td>Super admin</td><td>Bezpośredni reset w bazie (SQL)</td></tr>
+      </table>
+
+      <div class="info-box">
+        <strong>🛡 Security by design:</strong> System separuje sesje pracowników (<code>user_id</code>) od sesji zawodników (<code>member_id</code>) - nie można niechcący wymieszać uprawnień.
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="instrukcja-en.js"></script>
+<script src="instrukcja.js"></script>
+</body>
+</html>
