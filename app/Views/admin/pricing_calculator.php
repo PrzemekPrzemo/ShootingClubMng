@@ -8,11 +8,11 @@
         <div class="card mb-3">
             <div class="card-header"><h6 class="mb-0"><i class="bi bi-people me-1"></i> Liczba członków</h6></div>
             <div class="card-body">
-                <input type="range" class="form-range" id="calc-members" min="10" max="510" value="100" step="10">
+                <input type="range" class="form-range" id="calc-members" min="10" max="1200" value="100" step="10">
                 <div class="d-flex justify-content-between">
                     <small class="text-muted">10</small>
                     <strong class="fs-5" id="calc-members-value">100</strong>
-                    <small class="text-muted">500+</small>
+                    <small class="text-muted">600+</small>
                 </div>
             </div>
         </div>
@@ -24,7 +24,7 @@
                 <button type="button" class="btn btn-sm btn-outline-primary" id="calc-select-all">Zaznacz wszystkie</button>
             </div>
             <div class="card-body">
-                <p class="text-muted small mb-3">Cena modułu naliczana za każde rozpoczęte 100 członków / rok</p>
+                <p class="text-muted small mb-3">Cena modułu naliczana za każde rozpoczęte 200 członków / rok</p>
                 <div class="row g-2" id="calc-modules">
                     <!-- Core (included) -->
                     <div class="col-md-6">
@@ -59,7 +59,31 @@
                             <span class="badge bg-secondary">W cenie</span>
                         </label>
                     </div>
-                    <!-- Paid modules -->
+                    <div class="col-md-6">
+                        <label class="d-flex align-items-center gap-2 p-2 rounded border bg-body-tertiary opacity-75">
+                            <input type="checkbox" class="form-check-input" checked disabled>
+                            <i class="bi bi-calendar3 text-primary"></i>
+                            <span class="flex-grow-1">Kalendarz i wydarzenia</span>
+                            <span class="badge bg-secondary">W cenie</span>
+                        </label>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="d-flex align-items-center gap-2 p-2 rounded border bg-body-tertiary opacity-75">
+                            <input type="checkbox" class="form-check-input" checked disabled>
+                            <i class="bi bi-megaphone text-primary"></i>
+                            <span class="flex-grow-1">Ogłoszenia</span>
+                            <span class="badge bg-secondary">W cenie</span>
+                        </label>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="d-flex align-items-center gap-2 p-2 rounded border bg-body-tertiary opacity-75">
+                            <input type="checkbox" class="form-check-input" checked disabled>
+                            <i class="bi bi-shield-check text-primary"></i>
+                            <span class="flex-grow-1">Dashboard bezpieczeństwa</span>
+                            <span class="badge bg-success">GRATIS</span>
+                        </label>
+                    </div>
+                    <!-- Paid modules (× blocks of 200) -->
                     <div class="col-md-6">
                         <label class="d-flex align-items-center gap-2 p-2 rounded border calc-module" data-price="290">
                             <input type="checkbox" class="form-check-input calc-module-cb">
@@ -109,43 +133,36 @@
                         </label>
                     </div>
                     <div class="col-md-6">
-                        <label class="d-flex align-items-center gap-2 p-2 rounded border calc-module" data-price="190">
-                            <input type="checkbox" class="form-check-input calc-module-cb">
-                            <i class="bi bi-envelope text-warning"></i>
-                            <span class="flex-grow-1">Powiadomienia email</span>
-                            <span class="text-muted small">190 PLN</span>
-                        </label>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="d-flex align-items-center gap-2 p-2 rounded border calc-module" data-price="90">
-                            <input type="checkbox" class="form-check-input calc-module-cb">
-                            <i class="bi bi-calendar3 text-warning"></i>
-                            <span class="flex-grow-1">Kalendarz i wydarzenia</span>
-                            <span class="text-muted small">90 PLN</span>
-                        </label>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="d-flex align-items-center gap-2 p-2 rounded border calc-module" data-price="90">
-                            <input type="checkbox" class="form-check-input calc-module-cb">
-                            <i class="bi bi-megaphone text-warning"></i>
-                            <span class="flex-grow-1">Ogłoszenia</span>
-                            <span class="text-muted small">90 PLN</span>
-                        </label>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="d-flex align-items-center gap-2 p-2 rounded border calc-module" data-price="90">
-                            <input type="checkbox" class="form-check-input calc-module-cb">
-                            <i class="bi bi-shield-check text-warning"></i>
-                            <span class="flex-grow-1">Dashboard bezpieczeństwa</span>
-                            <span class="text-muted small">90 PLN</span>
-                        </label>
-                    </div>
-                    <div class="col-md-6">
                         <label class="d-flex align-items-center gap-2 p-2 rounded border calc-module" data-price="90">
                             <input type="checkbox" class="form-check-input calc-module-cb">
                             <i class="bi bi-bank text-warning"></i>
                             <span class="flex-grow-1">Opłaty federacyjne</span>
                             <span class="text-muted small">90 PLN</span>
+                        </label>
+                    </div>
+                    <!-- Flat-fee modules -->
+                    <div class="col-md-12">
+                        <label class="d-flex align-items-center gap-2 p-2 rounded border calc-module" data-price="500" data-flat="1">
+                            <input type="checkbox" class="form-check-input calc-module-cb">
+                            <i class="bi bi-chat-dots text-info"></i>
+                            <span class="flex-grow-1">Komunikacja SMS do klubowiczów</span>
+                            <span class="text-muted small">500 PLN wdrożenie <em>jednorazowo</em> + 0,05 PLN/SMS</span>
+                        </label>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="d-flex align-items-center gap-2 p-2 rounded border calc-module" data-price="2200" data-flat="1">
+                            <input type="checkbox" class="form-check-input calc-module-cb">
+                            <i class="bi bi-envelope-at text-info"></i>
+                            <span class="flex-grow-1">Powiadomienia email (hostowane)</span>
+                            <span class="text-muted small">1000 PLN wdrożenie + 100 PLN/mies. (rocznie 2200 PLN)</span>
+                        </label>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="d-flex align-items-center gap-2 p-2 rounded border calc-module" data-price="1000" data-flat="1">
+                            <input type="checkbox" class="form-check-input calc-module-cb">
+                            <i class="bi bi-envelope-gear text-info"></i>
+                            <span class="flex-grow-1">Email SMTP klubu (wysyłka z własnego konta)</span>
+                            <span class="text-muted small">1000 PLN konfiguracja, bez opłat miesięcznych</span>
                         </label>
                     </div>
                 </div>
@@ -171,7 +188,7 @@
                             <td class="text-end" id="calc-members-cost">0 PLN</td>
                         </tr>
                         <tr>
-                            <td>Wybrane moduły <small class="text-muted">(<span id="calc-modules-count">0</span>) × <span id="calc-blocks-count">1</span> blok(ów)</small></td>
+                            <td>Wybrane moduły <small class="text-muted">(<span id="calc-modules-count">0</span>) × <span id="calc-blocks-count">1</span> blok(ów) po 200 czł.</small></td>
                             <td class="text-end" id="calc-modules-cost">0 PLN</td>
                         </tr>
                         <tr id="calc-discount-row" style="display: none;">
@@ -190,15 +207,16 @@
                         </tr>
                     </tfoot>
                 </table>
+                <p class="text-muted small mb-0"><i class="bi bi-info-circle"></i> Ceny modułów naliczane za każde rozpoczęte 200 członków. Moduł SMS to opłata jednorazowa (wdrożenie) — nie skaluje się z liczbą członków.</p>
             </div>
         </div>
 
-        <!-- Enterprise panel (500+) -->
+        <!-- Enterprise panel (600+) -->
         <div class="card border-warning mt-3" id="calc-enterprise" style="display: none;">
             <div class="card-body text-center py-4">
                 <i class="bi bi-building fs-1 text-warning mb-2 d-block"></i>
-                <h5>Powyżej 500 członków</h5>
-                <p class="text-muted">Zapraszamy do indywidualnych negocjacji — dopasujemy ofertę do skali i potrzeb klubu.</p>
+                <h5>Powyżej 600 członków</h5>
+                <p class="text-muted mb-0">Negocjuj własną cenę — dopasujemy ofertę do skali i potrzeb klubu.</p>
             </div>
         </div>
     </div>
@@ -230,34 +248,29 @@
     var BASE_PRICE = 990;
     var INCLUDED_MEMBERS = 100;
     var PER_MEMBER_PRICE = 20;
-    var MEMBER_BLOCK = 100;
-    var ALL_MODULES_DISCOUNT = 20; // percent
+    var MEMBER_BLOCK = 200;
+    var ENTERPRISE_THRESHOLD = 600;
+    var ALL_MODULES_DISCOUNT = 20;
 
     var formatter = new Intl.NumberFormat('pl-PL');
-
     function fmt(v) { return formatter.format(v) + ' PLN'; }
 
     function calculate() {
         var rawValue = parseInt(slider.value, 10);
-        var isEnterprise = (rawValue > 500);
-        var memberCount = isEnterprise ? 500 : rawValue;
+        var isEnterprise = (rawValue > ENTERPRISE_THRESHOLD);
+        var memberCount = isEnterprise ? ENTERPRISE_THRESHOLD : rawValue;
 
-        // Display
-        sliderValue.textContent = isEnterprise ? '500+' : memberCount;
+        sliderValue.textContent = isEnterprise ? '600+' : memberCount;
 
-        // Enterprise mode
         if (isEnterprise) {
             summaryCard.style.display = 'none';
-            modulesCard.style.opacity = '0.4';
-            modulesCard.style.pointerEvents = 'none';
+            modulesCard.style.display = 'none';
             enterpriseCard.style.display = '';
             return;
-        } else {
-            summaryCard.style.display = '';
-            modulesCard.style.opacity = '';
-            modulesCard.style.pointerEvents = '';
-            enterpriseCard.style.display = 'none';
         }
+        summaryCard.style.display = '';
+        modulesCard.style.display = '';
+        enterpriseCard.style.display = 'none';
 
         var blocks = Math.ceil(memberCount / MEMBER_BLOCK);
         var extraMembers = Math.max(0, memberCount - INCLUDED_MEMBERS);
@@ -265,31 +278,32 @@
 
         membersRowEl.style.display = extraMembers > 0 ? '' : 'none';
 
-        // Modules
-        var checkboxes = document.querySelectorAll('.calc-module-cb');
+        var cbs = document.querySelectorAll('.calc-module-cb');
         var paidModules = document.querySelectorAll('.calc-module');
         var selectedCount = 0;
-        var moduleBaseSum = 0;
+        var scaledSum = 0;
+        var flatSum = 0;
 
-        checkboxes.forEach(function (cb) {
+        cbs.forEach(function (cb) {
             if (cb.checked) {
                 selectedCount++;
-                moduleBaseSum += parseInt(cb.closest('.calc-module').dataset.price, 10);
+                var lbl = cb.closest('.calc-module');
+                var price = parseInt(lbl.dataset.price, 10);
+                if (lbl.dataset.flat === '1') { flatSum += price; }
+                else { scaledSum += price; }
             }
         });
 
-        var moduleCost = moduleBaseSum * blocks;
+        var moduleCost = scaledSum * blocks + flatSum;
 
-        // Discount
         var discount = 0;
         var allSelected = (selectedCount === paidModules.length);
         if (allSelected && ALL_MODULES_DISCOUNT > 0) {
-            discount = Math.round(moduleCost * ALL_MODULES_DISCOUNT / 100);
+            discount = Math.round((scaledSum * blocks) * ALL_MODULES_DISCOUNT / 100);
         }
 
         var total = BASE_PRICE + membersCost + moduleCost - discount;
 
-        // Update UI
         baseCostEl.textContent = fmt(BASE_PRICE);
         extraCountEl.textContent = extraMembers;
         membersCostEl.textContent = fmt(membersCost);
@@ -305,11 +319,9 @@
     }
 
     slider.addEventListener('input', calculate);
-
     document.getElementById('calc-modules').addEventListener('change', function (e) {
         if (e.target.classList.contains('calc-module-cb')) calculate();
     });
-
     selectAllBtn.addEventListener('click', function () {
         var cbs = document.querySelectorAll('.calc-module-cb');
         var allChecked = true;
