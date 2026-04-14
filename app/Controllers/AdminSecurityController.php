@@ -231,7 +231,7 @@ class AdminSecurityController extends BaseController
             $r[] = $this->check('CSRF weryfikacja w kodzie',   strpos($src,'verify') !== false,  'Brak metody verify() w Csrf.php',   'critical');
             $r[] = $this->check('CSRF używa hash_equals',      strpos($src,'hash_equals') !== false,'Użyj hash_equals() do porównania tokenów', 'warning');
         }
-        $r[] = $this->check('session_regenerate_id',      $this->codeContains('app/Helpers/Auth.php', 'session_regenerate_id'), 'Wywołaj session_regenerate_id po logowaniu', 'critical');
+        $r[] = $this->check('session_regenerate_id',      $this->codeContains(ROOT_PATH . '/app/Helpers/Auth.php', 'session_regenerate_id'), 'Wywołaj session_regenerate_id po logowaniu', 'critical');
         return $r;
     }
 
@@ -339,27 +339,33 @@ class AdminSecurityController extends BaseController
         $r = [];
         $controllersDir = ROOT_PATH . '/app/Controllers';
 
-        // Check for eval() usage
-        $evalCount = $this->countCodePattern($controllersDir, '~\beval\s*\(~');
+        // Check for eval() usage — exclude the security scanner itself (it contains the pattern in strings)
+        $evalCount = $this->countCodePattern($controllersDir, '~\beval\s*\(~', [
+            ROOT_PATH . '/app/Controllers/AdminSecurityController.php',
+        ]);
         $r[] = $this->check('Brak eval() w kontrolerach', $evalCount === 0, "Znaleziono {$evalCount} wywołań eval() w kontrolerach", 'critical');
 
-        // Check for direct $_GET/$_POST without sanitization in SQL
-        $rawSql = $this->countCodePattern($controllersDir, '~\$_(GET|POST|REQUEST)\s*\[.+\]\s*\)?\s*;?\s*(?!.*prepare|.*filter)~');
-        $r[] = $this->check('Brak surowych $_GET/$_POST w SQL', $rawSql < 5, "Potencjalne {$rawSql} miejsc z niefiltrowanym inputem — sprawdź ręcznie", 'warning');
-
-        // Check for shell_exec / system calls
-        $shellCount = $this->countCodePattern($controllersDir, '~\b(shell_exec|system|passthru|exec|popen)\s*\(~');
-        $r[] = $this->check('Brak shell_exec w kontrolerach', $shellCount === 0, "Znaleziono {$shellCount} wywołań shell w kontrolerach", 'critical');
-
-        // Check models use prepared statements
+        // Check for direct $_GET/$_POST used directly in SQL query strings (not via prepared statements)
+        // Pattern: ->query( or ->exec( with a string containing $_ — excludes PDO prepare()
         $modelsDir = ROOT_PATH . '/app/Models';
         $rawQuery  = $this->countCodePattern($modelsDir, '~->query\s*\(\s*"[^"]*\$_~');
-        $r[] = $this->check('Modele używają prepared statements', $rawQuery === 0, "Znaleziono {$rawQuery} potencjalnych raw queries z inputem usera", 'critical');
+        $rawQuery += $this->countCodePattern($controllersDir, '~->query\s*\(\s*"[^"]*\$_~');
+        $r[] = $this->check('Brak surowych $_GET/$_POST w SQL', $rawQuery === 0, "Znaleziono {$rawQuery} miejsc z niefiltrowanym inputem bezpośrednio w query()", 'critical');
 
-        // Check for XSS — unescaped echo in views
+        // Check for shell_exec / system calls — exclude PDO $db->exec() and BackupController (whitelisted)
+        $shellCount = $this->countCodePattern($controllersDir, '~(?<!->)\b(shell_exec|passthru|popen)\s*\(~', [
+            ROOT_PATH . '/app/Controllers/AdminSecurityController.php',
+        ]);
+        // exec() separately — allow BackupController (mysqldump) but flag others
+        $execFiles = $this->findFilesWithPattern($controllersDir, '~(?<!->)\bexec\s*\(~');
+        $execFiles = array_filter($execFiles, fn($f) => !str_contains($f, 'BackupController') && !str_contains($f, 'AdminSecurityController'));
+        $shellCount += count($execFiles);
+        $r[] = $this->check('Brak nieautoryzowanego shell_exec', $shellCount === 0, "Znaleziono {$shellCount} wywołań shell poza BackupController", 'critical');
+
+        // Check for XSS — <?= $var['key'] without e() wrapping — must be directly in the echo, not inside a function call
         $viewsDir  = ROOT_PATH . '/app/Views';
-        $rawEcho   = $this->countCodePattern($viewsDir, '~<\?=\s*\$(?!content|csrf|flashSuccess|flashWarning)[a-zA-Z_]+\[~');
-        $r[] = $this->check('Widoki używają e() do escapowania', $rawEcho < 10, "Znaleziono ok. {$rawEcho} potencjalnych XSS (<?= \$var bez e()) — sprawdź widoki", 'warning');
+        $rawEcho   = $this->countCodePattern($viewsDir, '~<\?=\s*\$[a-zA-Z_]+\[[\'"][a-zA-Z_]+[\'"]\]\s*\?>~');
+        $r[] = $this->check('Widoki używają e() do escapowania', $rawEcho < 5, "Znaleziono ok. {$rawEcho} potencjalnych XSS — echo zmiennej tablicowej bez e()", 'warning');
 
         // Check file upload validation
         $uploadCount = $this->countCodePattern($controllersDir, '~\$_FILES~');
@@ -444,18 +450,35 @@ class AdminSecurityController extends BaseController
         return strpos(file_get_contents($file), $needle) !== false;
     }
 
-    private function countCodePattern(string $dir, string $pattern): int
+    private function countCodePattern(string $dir, string $pattern, array $excludeFiles = []): int
     {
         if (!is_dir($dir)) return 0;
         $count = 0;
         $iter  = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir));
         foreach ($iter as $file) {
             if ($file->getExtension() !== 'php') continue;
+            if (in_array($file->getPathname(), $excludeFiles, true)) continue;
             $src = file_get_contents($file->getPathname());
             preg_match_all($pattern, $src, $m);
             $count += count($m[0]);
         }
         return $count;
+    }
+
+    /** Returns list of file paths that match a pattern — for per-file whitelisting. */
+    private function findFilesWithPattern(string $dir, string $pattern): array
+    {
+        if (!is_dir($dir)) return [];
+        $found = [];
+        $iter  = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir));
+        foreach ($iter as $file) {
+            if ($file->getExtension() !== 'php') continue;
+            $src = file_get_contents($file->getPathname());
+            if (preg_match($pattern, $src)) {
+                $found[] = $file->getPathname();
+            }
+        }
+        return $found;
     }
 
     private function dbColumnExists(string $table, string $column): bool

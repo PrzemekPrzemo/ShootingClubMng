@@ -5,6 +5,14 @@ declare(strict_types=1);
 // Front Controller
 // ============================================================
 
+// Security hardening — override php.ini values that may be unsafe on this server
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+// Secure session cookie when running over HTTPS
+if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+    ini_set('session.cookie_secure', '1');
+}
+
 define('ROOT_PATH', dirname(__DIR__));
 
 // Auto-detect base URL
