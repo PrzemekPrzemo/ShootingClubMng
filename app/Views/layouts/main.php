@@ -464,6 +464,7 @@ $__brandText       = $__hasClubCtx
             ['icon' => 'book',                 'label' => 'Słowniki',       'url' => 'config/disciplines', 'match' => '/config/'],
             ['icon' => 'joystick',             'label' => 'Demo',           'url' => 'admin/demos',        'match' => '/admin/demos'],
             ['icon' => 'credit-card-2-front',  'label' => 'Subskrypcje',   'url' => 'admin/subscriptions','match' => '/admin/subscriptions'],
+            ['icon' => 'calculator',           'label' => 'Kalkulator cen','url' => 'admin/pricing-calculator','match' => '/admin/pricing-calculator'],
             ['icon' => 'bar-chart-line',       'label' => 'Analityka',      'url' => 'admin/analytics',    'match' => '/admin/analytics'],
             ['icon' => 'megaphone',            'label' => 'Reklamy',        'url' => 'admin/ads',          'match' => '/admin/ads'],
             ['icon' => 'gear',                 'label' => 'Ustawienia',     'url' => 'admin/settings',     'match' => '/admin/settings'],
