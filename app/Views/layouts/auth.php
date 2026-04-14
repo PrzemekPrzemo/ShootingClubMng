@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="<?= url('css/app.css') ?>">
     <link rel="icon" type="image/svg+xml" href="<?= url('favicon.svg') ?>">
+    <script>(function(){var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-bs-theme',t);})();</script>
     <style>
         :root {
             --sht-gold: #D4A373;
@@ -108,6 +109,47 @@
         /* Flash outside card */
         .auth-flash { margin-bottom: 1rem; }
         .auth-flash .alert { border-radius: .5rem; }
+
+        /* Theme toggle button */
+        .auth-theme-btn {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.12);
+            color: #94A3B8;
+            width: 2.1rem;
+            height: 2.1rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background .15s, color .15s;
+            z-index: 10;
+        }
+        .auth-theme-btn:hover { background: rgba(212,163,115,.18); color: #D4A373; }
+
+        /* Light mode */
+        [data-bs-theme="light"] body { background: #F1F5F9; }
+        [data-bs-theme="light"] body::before {
+            background-image:
+                radial-gradient(circle at 50% 50%, rgba(212,163,115,.06) 0%, transparent 60%),
+                repeating-linear-gradient(0deg,  transparent, transparent 60px, rgba(0,0,0,.025) 60px, rgba(0,0,0,.025) 61px),
+                repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(0,0,0,.025) 60px, rgba(0,0,0,.025) 61px);
+        }
+        [data-bs-theme="light"] .auth-card {
+            background: #FFFFFF;
+            border-color: rgba(0,0,0,.1);
+            box-shadow: 0 4px 24px rgba(0,0,0,.1), 0 1px 4px rgba(0,0,0,.06);
+        }
+        [data-bs-theme="light"] .auth-theme-btn {
+            background: rgba(0,0,0,.05);
+            border-color: rgba(0,0,0,.12);
+            color: #475569;
+        }
+        [data-bs-theme="light"] .auth-theme-btn:hover { background: rgba(139,69,19,.1); color: #8B4513; }
     </style>
 </head>
 <body>
