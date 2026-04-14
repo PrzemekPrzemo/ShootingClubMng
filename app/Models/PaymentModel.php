@@ -56,20 +56,95 @@ class PaymentModel extends BaseModel
 
     public function getDebtors(int $year): array
     {
-        // Members who haven't paid annual membership fee this year
+        // Members and how much they owe for annual membership fee this year.
+        // First month free rule: if member joined in month M of $year, they pay
+        // for months (M+1)..12 = (12 - M) months of the annual fee.
+        // If joined in previous year(s) → full annual fee.
         $stmt = $this->db->prepare("
             SELECT m.id, m.first_name, m.last_name, m.member_number, m.email, m.phone,
-                   COALESCE(SUM(p.amount), 0) AS paid_total
+                   m.join_date, m.member_type, m.member_class_id,
+                   COALESCE(SUM(p.amount), 0) AS paid_total,
+                   pt_default.amount AS default_amount, pt_default.id AS default_type_id
             FROM members m
             LEFT JOIN payments p ON p.member_id = m.id AND p.period_year = ?
                 AND p.payment_type_id IN (SELECT id FROM payment_types WHERE name LIKE '%składka roczna%')
+            LEFT JOIN payment_types pt_default ON pt_default.id = (
+                SELECT id FROM payment_types WHERE name LIKE '%składka roczna%' AND is_active = 1 ORDER BY id LIMIT 1
+            )
             WHERE m.status = 'aktywny'
+              AND (YEAR(m.join_date) < ? OR (YEAR(m.join_date) = ? AND MONTH(m.join_date) < 12))
             GROUP BY m.id
-            HAVING paid_total = 0
             ORDER BY m.last_name, m.first_name
         ");
-        $stmt->execute([$year]);
-        return $stmt->fetchAll();
+        $stmt->execute([$year, $year, $year]);
+        $rows = $stmt->fetchAll();
+
+        $result = [];
+        foreach ($rows as $r) {
+            $joinYear  = (int)substr((string)$r['join_date'], 0, 4);
+            $joinMonth = (int)substr((string)$r['join_date'], 5, 2);
+
+            // Determine expected annual fee via fee_rates matrix (fallback to payment_types.amount)
+            $annualFee = $this->resolveAnnualFee(
+                (int)($r['default_type_id'] ?? 0),
+                $r['member_class_id'] !== null ? (int)$r['member_class_id'] : null,
+                $year,
+                (float)($r['default_amount'] ?? 0)
+            );
+
+            $monthsDue = 12;
+            if ($joinYear === $year) {
+                // First month free → pay months after join month
+                $monthsDue = max(0, 12 - $joinMonth);
+            } elseif ($joinYear > $year) {
+                $monthsDue = 0;
+            }
+
+            $expected = round(($annualFee / 12) * $monthsDue, 2);
+            $paid     = (float)$r['paid_total'];
+            $outstanding = max(0, round($expected - $paid, 2));
+
+            if ($outstanding > 0.005) {
+                $r['expected'] = $expected;
+                $r['paid_total'] = $paid;
+                $r['outstanding'] = $outstanding;
+                $r['months_due'] = $monthsDue;
+                $result[] = $r;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Resolve annual fee for a member using fee_rates matrix with fallbacks:
+     * 1. Class-specific rate for the year
+     * 2. Default rate (NULL class_id) for the year
+     * 3. payment_types.amount (given as fallback parameter)
+     */
+    private function resolveAnnualFee(int $typeId, ?int $classId, int $year, float $fallback): float
+    {
+        if ($typeId <= 0) return $fallback;
+        try {
+            // Try class-specific first
+            if ($classId !== null) {
+                $stmt = $this->db->prepare(
+                    "SELECT amount FROM fee_rates WHERE payment_type_id = ? AND member_class_id = ? AND year = ? LIMIT 1"
+                );
+                $stmt->execute([$typeId, $classId, $year]);
+                $row = $stmt->fetch();
+                if ($row) return (float)$row['amount'];
+            }
+            // Fall back to default (NULL class)
+            $stmt = $this->db->prepare(
+                "SELECT amount FROM fee_rates WHERE payment_type_id = ? AND member_class_id IS NULL AND year = ? LIMIT 1"
+            );
+            $stmt->execute([$typeId, $year]);
+            $row = $stmt->fetch();
+            if ($row) return (float)$row['amount'];
+        } catch (\PDOException) {
+            // fee_rates table may not exist on some deployments
+        }
+        return $fallback;
     }
 
     public function getSummaryByType(int $year): array
