@@ -23,15 +23,30 @@
         :root {
             --club-primary: <?= htmlspecialchars($__primaryColor, ENT_QUOTES) ?>;
             --club-navbar:  <?= htmlspecialchars($__navbarBg, ENT_QUOTES) ?>;
-            /* Shootero palette — brand spec 2026 */
-            --sht-900: #081220;        /* Navy 500 */
-            --sht-800: #0F172A;        /* Navy 600 */
-            --sht-700: #1E2838;        /* Navy 700 */
+            /* Shootero palette — brand spec 2026 (brand colors, theme-independent) */
             --sht-gold: #D4A373;       /* Gold 500 */
             --sht-gold-bright: #E6C200;/* Gold 400 */
             --sht-gold-soft: #F3E9DC;  /* Gold Soft */
-            --sht-muted: #94A3B8;      /* Gray 400 */
-            --sht-dim: #475569;        /* Gray 600 */
+        }
+        [data-bs-theme="dark"] {
+            --sht-900: #081220;
+            --sht-800: #0F172A;
+            --sht-700: #1E2838;
+            --sht-text: #e2e8f0;
+            --sht-muted: #94A3B8;
+            --sht-dim:   #475569;
+            --sht-border: rgba(255,255,255,.05);
+        }
+        [data-bs-theme="light"] {
+            --sht-900: #f8fafc;
+            --sht-800: #ffffff;
+            --sht-700: #f1f5f9;
+            --sht-text: #1e293b;
+            --sht-muted: #64748b;
+            --sht-dim:   #94a3b8;
+            --sht-border: rgba(0,0,0,.08);
+            /* Sidebar stays dark for contrast, override club-navbar */
+            --club-navbar: #1e293b;
         }
 
         /* ── Layout ── */
@@ -41,7 +56,7 @@
             display: flex;
             flex-direction: column;
             background: var(--sht-900);
-            color: #e2e8f0;
+            color: var(--sht-text);
             font-family: 'Inter', -apple-system, sans-serif;
         }
 
@@ -225,7 +240,7 @@
         /* Top bar */
         #topbar {
             background: var(--sht-800);
-            border-bottom: 1px solid rgba(255,255,255,.06);
+            border-bottom: 1px solid var(--sht-border);
             padding: 0 1.25rem;
             height: 52px;
             display: flex;
@@ -246,12 +261,12 @@
             line-height: 1;
             display: none;
         }
-        .topbar-hamburger:hover { background: rgba(255,255,255,.07); color: #fff; }
+        .topbar-hamburger:hover { background: rgba(127,127,127,.12); color: var(--sht-text); }
         .topbar-title {
             font-family: 'Poppins', sans-serif;
             font-weight: 600;
             font-size: .93rem;
-            color: #e2e8f0;
+            color: var(--sht-text);
             flex: 1;
             white-space: nowrap;
             overflow: hidden;
@@ -442,6 +457,7 @@ $__brandText       = $__hasClubCtx
             ['icon' => 'book',                 'label' => 'Słowniki',       'url' => 'config/disciplines', 'match' => '/config/'],
             ['icon' => 'joystick',             'label' => 'Demo',           'url' => 'admin/demos',        'match' => '/admin/demos'],
             ['icon' => 'credit-card-2-front',  'label' => 'Subskrypcje',   'url' => 'admin/subscriptions','match' => '/admin/subscriptions'],
+            ['icon' => 'calculator',           'label' => 'Cennik pakietów','url' => 'admin/subscriptions/plans', 'match' => '/admin/subscriptions/plans'],
             ['icon' => 'bar-chart-line',       'label' => 'Analityka',      'url' => 'admin/analytics',    'match' => '/admin/analytics'],
             ['icon' => 'megaphone',            'label' => 'Reklamy',        'url' => 'admin/ads',          'match' => '/admin/ads'],
             ['icon' => 'gear',                 'label' => 'Ustawienia',     'url' => 'admin/settings',     'match' => '/admin/settings'],

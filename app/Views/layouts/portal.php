@@ -1,6 +1,10 @@
 <!DOCTYPE html>
-<html lang="pl" data-bs-theme="dark">
+<html lang="pl" id="htmlRoot">
 <head>
+    <script>
+    (function(){ try { var t = localStorage.getItem('bs-theme') || 'dark';
+        document.documentElement.setAttribute('data-bs-theme', t); } catch(e){} })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e($title ?? 'Portal Zawodnika') ?> &mdash; Shootero</title>
@@ -16,20 +20,31 @@
     <link rel="icon" type="image/svg+xml" href="<?= url('favicon.svg') ?>">
     <style>
         :root {
+            --sht-gold: #D4A373;
+            --sht-gold-bright: #E6C200;
+        }
+        [data-bs-theme="dark"] {
             --sht-900: #081220;
             --sht-800: #0F172A;
             --sht-700: #1E2838;
-            --sht-gold: #D4A373;
-            --sht-gold-bright: #E6C200;
+            --sht-text: #e2e8f0;
             --sht-muted: #94A3B8;
-            --sht-dim: #475569;
+            --sht-dim:   #475569;
+        }
+        [data-bs-theme="light"] {
+            --sht-900: #f8fafc;
+            --sht-800: #ffffff;
+            --sht-700: #f1f5f9;
+            --sht-text: #1e293b;
+            --sht-muted: #64748b;
+            --sht-dim:   #94a3b8;
         }
 
         html, body {
             height: 100%;
             margin: 0;
             background: var(--sht-900);
-            color: #e2e8f0;
+            color: var(--sht-text);
             font-family: 'Inter', -apple-system, sans-serif;
             -webkit-font-smoothing: antialiased;
         }
@@ -223,9 +238,11 @@ $__uri = $_SERVER['REQUEST_URI'] ?? '';
                     <i class="bi bi-person-fill"></i>
                     <span><?= e($memberUser['full_name'] ?? '') ?></span>
                 </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="themeToggleBtn" title="Przełącz tryb jasny/ciemny">
+                    <i class="bi bi-moon-stars" id="themeIcon"></i>
+                </button>
                 <a href="<?= url('portal/logout') ?>"
-                   class="btn btn-sm btn-outline-secondary"
-                   style="border-color:rgba(255,255,255,.15);color:var(--sht-muted)">
+                   class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-box-arrow-right me-1"></i>Wyloguj
                 </a>
             </div>
@@ -297,5 +314,24 @@ $__uri = $_SERVER['REQUEST_URI'] ?? '';
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+    var btn = document.getElementById('themeToggleBtn');
+    var icon = document.getElementById('themeIcon');
+    function apply(t) {
+        document.documentElement.setAttribute('data-bs-theme', t);
+        if (icon) icon.className = t === 'dark' ? 'bi bi-moon-stars' : 'bi bi-sun';
+        try { localStorage.setItem('bs-theme', t); } catch(e){}
+    }
+    if (btn) {
+        var cur = document.documentElement.getAttribute('data-bs-theme') || 'dark';
+        apply(cur);
+        btn.addEventListener('click', function () {
+            var c = document.documentElement.getAttribute('data-bs-theme') || 'dark';
+            apply(c === 'dark' ? 'light' : 'dark');
+        });
+    }
+})();
+</script>
 </body>
 </html>

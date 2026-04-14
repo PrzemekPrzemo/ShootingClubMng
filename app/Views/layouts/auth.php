@@ -1,6 +1,10 @@
 <!DOCTYPE html>
-<html lang="pl" data-bs-theme="dark">
+<html lang="pl" id="htmlRoot">
 <head>
+    <script>
+    (function(){ try { var t = localStorage.getItem('bs-theme') || 'dark';
+        document.documentElement.setAttribute('data-bs-theme', t); } catch(e){} })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e($title ?? 'Shootero') ?> &mdash; Logowanie</title>
@@ -13,16 +17,28 @@
     <link rel="icon" type="image/svg+xml" href="<?= url('favicon.svg') ?>">
     <style>
         :root {
+            --sht-gold: #D4A373;
+            --sht-gold-bright: #E6C200;
+        }
+        [data-bs-theme="dark"] {
             --sht-900: #081220;
             --sht-800: #0F172A;
             --sht-700: #1E2838;
-            --sht-gold: #D4A373;
-            --sht-gold-bright: #E6C200;
+            --sht-text: #e2e8f0;
+            --sht-card-border: rgba(255,255,255,.07);
+        }
+        [data-bs-theme="light"] {
+            --sht-900: #f8fafc;
+            --sht-800: #ffffff;
+            --sht-700: #f1f5f9;
+            --sht-text: #1e293b;
+            --sht-card-border: rgba(0,0,0,.08);
         }
         html, body {
             height: 100%;
             margin: 0;
             background: var(--sht-900);
+            color: var(--sht-text);
             font-family: 'Inter', -apple-system, sans-serif;
             -webkit-font-smoothing: antialiased;
         }
@@ -52,14 +68,33 @@
         /* Card */
         .auth-card {
             background: var(--sht-800);
-            border: 1px solid rgba(255,255,255,.07);
+            border: 1px solid var(--sht-card-border);
             border-radius: .85rem;
             padding: 2rem 2rem 1.75rem;
+            box-shadow:
+                0 20px 60px rgba(0,0,0,.15),
+                0 4px 16px rgba(0,0,0,.08);
+        }
+        [data-bs-theme="dark"] .auth-card {
             box-shadow:
                 0 0 0 1px rgba(255,255,255,.04),
                 0 20px 60px rgba(0,0,0,.5),
                 0 4px 16px rgba(0,0,0,.3);
         }
+        /* Theme toggle in corner of login screen */
+        .theme-toggle-corner {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(127,127,127,.1);
+            border: 1px solid var(--sht-card-border);
+            color: var(--sht-text);
+            padding: .4rem .7rem;
+            border-radius: 6px;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .theme-toggle-corner:hover { background: rgba(127,127,127,.2); }
         /* Top gold line accent */
         .auth-card::before {
             content: '';
@@ -76,6 +111,9 @@
     </style>
 </head>
 <body>
+<button type="button" class="theme-toggle-corner" id="themeToggleBtn" title="Przełącz tryb jasny/ciemny">
+    <i class="bi bi-moon-stars" id="themeIcon"></i>
+</button>
 <div class="auth-wrap">
     <div class="auth-container">
         <?php if (!empty($flashError)): ?>
@@ -92,5 +130,24 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+    var btn = document.getElementById('themeToggleBtn');
+    var icon = document.getElementById('themeIcon');
+    function apply(t) {
+        document.documentElement.setAttribute('data-bs-theme', t);
+        if (icon) icon.className = t === 'dark' ? 'bi bi-moon-stars' : 'bi bi-sun';
+        try { localStorage.setItem('bs-theme', t); } catch(e){}
+    }
+    if (btn) {
+        var cur = document.documentElement.getAttribute('data-bs-theme') || 'dark';
+        apply(cur);
+        btn.addEventListener('click', function () {
+            var c = document.documentElement.getAttribute('data-bs-theme') || 'dark';
+            apply(c === 'dark' ? 'light' : 'dark');
+        });
+    }
+})();
+</script>
 </body>
 </html>

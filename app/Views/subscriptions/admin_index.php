@@ -1,6 +1,9 @@
 <div class="d-flex align-items-center mb-3 gap-2">
     <a href="<?= url('admin/dashboard') ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
     <h2 class="h4 mb-0"><i class="bi bi-credit-card-2-front"></i> Subskrypcje klubów</h2>
+    <a href="<?= url('admin/subscriptions/plans') ?>" class="btn btn-sm btn-outline-primary ms-auto">
+        <i class="bi bi-calculator"></i> Cennik pakietów
+    </a>
 </div>
 
 <?php
