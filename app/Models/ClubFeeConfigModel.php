@@ -176,35 +176,47 @@ class ClubFeeConfigModel extends BaseModel
         $base  = $feeConfig[$memberType]['max_annual_fee']    ?? 0.0;
         $early = $feeConfig[$memberType]['early_payment_fee'] ?? 0.0;
 
-        // Find member's best discipline class (lowest sort_order = highest rank)
-        // that matches a club-defined discipline_class entry (club_id = $clubId).
+        // Sum discount across all disciplines the member has a class in.
+        // Each discipline with a matching class contributes its discount.
+        // Classes may be club-specific (club_id = X) or global (club_id IS NULL).
         $discountClass = 0.0;
         if (!empty($classDiscounts)) {
             try {
                 $stmt = $this->db->prepare(
-                    "SELECT dc.id
+                    "SELECT dc.id, md.discipline_id
                      FROM member_disciplines md
-                     JOIN discipline_classes dc ON dc.name = md.class AND dc.club_id = ?
-                     WHERE md.member_id = ?
-                     ORDER BY dc.sort_order ASC
-                     LIMIT 1"
+                     JOIN discipline_classes dc ON dc.name = md.class
+                        AND (dc.club_id = ? OR dc.club_id IS NULL)
+                     WHERE md.member_id = ? AND md.class IS NOT NULL AND md.class <> ''"
                 );
                 $stmt->execute([$clubId, (int)$member['id']]);
-                $dcRow = $stmt->fetch();
-                if ($dcRow && isset($classDiscounts[(int)$dcRow['id']])) {
-                    $discountClass = $classDiscounts[(int)$dcRow['id']];
+                // Deduplicate by discipline (one class per discipline counts once).
+                // If member has class in multiple matching discipline_classes rows
+                // (e.g., club-specific + global with same name), pick the highest rank.
+                $perDiscipline = [];
+                foreach ($stmt->fetchAll() as $row) {
+                    $did = (int)$row['discipline_id'];
+                    $dcId = (int)$row['id'];
+                    if (isset($classDiscounts[$dcId])) {
+                        $disc = $classDiscounts[$dcId];
+                        if (!isset($perDiscipline[$did]) || $disc > $perDiscipline[$did]) {
+                            $perDiscipline[$did] = $disc;
+                        }
+                    }
                 }
+                $discountClass = array_sum($perDiscipline);
             } catch (\PDOException) {
                 // table not yet created — skip
             }
         }
 
-        // Sum discounts for each unique achievement type the member holds
+        // Sum discounts for each achievement the member holds.
+        // Each achievement row counts — multiple medals of same type stack.
         $discountAchieve = 0.0;
         if (!empty($achDiscounts)) {
             try {
                 $stmt = $this->db->prepare(
-                    "SELECT DISTINCT achievement_type FROM member_achievements WHERE member_id = ?"
+                    "SELECT achievement_type FROM member_achievements WHERE member_id = ?"
                 );
                 $stmt->execute([(int)$member['id']]);
                 foreach ($stmt->fetchAll() as $row) {
