@@ -236,7 +236,9 @@ $router->post('/admin/subscriptions/:id',              [\App\Controllers\Subscri
 $router->get('/subscription',                          [\App\Controllers\SubscriptionController::class, 'clubView']);
 
 // Security audit (superadmin)
-$router->get('/admin/security',  [\App\Controllers\AdminSecurityController::class, 'index']);
+$router->get('/admin/security',             [\App\Controllers\AdminSecurityController::class, 'index']);
+$router->get('/admin/security/export.json', [\App\Controllers\AdminSecurityController::class, 'exportJson']);
+$router->get('/admin/security/export.pdf',  [\App\Controllers\AdminSecurityController::class, 'exportPdf']);
 
 // Online payments — master admin view
 $router->get('/admin/online-payments',               [\App\Controllers\PaymentGatewayController::class, 'adminIndex']);

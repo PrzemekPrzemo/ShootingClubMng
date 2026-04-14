@@ -32,6 +32,69 @@ class AdminSecurityController extends BaseController
         ]);
     }
 
+    // ── Export as JSON ────────────────────────────────────────────────
+
+    public function exportJson(): void
+    {
+        $checks    = $this->runAll();
+        $score     = $this->calcScore($checks);
+        $timestamp = date('Y-m-d H:i:s');
+        $phpVer    = PHP_VERSION;
+        $appVer    = (require ROOT_PATH . '/config/app.php')['app_version'] ?? '?';
+
+        $issues = [];
+        foreach ($checks as $group => $items) {
+            foreach ($items as $item) {
+                if (!$item['pass']) {
+                    $issues[] = [
+                        'group'      => $group,
+                        'name'       => $item['name'],
+                        'level'      => $item['level'],
+                        'suggestion' => $item['suggestion'],
+                    ];
+                }
+            }
+        }
+
+        $report = [
+            'meta' => [
+                'generated_at' => $timestamp,
+                'php_version'  => $phpVer,
+                'app_version'  => $appVer,
+                'hostname'     => gethostname() ?: 'unknown',
+            ],
+            'score' => $score,
+            'issues' => $issues,
+            'all_checks' => $checks,
+        ];
+
+        $filename = 'security_audit_' . date('Y-m-d_His') . '.json';
+        header('Content-Type: application/json; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-cache');
+        echo json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // ── Export as PDF ─────────────────────────────────────────────────
+
+    public function exportPdf(): void
+    {
+        $checks    = $this->runAll();
+        $score     = $this->calcScore($checks);
+        $timestamp = date('Y-m-d H:i:s');
+
+        $html = $this->renderToString('pdf/security_report', [
+            'checks'    => $checks,
+            'score'     => $score,
+            'timestamp' => $timestamp,
+            'phpVer'    => PHP_VERSION,
+        ]);
+
+        $filename = 'security_audit_' . date('Y-m-d') . '.pdf';
+        \App\Helpers\PdfHelper::send($html, $filename, 'A4', inline: false);
+    }
+
     // ── Run all check groups ──────────────────────────────────────────
 
     private function runAll(): array
