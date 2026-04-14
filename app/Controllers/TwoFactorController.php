@@ -44,11 +44,13 @@ class TwoFactorController extends BaseController
         $qrUrl     = Totp::qrCodeUrl($otpUrl);
 
         $this->render('2fa/setup', [
-            'title'      => 'Konfiguracja 2FA',
+            'title'      => 'Bezpieczeństwo konta',
             'secret'     => $secret,
             'qrUrl'      => $qrUrl,
             'otpUrl'     => $otpUrl,
             'is_enabled' => $this->isEnabled($userId),
+            'pw_error'   => Session::getFlash('pw_error'),
+            'pw_success' => Session::getFlash('pw_success'),
         ]);
     }
 
@@ -160,6 +162,41 @@ class TwoFactorController extends BaseController
 
         Session::flash('error', 'Nieprawidłowy kod 2FA.');
         $this->redirect('2fa/verify');
+    }
+
+    // ── Password change ───────────────────────────────────────────────
+
+    public function changePassword(): void
+    {
+        Csrf::verify();
+        $userId  = (int)Auth::id();
+        $current = $_POST['current_password'] ?? '';
+        $new     = $_POST['new_password']     ?? '';
+        $confirm = $_POST['confirm_password'] ?? '';
+
+        if (strlen($new) < 8) {
+            Session::flash('pw_error', 'Nowe hasło musi mieć co najmniej 8 znaków.');
+            $this->redirect('2fa/setup');
+        }
+        if ($new !== $confirm) {
+            Session::flash('pw_error', 'Hasła nie są zgodne.');
+            $this->redirect('2fa/setup');
+        }
+
+        $stmt = $this->db->prepare("SELECT password FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch();
+
+        if (!$row || !password_verify($current, $row['password'])) {
+            Session::flash('pw_error', 'Aktualne hasło jest nieprawidłowe.');
+            $this->redirect('2fa/setup');
+        }
+
+        $this->db->prepare("UPDATE users SET password = ? WHERE id = ?")
+            ->execute([password_hash($new, PASSWORD_DEFAULT), $userId]);
+
+        Session::flash('pw_success', 'Hasło zostało zmienione.');
+        $this->redirect('2fa/setup');
     }
 
     // ── Helpers ───────────────────────────────────────────────────────

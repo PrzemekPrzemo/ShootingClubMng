@@ -275,7 +275,8 @@ $router->get('/admin/demos/:id/login-portal',  [\App\Controllers\DemoController:
 // 2FA
 $router->get('/2fa/setup',         [\App\Controllers\TwoFactorController::class, 'setup']);
 $router->post('/2fa/enable',       [\App\Controllers\TwoFactorController::class, 'enable']);
-$router->post('/2fa/disable',      [\App\Controllers\TwoFactorController::class, 'disable']);
+$router->post('/2fa/disable',             [\App\Controllers\TwoFactorController::class, 'disable']);
+$router->post('/account/change-password', [\App\Controllers\TwoFactorController::class, 'changePassword']);
 $router->get('/2fa/backup-codes',  [\App\Controllers\TwoFactorController::class, 'backupCodes']);
 $router->get('/2fa/verify',        [\App\Controllers\TwoFactorController::class, 'showVerify']);
 $router->post('/2fa/verify',       [\App\Controllers\TwoFactorController::class, 'verify']);
