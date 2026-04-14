@@ -391,8 +391,8 @@
         <div class="col-md-2">
             <select name="discipline_classes[]" class="form-select form-select-sm">
                 <option value="">Klasa</option>
-                <?php foreach (['Master','A','B','C','D'] as $cls): ?>
-                    <option value="<?= $cls ?>"><?= $cls ?></option>
+                <?php foreach ($disciplineClasses as $cls): ?>
+                    <option value="<?= e($cls['name']) ?>"><?= e($cls['name']) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
