@@ -75,7 +75,10 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
         <input type="text" class="form-control" id="username" name="username"
                value="<?= e($_POST['username'] ?? '') ?>"
                required autofocus autocomplete="username"
-               placeholder="Wpisz login">
+               placeholder="Login, e-mail, PESEL lub nr licencji">
+        <div class="form-text small" style="color:#64748B;font-size:.7rem">
+            Zawodnicy: zaloguj się e-mailem / PESEL (hasło przy pierwszym logowaniu = PESEL)
+        </div>
     </div>
 
     <div class="mb-4">

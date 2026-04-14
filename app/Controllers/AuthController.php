@@ -103,6 +103,11 @@ class AuthController extends BaseController
         $user = $this->userModel->findByUsername($username);
 
         if (!$user || !password_verify($password, $user['password'])) {
+            // Fallback — try member portal login (unified login UX)
+            if ($this->tryMemberPortalLogin($username, $password)) {
+                return; // member login succeeded and redirected
+            }
+
             RateLimiter::attempt($rlKey);
             $this->logActivity(null, 'login_failed', 'users', null, "Nieudana próba: {$username}");
             Session::flash('error', 'Nieprawidłowy login lub hasło.');
@@ -169,6 +174,90 @@ class AuthController extends BaseController
         // Multiple clubs — show club picker
         Session::set('pending_clubs', $clubs);
         $this->redirect('club-select');
+    }
+
+    /**
+     * Fallback member portal login — tries to log in as an athlete (member)
+     * when staff login fails. Unified login UX so users don't need to know
+     * whether they're in users table or members table.
+     *
+     * @return bool true if login succeeded and redirect was issued, false otherwise.
+     */
+    private function tryMemberPortalLogin(string $login, string $password): bool
+    {
+        $login    = trim($login);
+        $password = trim($password);
+        if ($login === '' || $password === '') return false;
+
+        $db      = Database::getInstance();
+        $clubId  = ClubContext::current();
+        $loginLc = mb_strtolower($login);
+
+        if ($clubId !== null) {
+            $stmt = $db->prepare(
+                "SELECT DISTINCT m.* FROM members m
+                 LEFT JOIN licenses l ON l.member_id = m.id
+                 WHERE m.club_id = ?
+                   AND (LOWER(m.email) = ? OR m.pesel = ? OR l.license_number = ?)
+                 LIMIT 1"
+            );
+            $stmt->execute([$clubId, $loginLc, $login, $login]);
+        } else {
+            $stmt = $db->prepare(
+                "SELECT DISTINCT m.* FROM members m
+                 LEFT JOIN licenses l ON l.member_id = m.id
+                 WHERE LOWER(m.email) = ? OR m.pesel = ? OR l.license_number = ?
+                 LIMIT 1"
+            );
+            $stmt->execute([$loginLc, $login, $login]);
+        }
+        $member = $stmt->fetch();
+        if (!$member) return false;
+
+        // Status check — blocked members cannot log in
+        if (in_array($member['status'], ['zawieszony', 'wykreślony', 'wykreslony'], true)) {
+            return false;
+        }
+
+        $pesel     = trim((string)($member['pesel'] ?? ''));
+        $verified  = false;
+
+        if (!empty($member['password_hash'])) {
+            if (password_verify($password, $member['password_hash'])) {
+                $verified = true;
+            } elseif ($pesel && $password === $pesel) {
+                // PESEL fallback — reset hash to PESEL and force change
+                $hash = password_hash($pesel, PASSWORD_DEFAULT);
+                $db->prepare("UPDATE members SET password_hash = ?, must_change_password = 1 WHERE id = ?")
+                   ->execute([$hash, $member['id']]);
+                $member['password_hash']        = $hash;
+                $member['must_change_password'] = 1;
+                $verified = true;
+            }
+        } elseif ($pesel && $password === $pesel) {
+            // Bootstrap: first-time login uses PESEL
+            $hash = password_hash($pesel, PASSWORD_DEFAULT);
+            $db->prepare("UPDATE members SET password_hash = ?, must_change_password = 1 WHERE id = ?")
+               ->execute([$hash, $member['id']]);
+            $member['password_hash']        = $hash;
+            $member['must_change_password'] = 1;
+            $verified = true;
+        }
+
+        if (!$verified) return false;
+
+        // Log in as member
+        \App\Helpers\MemberAuth::login($member);
+        if (!empty($member['club_id'])) {
+            ClubContext::set((int)$member['club_id']);
+        }
+
+        if (!empty($member['must_change_password'])) {
+            header('Location: ' . url('portal/change-password'));
+            exit;
+        }
+        header('Location: ' . url('portal'));
+        exit;
     }
 
     /**
