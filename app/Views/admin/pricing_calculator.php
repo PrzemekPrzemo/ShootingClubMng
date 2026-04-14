@@ -8,11 +8,18 @@
         <div class="card mb-3">
             <div class="card-header"><h6 class="mb-0"><i class="bi bi-people me-1"></i> Liczba członków</h6></div>
             <div class="card-body">
-                <input type="range" class="form-range" id="calc-members" min="10" max="510" value="100" step="10">
-                <div class="d-flex justify-content-between">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <input type="number" class="form-control form-control-sm" id="calc-members-num"
+                           min="1" value="100" style="width:110px">
+                    <span class="text-muted small">zawodników</span>
+                </div>
+                <input type="range" class="form-range" id="calc-members" min="10" max="2000" value="100" step="10">
+                <div class="d-flex justify-content-between mt-1">
                     <small class="text-muted">10</small>
-                    <strong class="fs-5" id="calc-members-value">100</strong>
-                    <small class="text-muted">500+</small>
+                    <small class="text-muted">500</small>
+                    <small class="text-muted">1000</small>
+                    <small class="text-muted">1500</small>
+                    <small class="text-muted">2000+</small>
                 </div>
             </div>
         </div>
@@ -193,14 +200,6 @@
             </div>
         </div>
 
-        <!-- Enterprise panel (500+) -->
-        <div class="card border-warning mt-3" id="calc-enterprise" style="display: none;">
-            <div class="card-body text-center py-4">
-                <i class="bi bi-building fs-1 text-warning mb-2 d-block"></i>
-                <h5>Powyżej 500 członków</h5>
-                <p class="text-muted">Zapraszamy do indywidualnych negocjacji — dopasujemy ofertę do skali i potrzeb klubu.</p>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -208,69 +207,50 @@
 (function () {
     'use strict';
 
-    var slider = document.getElementById('calc-members');
-    var sliderValue = document.getElementById('calc-members-value');
-    var modulesCard = document.getElementById('calc-modules-card');
-    var summaryCard = document.getElementById('calc-summary');
-    var enterpriseCard = document.getElementById('calc-enterprise');
+    var slider    = document.getElementById('calc-members');
+    var numInput  = document.getElementById('calc-members-num');
     var selectAllBtn = document.getElementById('calc-select-all');
 
-    var baseCostEl = document.getElementById('calc-base-cost');
-    var membersRowEl = document.getElementById('calc-members-row');
-    var extraCountEl = document.getElementById('calc-extra-count');
-    var membersCostEl = document.getElementById('calc-members-cost');
-    var modulesCountEl = document.getElementById('calc-modules-count');
-    var blocksCountEl = document.getElementById('calc-blocks-count');
-    var modulesCostEl = document.getElementById('calc-modules-cost');
-    var discountRowEl = document.getElementById('calc-discount-row');
-    var discountAmountEl = document.getElementById('calc-discount-amount');
-    var totalEl = document.getElementById('calc-total');
-    var monthlyEl = document.getElementById('calc-monthly');
+    var baseCostEl      = document.getElementById('calc-base-cost');
+    var membersRowEl    = document.getElementById('calc-members-row');
+    var extraCountEl    = document.getElementById('calc-extra-count');
+    var membersCostEl   = document.getElementById('calc-members-cost');
+    var modulesCountEl  = document.getElementById('calc-modules-count');
+    var blocksCountEl   = document.getElementById('calc-blocks-count');
+    var modulesCostEl   = document.getElementById('calc-modules-cost');
+    var discountRowEl   = document.getElementById('calc-discount-row');
+    var discountAmountEl= document.getElementById('calc-discount-amount');
+    var totalEl         = document.getElementById('calc-total');
+    var monthlyEl       = document.getElementById('calc-monthly');
 
-    var BASE_PRICE = 990;
-    var INCLUDED_MEMBERS = 100;
-    var PER_MEMBER_PRICE = 20;
-    var MEMBER_BLOCK = 100;
+    var BASE_PRICE          = 990;
+    var INCLUDED_MEMBERS    = 100;
+    var PER_MEMBER_PRICE    = 20;
+    var MEMBER_BLOCK        = 100;
     var ALL_MODULES_DISCOUNT = 20; // percent
+    var SLIDER_MAX          = parseInt(slider.max, 10);
 
     var formatter = new Intl.NumberFormat('pl-PL');
-
     function fmt(v) { return formatter.format(v) + ' PLN'; }
 
+    function getMemberCount() {
+        var v = parseInt(numInput.value, 10);
+        return (isNaN(v) || v < 1) ? 1 : v;
+    }
+
     function calculate() {
-        var rawValue = parseInt(slider.value, 10);
-        var isEnterprise = (rawValue > 500);
-        var memberCount = isEnterprise ? 500 : rawValue;
+        var memberCount = getMemberCount();
 
-        // Display
-        sliderValue.textContent = isEnterprise ? '500+' : memberCount;
-
-        // Enterprise mode
-        if (isEnterprise) {
-            summaryCard.style.display = 'none';
-            modulesCard.style.opacity = '0.4';
-            modulesCard.style.pointerEvents = 'none';
-            enterpriseCard.style.display = '';
-            return;
-        } else {
-            summaryCard.style.display = '';
-            modulesCard.style.opacity = '';
-            modulesCard.style.pointerEvents = '';
-            enterpriseCard.style.display = 'none';
-        }
-
-        var blocks = Math.ceil(memberCount / MEMBER_BLOCK);
+        var blocks       = Math.ceil(memberCount / MEMBER_BLOCK);
         var extraMembers = Math.max(0, memberCount - INCLUDED_MEMBERS);
-        var membersCost = extraMembers * PER_MEMBER_PRICE;
+        var membersCost  = extraMembers * PER_MEMBER_PRICE;
 
         membersRowEl.style.display = extraMembers > 0 ? '' : 'none';
 
-        // Modules
-        var checkboxes = document.querySelectorAll('.calc-module-cb');
+        var checkboxes  = document.querySelectorAll('.calc-module-cb');
         var paidModules = document.querySelectorAll('.calc-module');
         var selectedCount = 0;
         var moduleBaseSum = 0;
-
         checkboxes.forEach(function (cb) {
             if (cb.checked) {
                 selectedCount++;
@@ -278,33 +258,36 @@
             }
         });
 
-        var moduleCost = moduleBaseSum * blocks;
-
-        // Discount
-        var discount = 0;
+        var moduleCost  = moduleBaseSum * blocks;
         var allSelected = (selectedCount === paidModules.length);
-        if (allSelected && ALL_MODULES_DISCOUNT > 0) {
-            discount = Math.round(moduleCost * ALL_MODULES_DISCOUNT / 100);
-        }
+        var discount    = (allSelected && ALL_MODULES_DISCOUNT > 0)
+                          ? Math.round(moduleCost * ALL_MODULES_DISCOUNT / 100) : 0;
+        var total       = BASE_PRICE + membersCost + moduleCost - discount;
 
-        var total = BASE_PRICE + membersCost + moduleCost - discount;
-
-        // Update UI
-        baseCostEl.textContent = fmt(BASE_PRICE);
-        extraCountEl.textContent = extraMembers;
-        membersCostEl.textContent = fmt(membersCost);
-        modulesCountEl.textContent = selectedCount;
-        blocksCountEl.textContent = blocks;
-        modulesCostEl.textContent = fmt(moduleCost);
-
+        baseCostEl.textContent      = fmt(BASE_PRICE);
+        extraCountEl.textContent    = extraMembers;
+        membersCostEl.textContent   = fmt(membersCost);
+        modulesCountEl.textContent  = selectedCount;
+        blocksCountEl.textContent   = blocks;
+        modulesCostEl.textContent   = fmt(moduleCost);
         discountRowEl.style.display = (allSelected && discount > 0) ? '' : 'none';
-        discountAmountEl.textContent = '-' + fmt(discount);
-
-        totalEl.textContent = formatter.format(total);
-        monthlyEl.textContent = formatter.format(Math.round(total / 12));
+        discountAmountEl.textContent= '-' + fmt(discount);
+        totalEl.textContent         = formatter.format(total);
+        monthlyEl.textContent       = formatter.format(Math.round(total / 12));
     }
 
-    slider.addEventListener('input', calculate);
+    // Slider → number input
+    slider.addEventListener('input', function () {
+        numInput.value = slider.value;
+        calculate();
+    });
+
+    // Number input → slider (clamp slider to its visual max)
+    numInput.addEventListener('input', function () {
+        var v = getMemberCount();
+        slider.value = Math.min(v, SLIDER_MAX);
+        calculate();
+    });
 
     document.getElementById('calc-modules').addEventListener('change', function (e) {
         if (e.target.classList.contains('calc-module-cb')) calculate();
