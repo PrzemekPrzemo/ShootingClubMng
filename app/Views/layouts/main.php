@@ -467,10 +467,12 @@ $__brandText       = $__hasClubCtx
     <ul class="sb-nav">
         <?php
         $__clubAdminNav = [
-            ['icon' => 'speedometer2',  'label' => 'Dashboard',    'url' => 'dashboard',            'match' => '/dashboard'],
-            ['icon' => 'people',        'label' => 'Zawodnicy',    'url' => 'members',              'match' => '/members'],
-            ['icon' => 'gear',          'label' => 'Konfiguracja', 'url' => 'config',               'match' => '/config'],
-            ['icon' => 'bell',          'label' => 'Powiadomienia','url' => 'config/notifications', 'match' => '/config/notifications'],
+            ['icon' => 'speedometer2',  'label' => 'Dashboard',       'url' => 'dashboard',            'match' => '/dashboard'],
+            ['icon' => 'people',        'label' => 'Zawodnicy',       'url' => 'members',              'match' => '/members'],
+            ['icon' => 'trophy',        'label' => 'Zawody',          'url' => 'competitions',         'match' => '/competitions'],
+            ['icon' => 'list-ol',       'label' => 'Listy startowe',  'url' => 'startlist',            'match' => '/startlist'],
+            ['icon' => 'gear',          'label' => 'Konfiguracja',    'url' => 'config',               'match' => '/config'],
+            ['icon' => 'bell',          'label' => 'Powiadomienia',   'url' => 'config/notifications', 'match' => '/config/notifications'],
         ];
         foreach ($__clubAdminNav as $__item):
             $__aActive = str_contains($uri, $__item['match']);
