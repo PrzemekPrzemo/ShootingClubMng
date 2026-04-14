@@ -113,25 +113,37 @@ class DashboardController extends BaseController
                 $userId  = Auth::id();
                 $clubId  = \App\Helpers\ClubContext::current();
                 $db      = \App\Helpers\Database::pdo();
-                // Fetch staff user's email from DB
-                $uStmt   = $db->prepare("SELECT email FROM users WHERE id = ? LIMIT 1");
+                // Fetch staff user record
+                $uStmt   = $db->prepare("SELECT email, member_id FROM users WHERE id = ? LIMIT 1");
                 $uStmt->execute([$userId]);
                 $uRow    = $uStmt->fetch();
-                $email   = $uRow['email'] ?? '';
-                if ($email && $clubId) {
+                $member  = null;
+
+                // Priority 1: explicit member_id link
+                if (!empty($uRow['member_id'])) {
+                    $mStmt = $db->prepare(
+                        "SELECT * FROM members WHERE id = ? AND status = 'aktywny' LIMIT 1"
+                    );
+                    $mStmt->execute([(int)$uRow['member_id']]);
+                    $member = $mStmt->fetch() ?: null;
+                }
+
+                // Priority 2: email + club_id matching (legacy / auto-bridge)
+                if (!$member && !empty($uRow['email']) && $clubId) {
                     $mStmt = $db->prepare(
                         "SELECT * FROM members WHERE email = ? AND club_id = ? AND status = 'aktywny' LIMIT 1"
                     );
-                    $mStmt->execute([$email, $clubId]);
-                    $member = $mStmt->fetch();
-                    if ($member) {
-                        \App\Helpers\Session::set('member_id',             (int)$member['id']);
-                        \App\Helpers\Session::set('member_full_name',      $member['first_name'] . ' ' . $member['last_name']);
-                        \App\Helpers\Session::set('member_email',          $member['email'] ?? '');
-                        \App\Helpers\Session::set('member_status',         $member['status']);
-                        \App\Helpers\Session::set('must_change_password',  false);
-                        $bridged = true;
-                    }
+                    $mStmt->execute([$uRow['email'], $clubId]);
+                    $member = $mStmt->fetch() ?: null;
+                }
+
+                if ($member) {
+                    \App\Helpers\Session::set('member_id',             (int)$member['id']);
+                    \App\Helpers\Session::set('member_full_name',      $member['first_name'] . ' ' . $member['last_name']);
+                    \App\Helpers\Session::set('member_email',          $member['email'] ?? '');
+                    \App\Helpers\Session::set('member_status',         $member['status']);
+                    \App\Helpers\Session::set('must_change_password',  false);
+                    $bridged = true;
                 }
             }
             // Only redirect to portal if bridge succeeded — prevents infinite loop

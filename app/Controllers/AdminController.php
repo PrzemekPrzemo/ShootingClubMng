@@ -603,11 +603,39 @@ class AdminController extends BaseController
         $clubs     = $this->clubModel->findAll('name');
         $userClubs = $this->userModel->getClubsForUser((int)$id);
 
+        // Build member list: members from all clubs this user belongs to
+        $linkableMembers = [];
+        $db = \App\Helpers\Database::pdo();
+        if (!empty($userClubs)) {
+            $clubIds = array_column($userClubs, 'club_id');
+            $placeholders = implode(',', array_fill(0, count($clubIds), '?'));
+            $stmt = $db->prepare(
+                "SELECT m.id, m.first_name, m.last_name, m.member_number, c.name AS club_name
+                 FROM members m
+                 JOIN clubs c ON c.id = m.club_id
+                 WHERE m.club_id IN ($placeholders) AND m.status = 'aktywny'
+                 ORDER BY m.last_name, m.first_name"
+            );
+            $stmt->execute(array_values($clubIds));
+            $linkableMembers = $stmt->fetchAll();
+        } else {
+            // Super admin with no club context — fetch all active members
+            $stmt = $db->query(
+                "SELECT m.id, m.first_name, m.last_name, m.member_number, c.name AS club_name
+                 FROM members m
+                 JOIN clubs c ON c.id = m.club_id
+                 WHERE m.status = 'aktywny'
+                 ORDER BY m.last_name, m.first_name"
+            );
+            $linkableMembers = $stmt->fetchAll();
+        }
+
         $this->render('admin/user_form', [
-            'title'     => 'Edycja: ' . $user['full_name'],
-            'user'      => $user,
-            'clubs'     => $clubs,
-            'userClubs' => $userClubs,
+            'title'           => 'Edycja: ' . $user['full_name'],
+            'user'            => $user,
+            'clubs'           => $clubs,
+            'userClubs'       => $userClubs,
+            'linkableMembers' => $linkableMembers,
         ]);
     }
 
@@ -627,6 +655,8 @@ class AdminController extends BaseController
             ? \App\Models\UserModel::highestRole($clubRoles)
             : ($user['role'] ?? 'instruktor');
 
+        // member_id: '' means clear, numeric = set, absent = don't change
+        $memberIdRaw = $_POST['member_id'] ?? null;
         $data = [
             'username'  => trim($_POST['username'] ?? ''),
             'email'     => trim($_POST['email'] ?? ''),
@@ -634,6 +664,9 @@ class AdminController extends BaseController
             'role'      => $sysRole,
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
         ];
+        if ($memberIdRaw !== null) {
+            $data['member_id'] = $memberIdRaw !== '' ? (int)$memberIdRaw : null;
+        }
         $pw = trim($_POST['password'] ?? '');
         if ($pw !== '') {
             $data['password'] = $pw;

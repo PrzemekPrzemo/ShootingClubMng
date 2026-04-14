@@ -120,6 +120,71 @@ $allRoles  = [
         </div>
     </div>
 
+    <?php if ($isEdit && isset($linkableMembers)): ?>
+    <!-- Powiązanie z zawodnikiem -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <strong><i class="bi bi-person-lines-fill"></i> Powiązany zawodnik</strong>
+            <span class="text-muted small ms-1">— pozwala zalogowanemu użytkownikowi widzieć dane swojego rekordu zawodnika</span>
+        </div>
+        <div class="card-body">
+            <?php
+            $linkedId = $user['member_id'] ?? null;
+            $linkedName = '';
+            if ($linkedId) {
+                foreach ($linkableMembers as $m) {
+                    if ((int)$m['id'] === (int)$linkedId) {
+                        $linkedName = $m['last_name'] . ' ' . $m['first_name'] . ' [' . $m['member_number'] . '] — ' . $m['club_name'];
+                        break;
+                    }
+                }
+            }
+            ?>
+            <?php if ($linkedId && $linkedName): ?>
+            <div class="alert alert-success py-2 mb-3">
+                <i class="bi bi-link-45deg"></i> Połączony z: <strong><?= e($linkedName) ?></strong>
+            </div>
+            <?php elseif ($linkedId): ?>
+            <div class="alert alert-warning py-2 mb-3">
+                <i class="bi bi-exclamation-triangle"></i> Zawodnik ID <?= (int)$linkedId ?> nie istnieje lub jest nieaktywny.
+            </div>
+            <?php else: ?>
+            <div class="alert alert-secondary py-2 mb-3">
+                <i class="bi bi-link-45deg text-muted"></i> Brak powiązania — mostek automatyczny przez e-mail (jeśli istnieje).
+            </div>
+            <?php endif; ?>
+            <form method="post" action="<?= url("admin/users/{$user['id']}/edit") ?>">
+                <?= csrf_field() ?>
+                <input type="hidden" name="username"  value="<?= e($user['username']) ?>">
+                <input type="hidden" name="email"     value="<?= e($user['email']) ?>">
+                <input type="hidden" name="full_name" value="<?= e($user['full_name']) ?>">
+                <input type="hidden" name="is_active" value="<?= (int)($user['is_active'] ?? 1) ?>">
+                <div class="row g-2 align-items-end">
+                    <div class="col">
+                        <label class="form-label">Wybierz zawodnika</label>
+                        <select name="member_id" class="form-select">
+                            <option value="">— brak powiązania —</option>
+                            <?php foreach ($linkableMembers as $m): ?>
+                            <option value="<?= (int)$m['id'] ?>"
+                                <?= (int)($user['member_id'] ?? 0) === (int)$m['id'] ? 'selected' : '' ?>>
+                                <?= e($m['last_name'] . ' ' . $m['first_name']) ?>
+                                [<?= e($m['member_number']) ?>]
+                                — <?= e($m['club_name']) ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-link"></i> Zapisz
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <?php if ($isEdit && !empty($userClubs)): ?>
     <!-- Aktualne przypisania -->
     <div class="card">
