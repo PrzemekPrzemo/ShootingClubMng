@@ -30,7 +30,7 @@
                     </thead>
                     <tbody>
                     <?php foreach ($combos as $c):
-                        $discIds = $c['discipline_ids'] ? array_map('intval', explode(',', $c['discipline_ids'])) : [];
+                        $discIds = is_array($c['discipline_ids']) ? $c['discipline_ids'] : [];
                         $discNames = [];
                         foreach ($disciplines as $d) {
                             if (in_array((int)$d['id'], $discIds)) {
