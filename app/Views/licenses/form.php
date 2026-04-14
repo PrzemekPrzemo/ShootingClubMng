@@ -131,18 +131,25 @@
     var memberBirthEl  = document.getElementById('memberBirthDate');
     var searchInput    = document.getElementById('memberSearchInput');
     var resultsBox     = document.getElementById('memberSearchResults');
+    var typeSelect     = document.getElementById('licenseTypeSelect');
+    var issueDate      = document.getElementById('issueDate');
     var validUntil     = document.getElementById('validUntil');
+    var validUntilWrap = document.getElementById('validUntilWrap');
+    var validUntilLabel= document.getElementById('validUntilLabel');
     var isCreate       = <?= $mode === 'create' ? 'true' : 'false' ?>;
     var searchUrl      = <?= json_encode(url('api/member-search')) ?>;
     var searchTimer    = null;
 
-    function calcValidUntil(birthDate) {
+    /* ── Auto valid_until: end of year (or year they turn 18) ── */
+
+    function calcValidUntil() {
         if (!isCreate || !validUntil) return;
-        var now = new Date();
+        var birthDate = memberBirthEl.value;
+        var now  = new Date();
         var year = now.getFullYear();
 
         if (birthDate) {
-            var bd = new Date(birthDate);
+            var bd  = new Date(birthDate);
             var age = year - bd.getFullYear();
             if (now < new Date(bd.getFullYear() + age, bd.getMonth(), bd.getDate())) {
                 age--;
@@ -155,12 +162,35 @@
         validUntil.value = year + '-12-31';
     }
 
+    /* ── License type: handle no-expiry toggle ── */
+
+    function recalcType() {
+        var opt      = typeSelect.options[typeSelect.selectedIndex];
+        var noExpiry = opt && opt.dataset.noExpiry === '1';
+
+        if (noExpiry) {
+            validUntilWrap.style.display = 'none';
+            validUntil.removeAttribute('required');
+            validUntil.value = '';
+        } else {
+            validUntilWrap.style.display = '';
+            validUntil.setAttribute('required', 'required');
+            if (isCreate && !validUntil.value) {
+                calcValidUntil();
+            }
+        }
+    }
+
+    typeSelect.addEventListener('change', recalcType);
+
+    /* ── Member search ── */
+
     function selectMember(m) {
         memberIdInput.value = m.id;
         memberBirthEl.value = m.birth_date || '';
         searchInput.value   = m.full_name + ' [' + m.member_number + ']';
         resultsBox.style.display = 'none';
-        calcValidUntil(m.birth_date);
+        calcValidUntil();
     }
 
     function doSearch() {
@@ -212,49 +242,12 @@
     });
     searchInput.addEventListener('input', function() { searchInput.classList.remove('is-invalid'); });
 
-    // Auto-calculate on load if member is preselected in create mode
-    if (isCreate && memberIdInput.value && memberBirthEl.value && !validUntil.value) {
-        calcValidUntil(memberBirthEl.value);
+    /* ── Init on load ── */
+
+    if (isCreate && !validUntil.value) {
+        calcValidUntil();
     }
-})();
-</script>
-
-<script>
-(function () {
-    var typeSelect      = document.getElementById('licenseTypeSelect');
-    var issueDate       = document.getElementById('issueDate');
-    var validUntil      = document.getElementById('validUntil');
-    var validUntilWrap  = document.getElementById('validUntilWrap');
-    var validUntilLabel = document.getElementById('validUntilLabel');
-
-    function recalc() {
-        var opt      = typeSelect.options[typeSelect.selectedIndex];
-        var noExpiry = opt && opt.dataset.noExpiry === '1';
-        var months   = parseInt(opt ? opt.dataset.months : '', 10);
-
-        if (noExpiry) {
-            validUntilWrap.style.display = 'none';
-            validUntil.removeAttribute('required');
-            validUntil.value = '';
-        } else {
-            validUntilWrap.style.display = '';
-            validUntil.setAttribute('required', 'required');
-            if (months && issueDate.value) {
-                var d = new Date(issueDate.value);
-                d.setMonth(d.getMonth() + months);
-                d.setDate(d.getDate() - 1);
-                validUntil.value = d.toISOString().slice(0, 10);
-            }
-        }
-    }
-
-    typeSelect.addEventListener('change', recalc);
-    issueDate.addEventListener('change', function () {
-        if (typeSelect.value) recalc();
-    });
-
-    // Run on load in case patent is pre-selected (edit mode)
-    if (typeSelect.value) recalc();
+    if (typeSelect.value) recalcType();
 })();
 </script>
     </div>
