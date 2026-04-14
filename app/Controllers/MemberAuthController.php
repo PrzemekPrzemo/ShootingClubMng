@@ -65,26 +65,27 @@ class MemberAuthController
 
         $db      = Database::getInstance();
         $clubId  = ClubContext::current();
+        $loginLc = mb_strtolower($login);
 
-        // Wyszukaj zawodnika po email, PESEL lub numerze licencji
-        // Jeśli subdomena ustawiona — szukaj tylko w tym klubie
+        // Wyszukaj zawodnika po email (case-insensitive), PESEL lub numerze licencji
+        // DISTINCT chroni przed duplikatami z LEFT JOIN (wielu licencji)
         if ($clubId !== null) {
             $stmt = $db->prepare(
-                "SELECT m.* FROM members m
+                "SELECT DISTINCT m.* FROM members m
                  LEFT JOIN licenses l ON l.member_id = m.id
-                 WHERE m.club_id = ? AND (m.email = ? OR m.pesel = ? OR l.license_number = ?)
+                 WHERE m.club_id = ?
+                   AND (LOWER(m.email) = ? OR m.pesel = ? OR l.license_number = ?)
                  LIMIT 1"
             );
-            $stmt->execute([$clubId, $login, $login, $login]);
+            $stmt->execute([$clubId, $loginLc, $login, $login]);
         } else {
-            // Bez subdomeny — szukaj globalnie (email lub PESEL)
             $stmt = $db->prepare(
-                "SELECT m.* FROM members m
+                "SELECT DISTINCT m.* FROM members m
                  LEFT JOIN licenses l ON l.member_id = m.id
-                 WHERE m.email = ? OR m.pesel = ? OR l.license_number = ?
+                 WHERE LOWER(m.email) = ? OR m.pesel = ? OR l.license_number = ?
                  LIMIT 1"
             );
-            $stmt->execute([$login, $login, $login]);
+            $stmt->execute([$loginLc, $login, $login]);
         }
         $member = $stmt->fetch();
 
@@ -99,15 +100,21 @@ class MemberAuthController
             Session::flash('error', 'Konto zawieszone. Skontaktuj się z biurem klubu.');
             $this->redirectTo('portal/login');
         }
-        if ($member['status'] === 'wykreślony') {
+        if (in_array($member['status'], ['wykreślony', 'wykreslony'], true)) {
             Session::flash('error', 'Konto wykreślone. Skontaktuj się z biurem klubu.');
             $this->redirectTo('portal/login');
         }
 
+        $pesel = trim((string)($member['pesel'] ?? ''));
+
         // First-time login: password_hash is NULL → use PESEL as password
         if (empty($member['password_hash'])) {
-            $pesel = trim($member['pesel'] ?? '');
-            if (!$pesel || $password !== $pesel) {
+            if (!$pesel) {
+                Session::flash('error', 'Twoje konto nie ma zapisanego numeru PESEL. Skontaktuj się z biurem klubu w celu ustawienia hasła.');
+                $this->redirectTo('portal/login');
+            }
+            if ($password !== $pesel) {
+                RateLimiter::attempt($rlKey);
                 Session::flash('error', 'Nieprawidłowy e-mail lub hasło.');
                 $this->redirectTo('portal/login');
             }
@@ -117,11 +124,19 @@ class MemberAuthController
                ->execute([$hash, $member['id']]);
             $member['password_hash']        = $hash;
             $member['must_change_password'] = 1;
-        }
-
-        if (!password_verify($password, $member['password_hash'])) {
-            Session::flash('error', 'Nieprawidłowy e-mail lub hasło.');
-            $this->redirectTo('portal/login');
+        } elseif (!password_verify($password, $member['password_hash'])) {
+            // Fallback: if typed PESEL matches, reset password to PESEL (like password reset)
+            if ($pesel && $password === $pesel) {
+                $hash = password_hash($pesel, PASSWORD_DEFAULT);
+                $db->prepare("UPDATE members SET password_hash = ?, must_change_password = 1 WHERE id = ?")
+                   ->execute([$hash, $member['id']]);
+                $member['password_hash']        = $hash;
+                $member['must_change_password'] = 1;
+            } else {
+                RateLimiter::attempt($rlKey);
+                Session::flash('error', 'Nieprawidłowy e-mail lub hasło.');
+                $this->redirectTo('portal/login');
+            }
         }
 
         RateLimiter::clear($rlKey);
