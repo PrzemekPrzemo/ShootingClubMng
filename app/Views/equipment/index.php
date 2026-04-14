@@ -39,6 +39,10 @@ $conditionColors = ['dobry'=>'success','wymaga_obslugi'=>'warning','uszkodzona'=
 
 <?php if ($activeTab === 'members'): ?>
 <!-- Member weapons tab -->
+<div class="mb-3">
+    <input type="text" id="memberWeaponSearch" class="form-control form-control-sm"
+           placeholder="Szukaj zawodnika (min. 3 litery nazwiska)..." autocomplete="off">
+</div>
 <div class="card">
     <div class="card-body p-0">
         <?php if (empty($memberWeapons)): ?>
@@ -228,3 +232,27 @@ $conditionColors = ['dobry'=>'success','wymaga_obslugi'=>'warning','uszkodzona'=
     </div>
 </div>
 <?php endif; // end club/members tab ?>
+
+<?php if ($activeTab === 'members' && !empty($memberWeapons)): ?>
+<script>
+(function () {
+    var searchInput = document.getElementById('memberWeaponSearch');
+    if (!searchInput) return;
+    var table = searchInput.closest('div').nextElementSibling.querySelector('table');
+    if (!table) return;
+    var rows = table.querySelectorAll('tbody tr');
+
+    searchInput.addEventListener('input', function () {
+        var q = searchInput.value.trim().toLowerCase();
+        if (q.length < 3) {
+            rows.forEach(function(row) { row.style.display = ''; });
+            return;
+        }
+        rows.forEach(function(row) {
+            var name = row.cells[0] ? row.cells[0].textContent.toLowerCase() : '';
+            row.style.display = name.indexOf(q) !== -1 ? '' : 'none';
+        });
+    });
+})();
+</script>
+<?php endif; ?>

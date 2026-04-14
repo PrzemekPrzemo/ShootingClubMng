@@ -11,15 +11,27 @@
             <?= csrf_field() ?>
             <div class="mb-3">
                 <label class="form-label">Zawodnik <span class="text-danger">*</span></label>
-                <select name="member_id" class="form-select" required>
-                    <option value="">— wybierz —</option>
-                    <?php foreach ($members as $m): ?>
-                        <?php $sel = ($license['member_id'] ?? $preselected['id'] ?? '') == $m['id']; ?>
-                        <option value="<?= $m['id'] ?>" <?= $sel ? 'selected':'' ?>>
-                            <?= e($m['full_name']) ?> [<?= e($m['member_number']) ?>]
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <?php
+                    $preselId   = $license['member_id'] ?? $preselected['id'] ?? '';
+                    $preselName = '';
+                    if ($preselId) {
+                        foreach ($members as $m) {
+                            if ($m['id'] == $preselId) {
+                                $preselName = $m['full_name'] . ' [' . $m['member_number'] . ']';
+                                break;
+                            }
+                        }
+                    }
+                ?>
+                <input type="hidden" name="member_id" id="memberIdInput" value="<?= e($preselId) ?>">
+                <div class="position-relative">
+                    <input type="text" id="memberSearchInput" class="form-control"
+                           placeholder="Wpisz min. 3 litery nazwiska lub PESEL..."
+                           value="<?= e($preselName) ?>"
+                           autocomplete="off" required>
+                    <div id="memberSearchResults" class="list-group position-absolute w-100 shadow"
+                         style="display:none; z-index:1050; max-height:250px; overflow-y:auto;"></div>
+                </div>
             </div>
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
@@ -108,6 +120,66 @@
                 <a href="<?= url('licenses') ?>" class="btn btn-outline-secondary">Anuluj</a>
             </div>
         </form>
+<script>
+(function () {
+    var memberIdInput = document.getElementById('memberIdInput');
+    var searchInput   = document.getElementById('memberSearchInput');
+    var resultsBox    = document.getElementById('memberSearchResults');
+    var searchUrl     = <?= json_encode(url('api/member-search')) ?>;
+    var searchTimer   = null;
+
+    function doSearch() {
+        var q = searchInput.value.trim();
+        if (q.length < 3) { resultsBox.style.display = 'none'; return; }
+        fetch(searchUrl + '?q=' + encodeURIComponent(q))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                resultsBox.innerHTML = '';
+                if (!data.members || data.members.length === 0) {
+                    resultsBox.innerHTML = '<div class="list-group-item text-muted small">Brak wyników</div>';
+                    resultsBox.style.display = '';
+                    return;
+                }
+                data.members.forEach(function(m) {
+                    var item = document.createElement('a');
+                    item.href = '#';
+                    item.className = 'list-group-item list-group-item-action py-1 px-2 small';
+                    item.textContent = m.full_name + ' [' + m.member_number + ']';
+                    item.addEventListener('mousedown', function(e) {
+                        e.preventDefault();
+                        memberIdInput.value = m.id;
+                        searchInput.value   = m.full_name + ' [' + m.member_number + ']';
+                        resultsBox.style.display = 'none';
+                    });
+                    resultsBox.appendChild(item);
+                });
+                resultsBox.style.display = '';
+            })
+            .catch(function() { resultsBox.style.display = 'none'; });
+    }
+
+    searchInput.addEventListener('input', function() {
+        memberIdInput.value = '';
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(doSearch, 300);
+    });
+    searchInput.addEventListener('blur', function() {
+        setTimeout(function() { resultsBox.style.display = 'none'; }, 200);
+    });
+    searchInput.addEventListener('focus', function() {
+        if (searchInput.value.trim().length >= 3 && !memberIdInput.value) doSearch();
+    });
+    searchInput.closest('form').addEventListener('submit', function(e) {
+        if (!memberIdInput.value) {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.classList.add('is-invalid');
+        }
+    });
+    searchInput.addEventListener('input', function() { searchInput.classList.remove('is-invalid'); });
+})();
+</script>
+
 <script>
 (function () {
     var typeSelect      = document.getElementById('licenseTypeSelect');
