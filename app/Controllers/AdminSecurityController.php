@@ -362,10 +362,13 @@ class AdminSecurityController extends BaseController
         $shellCount += count($execFiles);
         $r[] = $this->check('Brak nieautoryzowanego shell_exec', $shellCount === 0, "Znaleziono {$shellCount} wywołań shell poza BackupController", 'critical');
 
-        // Check for XSS — <?= $var['key'] without e() wrapping — must be directly in the echo, not inside a function call
+        // Check for XSS — echo of TEXT columns (name/title/notes/content etc.) without e().
+        // Integer IDs, numeric counters, boolean flags are excluded — they cannot contain HTML.
         $viewsDir  = ROOT_PATH . '/app/Views';
-        $rawEcho   = $this->countCodePattern($viewsDir, '~<\?=\s*\$[a-zA-Z_]+\[[\'"][a-zA-Z_]+[\'"]\]\s*\?>~');
-        $r[] = $this->check('Widoki używają e() do escapowania', $rawEcho < 5, "Znaleziono ok. {$rawEcho} potencjalnych XSS — echo zmiennej tablicowej bez e()", 'warning');
+        $rawEcho   = $this->countCodePattern($viewsDir,
+            '~<\?=\s*\$[a-zA-Z_]+\[[\'"](name|title|description|desc|notes?|content|label|slug|email|phone|address|street|city|message|subject|body|text|caption|heading|bio|url|link)[\'"]]\s*\?>~i'
+        );
+        $r[] = $this->check('Widoki używają e() do escapowania', $rawEcho === 0, "Znaleziono {$rawEcho} pól tekstowych wypisywanych bez e() — ryzyko XSS", 'warning');
 
         // Check file upload validation
         $uploadCount = $this->countCodePattern($controllersDir, '~\$_FILES~');

@@ -95,13 +95,24 @@ class DemoSeeder
             ['Andrzej',   'Mazur',         'M', '1970-10-05', '1970100512345', null,                                 null],
         ];
 
-        $ids = [];
+        $ids  = [];
+        $year = date('Y');
+        // Determine starting sequence for member_number within this club
+        $lastNum = $db->prepare(
+            "SELECT member_number FROM members WHERE member_number LIKE ? AND club_id = ? ORDER BY id DESC LIMIT 1"
+        );
+        $lastNum->execute(["KS{$year}%", $cid]);
+        $lastVal = $lastNum->fetchColumn();
+        $seq = $lastVal ? ((int)substr($lastVal, 6) + 1) : 1;
+
         foreach ($people as $p) {
+            $memberNumber = sprintf('KS%s%04d', $year, $seq++);
             $db->prepare(
                 "INSERT INTO members
-                    (club_id, first_name, last_name, gender, birth_date, pesel, email, phone, status, join_date)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'aktywny', CURDATE())"
-            )->execute([$cid, $p[0], $p[1], $p[2], $p[3], $p[4], $p[5], $p[6]]);
+                    (club_id, first_name, last_name, gender, birth_date, pesel, email, phone,
+                     member_number, status, join_date)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'aktywny', CURDATE())"
+            )->execute([$cid, $p[0], $p[1], $p[2], $p[3], $p[4], $p[5], $p[6], $memberNumber]);
             $ids[] = (int)$db->lastInsertId();
         }
 
