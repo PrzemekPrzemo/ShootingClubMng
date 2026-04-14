@@ -81,7 +81,11 @@ class LicensesController extends BaseController
         $newId = $this->licenseModel->create($data);
         $this->licenseModel->saveDisciplines($newId, $disciplineIds);
         Session::flash('success', 'Licencja została dodana.');
-        $this->redirect('licenses');
+        if (!empty($data['member_id'])) {
+            $this->redirect('members/' . $data['member_id'] . '/edit');
+        } else {
+            $this->redirect('licenses');
+        }
     }
 
     public function edit(string $id): void
@@ -120,7 +124,11 @@ class LicensesController extends BaseController
         $this->licenseModel->updateLicense((int)$id, $data);
         $this->licenseModel->saveDisciplines((int)$id, $disciplineIds);
         Session::flash('success', 'Licencja została zaktualizowana.');
-        $this->redirect('licenses');
+        if (!empty($data['member_id'])) {
+            $this->redirect('members/' . $data['member_id'] . '/edit');
+        } else {
+            $this->redirect('licenses');
+        }
     }
 
     public function destroy(string $id): void

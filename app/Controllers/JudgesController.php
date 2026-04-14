@@ -66,7 +66,11 @@ class JudgesController extends BaseController
 
         $this->judgeModel->create($data);
         Session::flash('success', 'Licencja sędziowska została dodana.');
-        $this->redirect('judges');
+        if (!empty($data['member_id'])) {
+            $this->redirect('members/' . $data['member_id'] . '/edit');
+        } else {
+            $this->redirect('judges');
+        }
     }
 
     public function edit(string $id): void
@@ -96,7 +100,11 @@ class JudgesController extends BaseController
 
         $this->judgeModel->updateLicense((int)$id, $data);
         Session::flash('success', 'Licencja sędziowska zaktualizowana.');
-        $this->redirect('judges');
+        if (!empty($data['member_id'])) {
+            $this->redirect('members/' . $data['member_id'] . '/edit');
+        } else {
+            $this->redirect('judges');
+        }
     }
 
     public function destroy(string $id): void
