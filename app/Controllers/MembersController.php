@@ -463,6 +463,16 @@ class MembersController extends BaseController
             }
         }
 
+        // Auto-recalculate fee since disciplines/classes may have changed
+        try {
+            $clubId = \App\Helpers\ClubContext::current();
+            if ($clubId !== null) {
+                (new ClubFeeConfigModel())->recalculateOne((int)$id, $clubId, (int)date('Y'));
+            }
+        } catch (\Throwable) {
+            // Fee tables may not exist yet on this deployment — ignore
+        }
+
         Session::flash('success', 'Dane zawodnika zostały zaktualizowane.');
 
         $redirectAfter = trim($_POST['redirect_after'] ?? '');
@@ -471,6 +481,42 @@ class MembersController extends BaseController
             exit;
         }
 
+        $this->redirect("members/{$id}/edit");
+    }
+
+    /**
+     * POST /members/:id/recalc-fee — recalculate fee for a single member
+     * (after changing disciplines, classes or adding/removing achievements).
+     */
+    public function recalcFee(string $id): void
+    {
+        Csrf::verify();
+        $this->requireRole(['admin', 'zarzad']);
+
+        $member = $this->memberModel->findById((int)$id);
+        if (!$member) {
+            Session::flash('error', 'Zawodnik nie istnieje.');
+            $this->redirect('members');
+        }
+
+        $clubId = \App\Helpers\ClubContext::current();
+        if ($clubId === null) {
+            Session::flash('error', 'Przeliczanie składki dostępne tylko w kontekście klubu.');
+            $this->redirect("members/{$id}/edit");
+        }
+
+        $year = (int)($_POST['year'] ?? date('Y'));
+        $calc = (new ClubFeeConfigModel())->recalculateOne((int)$id, $clubId, $year);
+
+        if ($calc === null) {
+            Session::flash('error', 'Nie udało się przeliczyć składki.');
+        } else {
+            $final = number_format($calc['final_annual'], 2, ',', ' ');
+            Session::flash(
+                'success',
+                "Składka zawodnika za rok {$year} przeliczona: <strong>{$final} PLN/rok</strong>."
+            );
+        }
         $this->redirect("members/{$id}/edit");
     }
 

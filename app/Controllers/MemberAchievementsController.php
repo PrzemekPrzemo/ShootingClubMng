@@ -73,7 +73,9 @@ class MemberAchievementsController extends BaseController
             'created_by'       => $authUser['id'] ?? null,
         ]);
 
-        Session::flash('success', 'Osiągnięcie zostało dodane.');
+        $this->autoRecalcFee((int)$member_id, $clubId);
+
+        Session::flash('success', 'Osiągnięcie zostało dodane. Składka zaktualizowana.');
         $this->redirect("members/{$member_id}");
     }
 
@@ -90,8 +92,20 @@ class MemberAchievementsController extends BaseController
         }
 
         $this->achievementModel->delete((int)$id);
-        Session::flash('success', 'Osiągnięcie zostało usunięte.');
+        $this->autoRecalcFee((int)$member_id, ClubContext::current() ?? 0);
+
+        Session::flash('success', 'Osiągnięcie zostało usunięte. Składka zaktualizowana.');
         $this->redirect("members/{$member_id}");
+    }
+
+    private function autoRecalcFee(int $memberId, int $clubId): void
+    {
+        if ($clubId <= 0) return;
+        try {
+            (new \App\Models\ClubFeeConfigModel())->recalculateOne($memberId, $clubId, (int)date('Y'));
+        } catch (\Throwable) {
+            // Fee tables may not exist on this deployment — ignore
+        }
     }
 
     // ── helpers ─────────────────────────────────────────────────────────────

@@ -226,11 +226,21 @@
 
         <!-- Składki -->
         <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <strong>Składki <?= date('Y') ?></strong>
-                <a href="<?= url('finances/create?member_id=' . $member['id']) ?>" class="btn btn-sm btn-outline-success py-0">
-                    <i class="bi bi-plus"></i> Wpłata
-                </a>
+                <div class="d-flex gap-1">
+                    <?php if (in_array($authUser['role'] ?? '', ['admin','zarzad'], true)): ?>
+                    <form method="post" action="<?= url('members/' . $member['id'] . '/recalc-fee') ?>" class="d-inline">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="btn btn-sm btn-outline-secondary py-0" title="Przelicz składkę dla tego zawodnika">
+                            <i class="bi bi-arrow-clockwise"></i> Przelicz
+                        </button>
+                    </form>
+                    <?php endif; ?>
+                    <a href="<?= url('finances/create?member_id=' . $member['id']) ?>" class="btn btn-sm btn-outline-success py-0">
+                        <i class="bi bi-plus"></i> Wpłata
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 <p class="mb-0">

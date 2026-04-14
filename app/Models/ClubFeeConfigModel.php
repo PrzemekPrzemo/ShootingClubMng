@@ -246,6 +246,43 @@ class ClubFeeConfigModel extends BaseModel
     }
 
     /**
+     * Recalculate fees for a single member.
+     * Returns the calculation result or null if member not found.
+     */
+    public function recalculateOne(int $memberId, int $clubId, int $year): ?array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT id, member_type FROM members WHERE id = ? AND club_id = ? LIMIT 1"
+        );
+        $stmt->execute([$memberId, $clubId]);
+        $member = $stmt->fetch();
+        if (!$member) return null;
+
+        $calc = $this->calculateMemberFee($member, $clubId, $year);
+
+        $this->db->prepare(
+            "INSERT INTO member_fee_assignments
+               (member_id, club_id, year, base_annual_fee, discount_class, discount_achieve,
+                final_annual_fee, monthly_fee, early_payment_fee)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+               base_annual_fee  = VALUES(base_annual_fee),
+               discount_class   = VALUES(discount_class),
+               discount_achieve = VALUES(discount_achieve),
+               final_annual_fee = VALUES(final_annual_fee),
+               monthly_fee      = VALUES(monthly_fee),
+               early_payment_fee= VALUES(early_payment_fee),
+               calculated_at    = CURRENT_TIMESTAMP"
+        )->execute([
+            $memberId, $clubId, $year,
+            $calc['base'], $calc['discount_class'], $calc['discount_achieve'],
+            $calc['final_annual'], $calc['monthly'], $calc['early_payment_final'],
+        ]);
+
+        return $calc;
+    }
+
+    /**
      * Recalculate fees for all active members in a club.
      * Returns stats array.
      */
