@@ -253,6 +253,9 @@ $router->get('/admin/security/export.md',   [\App\Controllers\AdminSecurityContr
 $router->get('/admin/online-payments',               [\App\Controllers\PaymentGatewayController::class, 'adminIndex']);
 $router->post('/admin/online-payments/:id/cancel',   [\App\Controllers\PaymentGatewayController::class, 'adminCancel']);
 
+// Pricing calculator (superadmin)
+$router->get('/admin/pricing-calculator', [\App\Controllers\AdminController::class, 'pricingCalculator']);
+
 // Backups (superadmin)
 $router->get('/admin/backups',              [\App\Controllers\BackupController::class, 'index']);
 $router->post('/admin/backups/run',         [\App\Controllers\BackupController::class, 'run']);

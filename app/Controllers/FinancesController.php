@@ -86,7 +86,7 @@ class FinancesController extends BaseController
         Session::flash('success', 'Wpłata została zarejestrowana.');
 
         if (!empty($_POST['member_id'])) {
-            $this->redirect('members/' . (int)$_POST['member_id']);
+            $this->redirect('finances?member_id=' . (int)$_POST['member_id']);
         } else {
             $this->redirect('finances');
         }
