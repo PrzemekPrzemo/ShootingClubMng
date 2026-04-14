@@ -155,6 +155,30 @@ class DashboardController extends BaseController
             \App\Helpers\Session::flash('info', 'Brak powiązanego rekordu zawodnika z tym kontem. Zaloguj się do portalu osobno lub skontaktuj z administratorem.');
         }
 
+        // Non-zawodnik staff with explicit member_id link → bridge portal session silently
+        // (allows dual-context: staff panel + member portal in same browser session)
+        if (Auth::role() !== 'zawodnik' && !\App\Helpers\MemberAuth::check()) {
+            $userId = Auth::id();
+            if ($userId) {
+                $db    = \App\Helpers\Database::pdo();
+                $uStmt = $db->prepare("SELECT member_id FROM users WHERE id = ? AND member_id IS NOT NULL LIMIT 1");
+                $uStmt->execute([$userId]);
+                $linkedMemberId = (int)$uStmt->fetchColumn();
+                if ($linkedMemberId) {
+                    $mStmt = $db->prepare("SELECT * FROM members WHERE id = ? AND status = 'aktywny' LIMIT 1");
+                    $mStmt->execute([$linkedMemberId]);
+                    $linkedMember = $mStmt->fetch();
+                    if ($linkedMember) {
+                        \App\Helpers\Session::set('member_id',            $linkedMemberId);
+                        \App\Helpers\Session::set('member_full_name',     $linkedMember['first_name'] . ' ' . $linkedMember['last_name']);
+                        \App\Helpers\Session::set('member_email',         $linkedMember['email'] ?? '');
+                        \App\Helpers\Session::set('member_status',        $linkedMember['status']);
+                        \App\Helpers\Session::set('must_change_password', false);
+                    }
+                }
+            }
+        }
+
         $memberModel      = new MemberModel();
         $licenseModel     = new LicenseModel();
         $examModel        = new MedicalExamModel();

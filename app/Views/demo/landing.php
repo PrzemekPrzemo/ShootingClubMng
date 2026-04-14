@@ -1,4 +1,4 @@
-<div class="container py-5" style="max-width:860px">
+<div class="container py-5" style="max-width:900px">
 
     <div class="text-center mb-4">
         <h1 class="fw-bold"><i class="bi bi-joystick"></i> Środowisko demonstracyjne</h1>
@@ -15,11 +15,10 @@
 
     <div class="alert alert-info">
         <i class="bi bi-info-circle"></i>
-        Poniżej znajdziesz dane logowania do każdego poziomu dostępu. Hasło do wszystkich kont:
-        <strong class="ms-1 font-monospace"><?= e($password) ?></strong>
+        Hasło do <strong>wszystkich</strong> kont: <strong class="ms-1 font-monospace"><?= e($password) ?></strong>
     </div>
 
-    <!-- Panel users -->
+    <!-- Staff panel section -->
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
             <h5 class="mb-0"><i class="bi bi-layout-sidebar"></i> Panel zarządzania klubem</h5>
@@ -29,7 +28,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>Poziom dostępu</th>
-                        <th>Login (nazwa użytkownika)</th>
+                        <th>Login</th>
                         <th>Hasło</th>
                         <th>Opis</th>
                         <th class="text-end">Akcja</th>
@@ -38,15 +37,17 @@
                 <tbody>
                     <?php
                     $roleLabels = [
-                        'zarzad'    => ['Zarząd (admin klubu)',   'bg-danger',  'Pełny dostęp: zawodnicy, zawody, finanse, ustawienia'],
-                        'instruktor'=> ['Instruktor',              'bg-success', 'Zarządzanie treningami i zawodnikami'],
-                        'sędzia'   => ['Sędzia',                  'bg-info',    'Protokołowanie zawodów i wyniki'],
+                        'zarzad'     => ['Zarząd (admin klubu)', 'bg-danger',  'Pełny dostęp: zawodnicy, zawody, finanse, ustawienia'],
+                        'instruktor' => ['Instruktor',           'bg-success', 'Zarządzanie treningami i zawodnikami'],
+                        'sędzia'    => ['Sędzia',               'bg-info',    'Protokołowanie zawodów i wyniki'],
                     ];
                     ?>
                     <?php foreach ($demoUsers as $u): ?>
                         <?php [$label, $badgeCls, $desc] = $roleLabels[$u['role']] ?? [$u['role'], 'bg-secondary', '']; ?>
                     <tr>
-                        <td><span class="badge <?= $badgeCls ?>"><?= e($label) ?></span></td>
+                        <td>
+                            <span class="badge <?= $badgeCls ?>"><?= e($label) ?></span>
+                        </td>
                         <td><code><?= e($u['username']) ?></code></td>
                         <td><code><?= e($password) ?></code></td>
                         <td class="small text-muted"><?= e($desc) ?></td>
@@ -65,39 +66,64 @@
         </div>
     </div>
 
-    <!-- Member portal -->
+    <!-- Portal members section -->
     <div class="card mb-4">
-        <div class="card-header bg-success text-white">
+        <div class="card-header bg-success text-white d-flex align-items-center gap-2">
             <h5 class="mb-0"><i class="bi bi-person-badge"></i> Portal zawodnika</h5>
+            <span class="badge bg-white text-success ms-1"><?= count($portalMembers) ?> konta</span>
         </div>
         <div class="card-body p-0">
-            <?php if ($portalMember): ?>
+            <?php if (!empty($portalMembers)): ?>
+            <div class="alert alert-secondary rounded-0 border-0 py-2 px-3 small mb-0"
+                 style="background:rgba(134,239,172,.06);border-bottom:1px solid rgba(134,239,172,.15)!important">
+                <i class="bi bi-arrow-left-right me-1 text-success"></i>
+                <strong>Podwójny kontekst:</strong> 3 z tych kont są powiązane z kontami panelu.
+                Po zalogowaniu do panelu zarządzania zobaczysz przycisk
+                <i class="bi bi-person-badge" style="color:#86EFAC"></i> w górnym pasku — kliknij, by przełączyć na widok zawodnika.
+            </div>
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Imię i nazwisko</th>
-                        <th>E-mail (login)</th>
+                        <th>Zawodnik</th>
+                        <th>E-mail (login do portalu)</th>
                         <th>Hasło</th>
-                        <th>Opis</th>
+                        <th>Powiązany z panelem</th>
                         <th class="text-end">Akcja</th>
                     </tr>
                 </thead>
                 <tbody>
+                    <?php
+                    $rolePortalLabels = [
+                        'zarzad'     => ['Zarząd',    'bg-danger'],
+                        'instruktor' => ['Instruktor', 'bg-success'],
+                        'sędzia'    => ['Sędzia',     'bg-info'],
+                    ];
+                    ?>
+                    <?php foreach ($portalMembers as $pm): ?>
                     <tr>
-                        <td><?= e($portalMember['first_name'] . ' ' . $portalMember['last_name']) ?></td>
-                        <td><code><?= e($portalMember['email']) ?></code></td>
+                        <td class="fw-medium"><?= e($pm['first_name'] . ' ' . $pm['last_name']) ?></td>
+                        <td><code><?= e($pm['email']) ?></code></td>
                         <td><code><?= e($password) ?></code></td>
-                        <td class="small text-muted">Widok własnych wyników, zgłoszenia na zawody, dokumenty</td>
+                        <td>
+                            <?php if (!empty($pm['linked_username'])): ?>
+                                <?php [$rl, $rc] = $rolePortalLabels[$pm['linked_role']] ?? [$pm['linked_role'], 'bg-secondary']; ?>
+                                <span class="badge <?= $rc ?> me-1"><?= e($rl) ?></span>
+                                <code class="small"><?= e($pm['linked_username']) ?></code>
+                            <?php else: ?>
+                                <span class="text-muted small">— tylko portal</span>
+                            <?php endif; ?>
+                        </td>
                         <td class="text-end">
                             <a href="<?= url('portal/login') ?>" class="btn btn-sm btn-outline-success" target="_blank">
-                                <i class="bi bi-box-arrow-in-right"></i> Zaloguj
+                                <i class="bi bi-box-arrow-in-right"></i> Portal
                             </a>
                         </td>
                     </tr>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
             <?php else: ?>
-            <div class="p-3 text-muted">Brak konta portalowego w tym demo.</div>
+            <div class="p-3 text-muted">Brak kont portalowych w tym demo.</div>
             <?php endif; ?>
         </div>
     </div>

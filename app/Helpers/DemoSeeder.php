@@ -19,8 +19,10 @@ class DemoSeeder
         self::$db     = Database::pdo();
         self::$clubId = $clubId;
 
-        $users    = self::createUsers();
-        $memberIds = self::createMembers();
+        $userRecords = self::createUsers();
+        $memberIds   = self::createMembers();
+        // Link staff users → member records (for dual-context portal access)
+        self::linkUsersToMembers($userRecords, $memberIds);
         self::assignMemberships($memberIds);
         self::createLicenses($memberIds);
         self::createWeapons();
@@ -32,11 +34,21 @@ class DemoSeeder
         self::createClubFees($memberIds);
         self::createPortalData($memberIds);
 
-        return $users;
+        // Return only the public credentials (without internal ids)
+        return array_map(fn($u) => [
+            'role'     => $u['role'],
+            'username' => $u['username'],
+            'email'    => $u['email'],
+            'password' => $u['password'],
+        ], $userRecords);
     }
 
     // ── Users ─────────────────────────────────────────────────────────────────
 
+    /**
+     * Creates 3 staff accounts (zarzad, instruktor, sedzia).
+     * Returns array with internal 'id' field (used for member linking) plus display credentials.
+     */
     private static function createUsers(): array
     {
         $hash = password_hash(self::DEMO_PASSWORD, PASSWORD_DEFAULT);
@@ -45,9 +57,9 @@ class DemoSeeder
         $users = [];
 
         $roles = [
-            ['zarzad',   'demo_zarzad_' . $cid,   'Jan Prezes',    'prezes@demo' . $cid . '.pl'],
-            ['instruktor','demo_instr_' . $cid,   'Piotr Trener',  'trener@demo' . $cid . '.pl'],
-            ['sędzia',   'demo_sedzia_' . $cid,   'Maria Sędzia',  'sedzia@demo' . $cid . '.pl'],
+            ['zarzad',    'demo_zarzad_' . $cid,  'Jan Prezes',   'prezes@demo' . $cid . '.pl'],
+            ['instruktor','demo_instr_' . $cid,   'Piotr Trener', 'trener@demo' . $cid . '.pl'],
+            ['sędzia',   'demo_sedzia_' . $cid,   'Maria Sędzia', 'sedzia@demo' . $cid . '.pl'],
         ];
 
         foreach ($roles as [$role, $username, $fullName, $email]) {
@@ -63,6 +75,7 @@ class DemoSeeder
             )->execute([$userId, $cid, $role]);
 
             $users[] = [
+                'id'       => $userId,  // used by linkUsersToMembers()
                 'role'     => $role,
                 'username' => $username,
                 'email'    => $email,
@@ -71,6 +84,31 @@ class DemoSeeder
         }
 
         return $users;
+    }
+
+    /**
+     * Link staff user accounts → member records so they can access the portal
+     * in dual-context mode (same password, different view).
+     *
+     * Mapping:
+     *   users[0] zarzad     → members[1] Marek Nowak
+     *   users[1] instruktor → members[3] Piotr Wójcik
+     *   users[2] sędzia     → members[2] Katarzyna Wiśniewska
+     */
+    private static function linkUsersToMembers(array $users, array $memberIds): void
+    {
+        $db = self::$db;
+        $links = [
+            0 => 1,  // zarzad → Marek Nowak
+            1 => 3,  // instruktor → Piotr Wójcik
+            2 => 2,  // sędzia → Katarzyna Wiśniewska
+        ];
+        foreach ($links as $userIdx => $memberIdx) {
+            if (isset($users[$userIdx]['id']) && isset($memberIds[$memberIdx])) {
+                $db->prepare("UPDATE users SET member_id = ? WHERE id = ? LIMIT 1")
+                   ->execute([$memberIds[$memberIdx], $users[$userIdx]['id']]);
+            }
+        }
     }
 
     // ── Members ───────────────────────────────────────────────────────────────
@@ -116,10 +154,12 @@ class DemoSeeder
             $ids[] = (int)$db->lastInsertId();
         }
 
-        // Give Anna Kowalska a portal account
+        // Give first 4 members portal accounts (Anna, Marek, Katarzyna, Piotr W.)
         $hash = password_hash(self::DEMO_PASSWORD, PASSWORD_DEFAULT);
-        $db->prepare("UPDATE members SET password_hash = ?, must_change_password = 0 WHERE id = ? LIMIT 1")
-           ->execute([$hash, $ids[0]]);
+        foreach (array_slice($ids, 0, 4) as $memberId) {
+            $db->prepare("UPDATE members SET password_hash = ?, must_change_password = 0 WHERE id = ? LIMIT 1")
+               ->execute([$hash, $memberId]);
+        }
 
         return $ids;
     }
@@ -324,13 +364,12 @@ class DemoSeeder
         }
     }
 
-    // ── Portal demo data (rich profile for Anna Kowalska) ─────────────────────
+    // ── Portal demo data (rich profiles for 4 portal members) ────────────────
 
     private static function createPortalData(array $memberIds): void
     {
-        $db   = self::$db;
-        $cid  = self::$clubId;
-        $anna = $memberIds[0]; // Anna Kowalska — portal demo user
+        $db  = self::$db;
+        $cid = self::$clubId;
         $year = (int)date('Y');
 
         // Get a user_id for created_by fields
@@ -341,52 +380,7 @@ class DemoSeeder
             return;
         }
 
-        // 1. Enrich Anna's profile with address and member_type
-        $db->prepare(
-            "UPDATE members SET address_street = ?, address_city = ?, address_postal = ?,
-             member_type = 'wyczynowy', notes = ? WHERE id = ? LIMIT 1"
-        )->execute([
-            'ul. Strzelecka 12/3', 'Warszawa', '00-123',
-            'Zawodniczka z 5-letnim stażem. Specjalizacja: pistolet sportowy.',
-            $anna,
-        ]);
-
-        // 2. Medical exams (one valid, one expired)
-        $db->prepare(
-            "INSERT INTO member_medical_exams (member_id, exam_date, valid_until, notes, created_by)
-             VALUES (?, ?, ?, ?, ?)"
-        )->execute([
-            $anna,
-            date('Y-m-d', strtotime('-5 months')),
-            date('Y-m-d', strtotime('+7 months')),
-            'Badanie profilaktyczne — zdolna do uprawiania sportu strzeleckiego bez ograniczeń.',
-            $adminUserId,
-        ]);
-        $db->prepare(
-            "INSERT INTO member_medical_exams (member_id, exam_date, valid_until, notes, created_by)
-             VALUES (?, ?, ?, ?, ?)"
-        )->execute([
-            $anna,
-            date('Y-m-d', strtotime('-17 months')),
-            date('Y-m-d', strtotime('-5 months')),
-            'Badanie poprzednie — wygasło.',
-            $adminUserId,
-        ]);
-
-        // 3. Personal weapons
-        $weapons = [
-            ['Walther PPQ M2', 'pistolet', '9mm', 'Walther', 'WPQ2-2021-DEMO', 'POZ/WA/1234/2021'],
-            ['CZ 75 SP-01 Shadow', 'pistolet', '9mm', 'Česká zbrojovka', 'CZ75SP-2022-DEMO', 'POZ/WA/5678/2022'],
-        ];
-        foreach ($weapons as [$name, $type, $caliber, $mfr, $serial, $permit]) {
-            $db->prepare(
-                "INSERT INTO member_weapons
-                    (member_id, name, type, caliber, manufacturer, serial_number, permit_number, is_active, created_by)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)"
-            )->execute([$anna, $name, $type, $caliber, $mfr, $serial, $permit, $adminUserId]);
-        }
-
-        // 4. Payment types for this demo club
+        // Payment types for this demo club (shared by all portal members)
         $db->prepare(
             "INSERT INTO payment_types (club_id, name, amount, is_active) VALUES (?, 'Składka roczna', 240.00, 1)"
         )->execute([$cid]);
@@ -397,39 +391,138 @@ class DemoSeeder
         )->execute([$cid]);
         $ptComp = (int)$db->lastInsertId();
 
-        // 5. Payment records for Anna (previous year + current year + competition fee)
+        // ── Anna Kowalska [0] — pure portal member, wyczynowy ─────────────────
+        $anna = $memberIds[0];
         $db->prepare(
-            "INSERT INTO payments
-                (member_id, payment_type_id, amount, payment_date, period_year, method, reference, created_by)
-             VALUES (?, ?, 240.00, ?, ?, 'przelew', ?, ?)"
-        )->execute([
-            $anna, $ptAnnual,
-            date('Y-m-d', strtotime('-380 days')),
-            $year - 1,
-            'PRLW/' . ($year - 1) . '/00042',
-            $adminUserId,
-        ]);
+            "UPDATE members SET address_street=?, address_city=?, address_postal=?,
+             member_type='wyczynowy', notes=? WHERE id=? LIMIT 1"
+        )->execute(['ul. Strzelecka 12/3', 'Warszawa', '00-123',
+            'Zawodniczka z 5-letnim stażem. Specjalizacja: pistolet sportowy.', $anna]);
+
         $db->prepare(
-            "INSERT INTO payments
-                (member_id, payment_type_id, amount, payment_date, period_year, method, reference, created_by)
-             VALUES (?, ?, 240.00, ?, ?, 'gotówka', ?, ?)"
-        )->execute([
-            $anna, $ptAnnual,
-            date('Y-m-d', strtotime('-15 days')),
-            $year,
-            'KP/' . $year . '/00018',
-            $adminUserId,
-        ]);
+            "INSERT INTO member_medical_exams (member_id, exam_date, valid_until, notes, created_by) VALUES (?,?,?,?,?)"
+        )->execute([$anna, date('Y-m-d', strtotime('-5 months')), date('Y-m-d', strtotime('+7 months')),
+            'Badanie profilaktyczne — zdolna do uprawiania sportu strzeleckiego bez ograniczeń.', $adminUserId]);
         $db->prepare(
-            "INSERT INTO payments
-                (member_id, payment_type_id, amount, payment_date, period_year, method, notes, created_by)
-             VALUES (?, ?, 35.00, ?, ?, 'gotówka', 'Zawody Wiosenne', ?)"
-        )->execute([
-            $anna, $ptComp,
-            date('Y-m-d', strtotime('-32 days')),
-            $year,
-            $adminUserId,
-        ]);
+            "INSERT INTO member_medical_exams (member_id, exam_date, valid_until, notes, created_by) VALUES (?,?,?,?,?)"
+        )->execute([$anna, date('Y-m-d', strtotime('-17 months')), date('Y-m-d', strtotime('-5 months')),
+            'Badanie poprzednie — wygasło.', $adminUserId]);
+
+        foreach ([
+            ['Walther PPQ M2',      'pistolet', '9mm', 'Walther',            'WPQ2-2021-DEMO',   'POZ/WA/1234/2021'],
+            ['CZ 75 SP-01 Shadow',  'pistolet', '9mm', 'Česká zbrojovka',    'CZ75SP-2022-DEMO', 'POZ/WA/5678/2022'],
+        ] as [$n, $t, $cal, $mfr, $s, $p]) {
+            $db->prepare(
+                "INSERT INTO member_weapons (member_id,name,type,caliber,manufacturer,serial_number,permit_number,is_active,created_by)
+                 VALUES (?,?,?,?,?,?,?,1,?)"
+            )->execute([$anna, $n, $t, $cal, $mfr, $s, $p, $adminUserId]);
+        }
+
+        // Anna payments: previous year + current year + competition fee
+        $db->prepare(
+            "INSERT INTO payments (member_id,payment_type_id,amount,payment_date,period_year,method,reference,created_by)
+             VALUES (?,?,240.00,?,?,'przelew',?,?)"
+        )->execute([$anna, $ptAnnual, date('Y-m-d', strtotime('-380 days')), $year - 1,
+            'PRLW/' . ($year - 1) . '/00042', $adminUserId]);
+        $db->prepare(
+            "INSERT INTO payments (member_id,payment_type_id,amount,payment_date,period_year,method,reference,created_by)
+             VALUES (?,?,240.00,?,?,'gotówka',?,?)"
+        )->execute([$anna, $ptAnnual, date('Y-m-d', strtotime('-15 days')), $year,
+            'KP/' . $year . '/00018', $adminUserId]);
+        $db->prepare(
+            "INSERT INTO payments (member_id,payment_type_id,amount,payment_date,period_year,method,notes,created_by)
+             VALUES (?,?,35.00,?,?,'gotówka','Zawody Wiosenne',?)"
+        )->execute([$anna, $ptComp, date('Y-m-d', strtotime('-32 days')), $year, $adminUserId]);
+
+        // ── Marek Nowak [1] — linked to zarząd (Jan Prezes), wyczynowy ────────
+        $marek = $memberIds[1];
+        $db->prepare(
+            "UPDATE members SET address_street=?, address_city=?, address_postal=?,
+             member_type='wyczynowy', notes=? WHERE id=? LIMIT 1"
+        )->execute(['ul. Karabinierów 5/8', 'Kraków', '30-010',
+            'Zawodnik z 12-letnim stażem. Specjalizacja: karabin sportowy. Vice-prezes zarządu.', $marek]);
+
+        $db->prepare(
+            "INSERT INTO member_medical_exams (member_id, exam_date, valid_until, notes, created_by) VALUES (?,?,?,?,?)"
+        )->execute([$marek, date('Y-m-d', strtotime('-8 months')), date('Y-m-d', strtotime('+4 months')),
+            'Badanie profilaktyczne — zdolny do uprawiania sportu. Wynik badań słuchu w normie.', $adminUserId]);
+
+        foreach ([
+            ['SIG Sauer MCX',  'karabin',  '5.56mm', 'SIG Sauer',  'MCX-2020-DEMO',  'WRO/KR/3344/2020'],
+            ['Glock 34',        'pistolet', '9mm',    'Glock GmbH', 'G34-2019-DEMO',  'WRO/KR/1122/2019'],
+        ] as [$n, $t, $cal, $mfr, $s, $p]) {
+            $db->prepare(
+                "INSERT INTO member_weapons (member_id,name,type,caliber,manufacturer,serial_number,permit_number,is_active,created_by)
+                 VALUES (?,?,?,?,?,?,?,1,?)"
+            )->execute([$marek, $n, $t, $cal, $mfr, $s, $p, $adminUserId]);
+        }
+
+        $db->prepare(
+            "INSERT INTO payments (member_id,payment_type_id,amount,payment_date,period_year,method,reference,created_by)
+             VALUES (?,?,240.00,?,?,'przelew',?,?)"
+        )->execute([$marek, $ptAnnual, date('Y-m-d', strtotime('-395 days')), $year - 1,
+            'PRLW/' . ($year - 1) . '/00031', $adminUserId]);
+        $db->prepare(
+            "INSERT INTO payments (member_id,payment_type_id,amount,payment_date,period_year,method,reference,created_by)
+             VALUES (?,?,240.00,?,?,'przelew',?,?)"
+        )->execute([$marek, $ptAnnual, date('Y-m-d', strtotime('-10 days')), $year,
+            'PRLW/' . $year . '/00009', $adminUserId]);
+        $db->prepare(
+            "INSERT INTO payments (member_id,payment_type_id,amount,payment_date,period_year,method,notes,created_by)
+             VALUES (?,?,35.00,?,?,'gotówka','Zawody Wiosenne',?)"
+        )->execute([$marek, $ptComp, date('Y-m-d', strtotime('-33 days')), $year, $adminUserId]);
+
+        // ── Katarzyna Wiśniewska [2] — linked to sędzia (Maria Sędzia), aktywny ─
+        $kasia = $memberIds[2];
+        $db->prepare(
+            "UPDATE members SET address_street=?, address_city=?, address_postal=?,
+             member_type='aktywny', notes=? WHERE id=? LIMIT 1"
+        )->execute(['al. Olimpijska 22/14', 'Wrocław', '50-001',
+            'Zawodniczka z 6-letnim stażem. Sędzia strzelecki II klasy. Specjalizacja: pistolet sportowy.', $kasia]);
+
+        $db->prepare(
+            "INSERT INTO member_medical_exams (member_id, exam_date, valid_until, notes, created_by) VALUES (?,?,?,?,?)"
+        )->execute([$kasia, date('Y-m-d', strtotime('-2 months')), date('Y-m-d', strtotime('+10 months')),
+            'Badanie profilaktyczne — zdolna do uprawiania sportu strzeleckiego.', $adminUserId]);
+
+        foreach ([
+            ['SIG Sauer P226', 'pistolet', '9mm', 'SIG Sauer', 'SP226-2023-DEMO', 'WRO/WR/8899/2023'],
+        ] as [$n, $t, $cal, $mfr, $s, $p]) {
+            $db->prepare(
+                "INSERT INTO member_weapons (member_id,name,type,caliber,manufacturer,serial_number,permit_number,is_active,created_by)
+                 VALUES (?,?,?,?,?,?,?,1,?)"
+            )->execute([$kasia, $n, $t, $cal, $mfr, $s, $p, $adminUserId]);
+        }
+
+        $db->prepare(
+            "INSERT INTO payments (member_id,payment_type_id,amount,payment_date,period_year,method,reference,created_by)
+             VALUES (?,?,240.00,?,?,'gotówka',?,?)"
+        )->execute([$kasia, $ptAnnual, date('Y-m-d', strtotime('-20 days')), $year,
+            'KP/' . $year . '/00022', $adminUserId]);
+
+        // ── Piotr Wójcik [3] — linked to instruktor (Piotr Trener), wyczynowy ─
+        $piotr = $memberIds[3];
+        $db->prepare(
+            "UPDATE members SET address_street=?, address_city=?, address_postal=?,
+             member_type='wyczynowy', notes=? WHERE id=? LIMIT 1"
+        )->execute(['ul. Celna 3/1', 'Poznań', '60-100',
+            'Zawodnik z 18-letnim stażem. Instruktor strzelecki klasy I. Korzysta ze sprzętu klubowego.', $piotr]);
+
+        $db->prepare(
+            "INSERT INTO member_medical_exams (member_id, exam_date, valid_until, notes, created_by) VALUES (?,?,?,?,?)"
+        )->execute([$piotr, date('Y-m-d', strtotime('-1 month')), date('Y-m-d', strtotime('+11 months')),
+            'Badanie profilaktyczne — zdolny do uprawiania sportu. Wynik EKG w normie.', $adminUserId]);
+
+        $db->prepare(
+            "INSERT INTO payments (member_id,payment_type_id,amount,payment_date,period_year,method,reference,created_by)
+             VALUES (?,?,240.00,?,?,'przelew',?,?)"
+        )->execute([$piotr, $ptAnnual, date('Y-m-d', strtotime('-370 days')), $year - 1,
+            'PRLW/' . ($year - 1) . '/00055', $adminUserId]);
+        $db->prepare(
+            "INSERT INTO payments (member_id,payment_type_id,amount,payment_date,period_year,method,reference,created_by)
+             VALUES (?,?,240.00,?,?,'przelew',?,?)"
+        )->execute([$piotr, $ptAnnual, date('Y-m-d', strtotime('-5 days')), $year,
+            'PRLW/' . $year . '/00041', $adminUserId]);
     }
 
     // ── Cleanup ───────────────────────────────────────────────────────────────

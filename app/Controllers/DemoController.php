@@ -57,20 +57,25 @@ class DemoController extends BaseController
         $usersStmt->execute([$demo['id']]);
         $demoUsers = $usersStmt->fetchAll();
 
-        // Fetch portal member (Anna Kowalska — has portal_password set)
+        // Fetch all portal members, with their linked staff username/role if any
         $portalStmt = $db->prepare(
-            "SELECT first_name, last_name, email FROM members
-             WHERE club_id = ? AND password_hash IS NOT NULL AND must_change_password = 0 LIMIT 1"
+            "SELECT m.first_name, m.last_name, m.email,
+                    u.username AS linked_username, uc.role AS linked_role
+             FROM members m
+             LEFT JOIN users u ON u.member_id = m.id AND u.is_demo = 1
+             LEFT JOIN user_clubs uc ON uc.user_id = u.id AND uc.club_id = m.club_id
+             WHERE m.club_id = ? AND m.password_hash IS NOT NULL AND m.must_change_password = 0
+             ORDER BY m.id ASC"
         );
         $portalStmt->execute([$demo['id']]);
-        $portalMember = $portalStmt->fetch();
+        $portalMembers = $portalStmt->fetchAll();
 
         $this->render('demo/landing', [
-            'title'        => 'Środowisko demonstracyjne — ' . $demo['name'],
-            'demo'         => $demo,
-            'demoUsers'    => $demoUsers,
-            'portalMember' => $portalMember,
-            'password'     => DemoSeeder::DEMO_PASSWORD,
+            'title'         => 'Środowisko demonstracyjne — ' . $demo['name'],
+            'demo'          => $demo,
+            'demoUsers'     => $demoUsers,
+            'portalMembers' => $portalMembers,
+            'password'      => DemoSeeder::DEMO_PASSWORD,
         ]);
     }
 
@@ -227,14 +232,14 @@ class DemoController extends BaseController
         $this->redirect('dashboard');
     }
 
-    /** GET /admin/demos/:id/login-portal — impersonates the demo portal member */
+    /** GET /admin/demos/:id/login-portal — impersonates the first demo portal member */
     public function adminQuickLoginPortal(string $id): void
     {
         $this->requireSuperAdmin();
 
         $db   = Database::getInstance();
         $stmt = $db->prepare(
-            "SELECT * FROM members WHERE club_id = ? AND portal_password IS NOT NULL LIMIT 1"
+            "SELECT * FROM members WHERE club_id = ? AND password_hash IS NOT NULL AND must_change_password = 0 LIMIT 1"
         );
         $stmt->execute([(int)$id]);
         $member = $stmt->fetch();

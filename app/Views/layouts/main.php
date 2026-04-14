@@ -562,6 +562,12 @@ $__brandText       = $__hasClubCtx
                     <i class="bi bi-shield-lock text-danger" style="font-size:1.05rem"></i>
                 </a>
             <?php endif; ?>
+            <?php if (($authUser['role'] ?? '') !== 'zawodnik' && \App\Helpers\MemberAuth::check()): ?>
+                <a href="<?= url('portal') ?>" title="Portal zawodnika — przejdź do swojego profilu zawodniczego"
+                   style="color:#86EFAC;font-size:1.05rem;text-decoration:none">
+                    <i class="bi bi-person-badge"></i>
+                </a>
+            <?php endif; ?>
             <?php if (in_array($authUser['role'] ?? '', ['admin', 'zarzad'])): ?>
                 <a href="<?= url('club/settings') ?>" title="Ustawienia klubu">
                     <i class="bi bi-building" style="font-size:1rem"></i>
