@@ -106,8 +106,8 @@
                         <div class="col-md-2">
                             <select name="discipline_classes[]" class="form-select form-select-sm">
                                 <option value="">Klasa</option>
-                                <?php foreach ($disciplineClasses as $cls): ?>
-                                    <option value="<?= e($cls['name']) ?>" <?= $md['class'] === $cls['name'] ? 'selected':'' ?>><?= e($cls['name']) ?></option>
+                                <?php foreach ($memberClasses ?? [] as $mc): ?>
+                                    <option value="<?= e($mc['short_code']) ?>" <?= $md['class'] === $mc['short_code'] ? 'selected':'' ?>><?= e($mc['name']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -141,8 +141,8 @@
                         <div class="col-md-2">
                             <select name="discipline_classes[]" class="form-select form-select-sm">
                                 <option value="">Klasa</option>
-                                <?php foreach ($disciplineClasses as $cls): ?>
-                                    <option value="<?= e($cls['name']) ?>"><?= e($cls['name']) ?></option>
+                                <?php foreach ($memberClasses ?? [] as $mc): ?>
+                                    <option value="<?= e($mc['short_code']) ?>"><?= e($mc['name']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -391,8 +391,8 @@
         <div class="col-md-2">
             <select name="discipline_classes[]" class="form-select form-select-sm">
                 <option value="">Klasa</option>
-                <?php foreach ($disciplineClasses as $cls): ?>
-                    <option value="<?= e($cls['name']) ?>"><?= e($cls['name']) ?></option>
+                <?php foreach ($memberClasses ?? [] as $mc): ?>
+                    <option value="<?= e($mc['short_code']) ?>"><?= e($mc['name']) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
