@@ -517,7 +517,7 @@ class MembersController extends BaseController
                 "Składka zawodnika za rok {$year} przeliczona: <strong>{$final} PLN/rok</strong>."
             );
         }
-        $this->redirect("members/{$id}/edit");
+        $this->redirect("members/{$id}");
     }
 
     public function destroy(string $id): void
