@@ -14,7 +14,7 @@
                     <strong class="fs-5" id="calc-members-value">200</strong>
                     <small class="text-muted">600+</small>
                 </div>
-                <p class="text-muted small mt-2 mb-0"><i class="bi bi-info-circle"></i> Opłata bazowa obejmuje 200 członków. Każde kolejne 200 = 500 PLN/mies.</p>
+                <p class="text-muted small mt-2 mb-0"><i class="bi bi-info-circle"></i> Opłata bazowa (3000 PLN) obejmuje 200 członków w 1. roku. Kolejne lata: 1500 PLN. Każde kolejne 200 czł. = 500 PLN/mies.</p>
             </div>
         </div>
 
@@ -63,8 +63,12 @@
                 <table class="table table-sm mb-3">
                     <tbody>
                         <tr>
-                            <td>Opłata bazowa <small class="text-muted">(wdrożenie, szkolenie, do 200 czł.) — jednorazowo</small></td>
+                            <td>Opłata bazowa <small class="text-muted">(wdrożenie, do 200 czł.) — jednorazowo</small></td>
                             <td class="text-end fw-bold" id="calc-base-cost">3 000 PLN</td>
+                        </tr>
+                        <tr>
+                            <td>Subskrypcja bazowa <small class="text-muted">— kolejne lata</small></td>
+                            <td class="text-end" id="calc-base-yearly">1 500 PLN</td>
                         </tr>
                         <tr id="calc-members-row" style="display: none;">
                             <td>Dodatkowe bloki po 200 czł. <small class="text-muted">(<span id="calc-extra-blocks">0</span> × 500 PLN/mies.)</small></td>
@@ -94,7 +98,7 @@
                         </tr>
                     </tfoot>
                 </table>
-                <p class="text-muted small mb-0"><i class="bi bi-info-circle"></i> Opłata bazowa 3 000 PLN (wdrożenie + szkolenie) jest jednorazowa — naliczana tylko w pierwszym roku.</p>
+                <p class="text-muted small mb-0"><i class="bi bi-info-circle"></i> Opłata bazowa 3 000 PLN (wdrożenie + szkolenie) jednorazowo w 1. roku. Subskrypcja bazowa 1 500 PLN/rok naliczana od 2. roku.</p>
             </div>
         </div>
 
@@ -120,6 +124,7 @@
     var selectAllBtn = document.getElementById('calc-select-all');
 
     var baseCostEl = document.getElementById('calc-base-cost');
+    var baseYearlyEl = document.getElementById('calc-base-yearly');
     var membersRowEl = document.getElementById('calc-members-row');
     var extraBlocksEl = document.getElementById('calc-extra-blocks');
     var membersCostEl = document.getElementById('calc-members-cost');
@@ -133,6 +138,7 @@
     var monthlyEl = document.getElementById('calc-monthly');
 
     var BASE_SETUP = 3000;
+    var BASE_YEARLY = 1500;
     var INCLUDED_MEMBERS = 200;
     var EXTRA_BLOCK_MONTHLY = 500;
     var MEMBER_BLOCK = 200;
@@ -194,9 +200,10 @@
         }
 
         var year1 = BASE_SETUP + membersCostYearly + scaledYearly + flatSetup + flatYearly - discount;
-        var year2 = membersCostYearly + scaledYearly + flatYearly - discount;
+        var year2 = BASE_YEARLY + membersCostYearly + scaledYearly + flatYearly - discount;
 
         baseCostEl.textContent = fmt(BASE_SETUP);
+        if (baseYearlyEl) baseYearlyEl.textContent = fmt(BASE_YEARLY);
         extraBlocksEl.textContent = extraBlocks;
         membersCostEl.textContent = fmt(membersCostYearly);
         modulesCountEl.textContent = selectedCount;
