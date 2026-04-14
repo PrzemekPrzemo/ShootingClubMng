@@ -470,6 +470,8 @@ $__brandText       = $__hasClubCtx
         $__clubAdminNav = [
             ['icon' => 'speedometer2',  'label' => 'Dashboard',       'url' => 'dashboard',            'match' => '/dashboard'],
             ['icon' => 'people',        'label' => 'Zawodnicy',       'url' => 'members',              'match' => '/members'],
+            ['icon' => 'card-checklist','label' => 'Licencje',        'url' => 'licenses',             'match' => '/licenses'],
+            ['icon' => 'person-badge',  'label' => 'Sędziowie',       'url' => 'judges',               'match' => '/judges'],
             ['icon' => 'trophy',        'label' => 'Zawody',          'url' => 'competitions',         'match' => '/competitions'],
             ['icon' => 'list-ol',       'label' => 'Listy startowe',  'url' => 'startlist',            'match' => '/startlist'],
             ['icon' => 'gear',          'label' => 'Konfiguracja',    'url' => 'config',               'match' => '/config'],

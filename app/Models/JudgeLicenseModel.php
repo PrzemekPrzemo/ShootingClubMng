@@ -11,6 +11,13 @@ class JudgeLicenseModel extends BaseModel
         $where  = ['1=1'];
         $params = [];
 
+        // Scope to current club (via member's club_id) when context is set
+        $clubId = \App\Helpers\ClubContext::current();
+        if ($clubId !== null) {
+            $where[]  = 'm.club_id = ?';
+            $params[] = $clubId;
+        }
+
         if (!empty($filters['judge_class'])) {
             $where[]  = "jl.judge_class = ?";
             $params[] = $filters['judge_class'];
@@ -78,7 +85,11 @@ class JudgeLicenseModel extends BaseModel
 
     public function getActiveJudges(): array
     {
-        $stmt = $this->db->query("
+        $clubId = \App\Helpers\ClubContext::current();
+        $clubWhere = $clubId !== null ? 'AND m.club_id = ?' : '';
+        $params    = $clubId !== null ? [$clubId] : [];
+
+        $stmt = $this->db->prepare("
             SELECT DISTINCT m.id, m.first_name, m.last_name, m.member_number,
                    jl.judge_class, jl.valid_until,
                    d.name AS discipline_name
@@ -87,8 +98,10 @@ class JudgeLicenseModel extends BaseModel
             LEFT JOIN disciplines d ON d.id = jl.discipline_id
             WHERE jl.valid_until >= CURDATE()
               AND m.status = 'aktywny'
+              {$clubWhere}
             ORDER BY m.last_name, m.first_name
         ");
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 
