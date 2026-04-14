@@ -198,18 +198,26 @@ class DemoSeeder
     private static function createLicenses(array $memberIds): void
     {
         $db  = self::$db;
-        $typeId = $db->query("SELECT id FROM license_types WHERE club_id IS NULL LIMIT 1")->fetchColumn();
-        if (!$typeId) {
+        $cid = self::$clubId;
+
+        // Get a created_by user for this club
+        $stmt = $db->prepare("SELECT user_id FROM user_clubs WHERE club_id = ? LIMIT 1");
+        $stmt->execute([$cid]);
+        $createdBy = (int)$stmt->fetchColumn();
+        if (!$createdBy) {
             return;
         }
 
         $year = date('Y');
         foreach (array_slice($memberIds, 0, 8) as $i => $memberId) {
-            $expiry = ($i < 6) ? ($year + 1) . '-12-31' : ($year - 1) . '-12-31'; // 2 expired
+            $expiry  = ($i < 6) ? ($year + 1) . '-12-31' : ($year - 1) . '-12-31'; // 2 expired
+            $status  = ($i < 6) ? 'aktywna' : 'wygasla';
+            $licNum  = 'LIC-' . $year . '-' . str_pad($i + 1, 4, '0', STR_PAD_LEFT);
             $db->prepare(
-                "INSERT INTO licenses (member_id, license_type_id, license_number, issued_date, expiry_date, is_active)
-                 VALUES (?, ?, ?, CURDATE(), ?, ?)"
-            )->execute([$memberId, $typeId, 'LIC-' . $year . '-' . str_pad($i + 1, 4, '0', STR_PAD_LEFT), $expiry, ($i < 6) ? 1 : 0]);
+                "INSERT INTO licenses
+                    (member_id, license_type, license_number, issue_date, valid_until, status, created_by)
+                 VALUES (?, 'zawodnicza', ?, CURDATE(), ?, ?, ?)"
+            )->execute([$memberId, $licNum, $expiry, $status, $createdBy]);
         }
     }
 
@@ -265,10 +273,11 @@ class DemoSeeder
         $db  = self::$db;
         $cid = self::$clubId;
 
+        // status ENUM: 'planowany','odbyl_sie','odwolany'
         $trainings = [
-            ['Trening grupowy — pistolety', date('Y-m-d', strtotime('-14 days')), 'zakończony',  array_slice($memberIds, 0, 6)],
-            ['Trening indywidualny',        date('Y-m-d', strtotime('-7 days')),  'zakończony',  array_slice($memberIds, 0, 3)],
-            ['Trening przygotowawczy',      date('Y-m-d', strtotime('+7 days')),  'zaplanowany', array_slice($memberIds, 2, 5)],
+            ['Trening grupowy — pistolety', date('Y-m-d', strtotime('-14 days')), 'odbyl_sie', array_slice($memberIds, 0, 6)],
+            ['Trening indywidualny',        date('Y-m-d', strtotime('-7 days')),  'odbyl_sie', array_slice($memberIds, 0, 3)],
+            ['Trening przygotowawczy',      date('Y-m-d', strtotime('+7 days')),  'planowany', array_slice($memberIds, 2, 5)],
         ];
 
         foreach ($trainings as [$title, $dt, $status, $participants]) {
@@ -281,7 +290,7 @@ class DemoSeeder
                 $db->prepare(
                     "INSERT IGNORE INTO training_attendees (training_id, member_id, attended)
                      VALUES (?, ?, ?)"
-                )->execute([$trainingId, $memberId, $status === 'zakończony' ? 1 : 0]);
+                )->execute([$trainingId, $memberId, $status === 'odbyl_sie' ? 1 : 0]);
             }
         }
     }
@@ -293,32 +302,48 @@ class DemoSeeder
         $db  = self::$db;
         $cid = self::$clubId;
 
-        // Past competition with results
-        $db->prepare(
-            "INSERT INTO competitions (club_id, name, competition_date, location, status, description)
-             VALUES (?, 'Zawody Wiosenne " . date('Y') . "', ?, 'Strzelnica miejska', 'zakończone', 'Zawody strzeleckie dla zawodników klubu')"
-        )->execute([$cid, date('Y-m-d', strtotime('-30 days'))]);
-        $compId1 = (int)$db->lastInsertId();
-
-        foreach (array_slice($memberIds, 0, 8) as $rank => $memberId) {
-            $score = 95 - $rank * 3 + rand(-2, 2);
-            $db->prepare(
-                "INSERT INTO competition_entries (competition_id, member_id, final_score, final_place, status)
-                 VALUES (?, ?, ?, ?, 'zatwierdzone')"
-            )->execute([$compId1, $memberId, $score, $rank + 1]);
+        // Get a user_id for registered_by / entered_by fields
+        $stmt = $db->prepare("SELECT user_id FROM user_clubs WHERE club_id = ? LIMIT 1");
+        $stmt->execute([$cid]);
+        $userId = (int)$stmt->fetchColumn();
+        if (!$userId) {
+            return;
         }
 
-        // Upcoming competition with registrations
+        // Past competition — status ENUM: 'planowane','otwarte','zamkniete','zakonczone' (no diacritics)
+        $db->prepare(
+            "INSERT INTO competitions (club_id, name, competition_date, location, status, description)
+             VALUES (?, ?, ?, 'Strzelnica miejska', 'zakonczone', 'Zawody strzeleckie dla zawodników klubu')"
+        )->execute([$cid, 'Zawody Wiosenne ' . date('Y'), date('Y-m-d', strtotime('-30 days'))]);
+        $compId1 = (int)$db->lastInsertId();
+
+        // competition_entries: status ENUM 'zgloszony','potwierdzony','wycofany','zdyskwalifikowany'
+        // Scores go into competition_results (separate table)
+        foreach (array_slice($memberIds, 0, 8) as $rank => $memberId) {
+            $db->prepare(
+                "INSERT INTO competition_entries (competition_id, member_id, status, registered_by)
+                 VALUES (?, ?, 'potwierdzony', ?)"
+            )->execute([$compId1, $memberId, $userId]);
+
+            $score = 95 - $rank * 3 + rand(-2, 2);
+            $db->prepare(
+                "INSERT INTO competition_results (competition_id, member_id, score, place, entered_by)
+                 VALUES (?, ?, ?, ?, ?)"
+            )->execute([$compId1, $memberId, $score, $rank + 1, $userId]);
+        }
+
+        // Upcoming open competition
         $db->prepare(
             "INSERT INTO competitions (club_id, name, competition_date, location, status, description, max_entries)
-             VALUES (?, 'Mistrzostwa Klubowe " . date('Y') . "', ?, 'Strzelnica klubowa', 'otwarte', 'Coroczne mistrzostwa klubu we wszystkich dyscyplinach', 20)"
-        )->execute([$cid, date('Y-m-d', strtotime('+21 days'))]);
+             VALUES (?, ?, ?, 'Strzelnica klubowa', 'otwarte', 'Coroczne mistrzostwa klubu we wszystkich dyscyplinach', 20)"
+        )->execute([$cid, 'Mistrzostwa Klubowe ' . date('Y'), date('Y-m-d', strtotime('+21 days'))]);
         $compId2 = (int)$db->lastInsertId();
 
         foreach (array_slice($memberIds, 0, 5) as $memberId) {
             $db->prepare(
-                "INSERT INTO competition_entries (competition_id, member_id, status) VALUES (?, ?, 'oczekujące')"
-            )->execute([$compId2, $memberId]);
+                "INSERT INTO competition_entries (competition_id, member_id, status, registered_by)
+                 VALUES (?, ?, 'zgloszony', ?)"
+            )->execute([$compId2, $memberId, $userId]);
         }
     }
 
@@ -329,15 +354,24 @@ class DemoSeeder
         $db  = self::$db;
         $cid = self::$clubId;
 
+        $stmt = $db->prepare("SELECT user_id FROM user_clubs WHERE club_id = ? LIMIT 1");
+        $stmt->execute([$cid]);
+        $createdBy = (int)$stmt->fetchColumn();
+        if (!$createdBy) {
+            return;
+        }
+
+        // announcements table: title, body, is_published, created_by (no content/is_active columns)
         $items = [
             ['Zebranie zarządu', 'Zebranie zarządu odbędzie się dnia ' . date('d.m.Y', strtotime('+10 days')) . ' o godz. 18:00 w siedzibie klubu. Obecność obowiązkowa.'],
             ['Nowe zasady korzystania ze strzelnicy', 'Informujemy, że od nowego miesiąca obowiązują zaktualizowane zasady korzystania ze strzelnicy. Prosimy o zapoznanie się z regulaminem dostępnym w biurze klubu.'],
         ];
 
-        foreach ($items as [$title, $content]) {
+        foreach ($items as [$title, $body]) {
             $db->prepare(
-                "INSERT INTO announcements (club_id, title, content, is_active) VALUES (?, ?, ?, 1)"
-            )->execute([$cid, $title, $content]);
+                "INSERT INTO announcements (club_id, title, body, is_published, created_by)
+                 VALUES (?, ?, ?, 1, ?)"
+            )->execute([$cid, $title, $body, $createdBy]);
         }
     }
 
@@ -348,34 +382,30 @@ class DemoSeeder
         $db  = self::$db;
         $cid = self::$clubId;
 
+        $stmt = $db->prepare("SELECT user_id FROM user_clubs WHERE club_id = ? LIMIT 1");
+        $stmt->execute([$cid]);
+        $createdBy = (int)$stmt->fetchColumn();
+
+        // calendar_events: no time_start/time_end; type ENUM 'zawody_zewnetrzne','spotkanie','szkolenie','wyjazd','inne'
         $events = [
-            ['Trening cotygodniowy',  date('Y-m-d', strtotime('+3 days')),  '10:00', '12:00', 'trening'],
-            ['Dzień otwarty klubu',   date('Y-m-d', strtotime('+14 days')), '09:00', '17:00', 'wydarzenie'],
+            ['Trening cotygodniowy',  date('Y-m-d', strtotime('+3 days')),  'szkolenie'],
+            ['Dzień otwarty klubu',   date('Y-m-d', strtotime('+14 days')), 'inne'],
         ];
 
-        foreach ($events as [$title, $dt, $timeStart, $timeEnd, $type]) {
+        foreach ($events as [$title, $dt, $type]) {
             $db->prepare(
-                "INSERT INTO calendar_events (club_id, title, event_date, time_start, time_end, type)
-                 VALUES (?, ?, ?, ?, ?, ?)"
-            )->execute([$cid, $title, $dt, $timeStart, $timeEnd, $type]);
+                "INSERT INTO calendar_events (club_id, title, event_date, type, created_by)
+                 VALUES (?, ?, ?, ?, ?)"
+            )->execute([$cid, $title, $dt, $type, $createdBy ?: null]);
         }
     }
 
     // ── Club fees ─────────────────────────────────────────────────────────────
-
+    // club_fees table tracks federation-level fees (PZSS etc.) — not per-member.
+    // Per-member annual fee payments are created in createPortalData() via payment_types + payments.
     private static function createClubFees(array $memberIds): void
     {
-        $db   = self::$db;
-        $cid  = self::$clubId;
-        $year = (int)date('Y');
-
-        foreach (array_slice($memberIds, 0, 10) as $i => $memberId) {
-            $paid = $i < 7; // 7 paid, 3 unpaid
-            $db->prepare(
-                "INSERT INTO club_fees (club_id, member_id, fee_year, amount, is_paid, paid_date)
-                 VALUES (?, ?, ?, 200.00, ?, ?)"
-            )->execute([$cid, $memberId, $year, $paid ? 1 : 0, $paid ? date('Y-m-d', strtotime('-' . (30 + $i * 5) . ' days')) : null]);
-        }
+        // Nothing to insert here for demo purposes.
     }
 
     // ── Portal demo data (rich profiles for 4 portal members) ────────────────
