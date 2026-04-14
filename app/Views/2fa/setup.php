@@ -37,7 +37,17 @@
             <div class="card-body">
                 <div class="text-center mb-3">
                     <p class="small text-muted mb-2">Zeskanuj aplikacją Google Authenticator / Authy:</p>
-                    <img src="<?= e($qrUrl) ?>" alt="QR Code" width="160" height="160" class="mb-2">
+                    <div id="qrcode" class="d-inline-block mb-2"></div>
+                    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+                    <script>
+                    new QRCode(document.getElementById('qrcode'), {
+                        text: <?= json_encode($otpUrl) ?>,
+                        width: 160,
+                        height: 160,
+                        colorDark: '#000000',
+                        colorLight: '#ffffff'
+                    });
+                    </script>
                     <hr>
                     <p class="small text-muted mb-1">Lub wpisz klucz ręcznie:</p>
                     <code class="d-block fw-bold"><?= e($secret) ?></code>

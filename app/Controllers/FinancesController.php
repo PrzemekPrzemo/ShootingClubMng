@@ -84,12 +84,7 @@ class FinancesController extends BaseController
 
         $this->paymentModel->create($data);
         Session::flash('success', 'Wpłata została zarejestrowana.');
-
-        if (!empty($_POST['member_id'])) {
-            $this->redirect('members/' . (int)$_POST['member_id']);
-        } else {
-            $this->redirect('finances');
-        }
+        $this->redirect('finances');
     }
 
     public function edit(string $id): void
@@ -133,6 +128,50 @@ class FinancesController extends BaseController
         $this->paymentModel->delete((int)$id);
         Session::flash('success', 'Wpłata została usunięta.');
         $this->redirect('finances');
+    }
+
+    public function memberSearch(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        $q = trim($_GET['q'] ?? '');
+
+        if (mb_strlen($q) < 3) {
+            echo json_encode(['members' => [], 'error' => 'Wpisz min. 3 znaki.']);
+            exit;
+        }
+
+        $clubId = \App\Helpers\ClubContext::current();
+        $db     = \App\Helpers\Database::pdo();
+
+        $where  = ['m.status = ?'];
+        $params = ['aktywny'];
+
+        if ($clubId !== null) {
+            $where[]  = 'm.club_id = ?';
+            $params[] = $clubId;
+        }
+
+        if (ctype_digit($q)) {
+            $where[]  = 'm.pesel LIKE ?';
+            $params[] = $q . '%';
+        } else {
+            $where[]  = 'm.last_name LIKE ?';
+            $params[] = $q . '%';
+        }
+
+        $whereClause = implode(' AND ', $where);
+        $stmt = $db->prepare(
+            "SELECT m.id, CONCAT(m.last_name, ' ', m.first_name) AS full_name,
+                    m.member_number, m.member_class_id
+             FROM members m
+             WHERE {$whereClause}
+             ORDER BY m.last_name, m.first_name
+             LIMIT 15"
+        );
+        $stmt->execute($params);
+
+        echo json_encode(['members' => $stmt->fetchAll(\PDO::FETCH_ASSOC)]);
+        exit;
     }
 
     // ----------------------------------------------------------------

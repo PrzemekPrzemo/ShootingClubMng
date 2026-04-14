@@ -253,36 +253,56 @@ class EquipmentController extends BaseController
     public function memberSearch(): void
     {
         header('Content-Type: application/json; charset=utf-8');
-        $pesel  = trim($_GET['pesel'] ?? '');
+        $q      = trim($_GET['q'] ?? $_GET['pesel'] ?? '');
         $clubId = ClubContext::current();
 
-        if (strlen($pesel) < 5 || !$clubId) {
-            echo json_encode(['member' => null, 'error' => 'Podaj PESEL.']);
+        if (mb_strlen($q) < 3 || !$clubId) {
+            echo json_encode(['members' => [], 'error' => 'Wpisz min. 3 znaki.']);
             exit;
         }
 
-        $db   = \App\Helpers\Database::pdo();
-        $stmt = $db->prepare(
-            "SELECT id, first_name, last_name, member_number, status, firearm_permit_number
-             FROM members
-             WHERE pesel = ? AND club_id = ?
-             LIMIT 1"
-        );
-        $stmt->execute([$pesel, $clubId]);
-        $row = $stmt->fetch();
+        $db     = \App\Helpers\Database::pdo();
+        $like   = $q . '%';
 
-        if (!$row) {
-            echo json_encode(['member' => null, 'error' => 'Nie znaleziono zawodnika w tym klubie.']);
+        if (ctype_digit($q)) {
+            $stmt = $db->prepare(
+                "SELECT id, first_name, last_name, member_number, status, firearm_permit_number
+                 FROM members
+                 WHERE pesel LIKE ? AND club_id = ? AND status = 'aktywny'
+                 ORDER BY last_name, first_name
+                 LIMIT 10"
+            );
+            $stmt->execute([$like, $clubId]);
+        } else {
+            $stmt = $db->prepare(
+                "SELECT id, first_name, last_name, member_number, status, firearm_permit_number
+                 FROM members
+                 WHERE last_name LIKE ? AND club_id = ? AND status = 'aktywny'
+                 ORDER BY last_name, first_name
+                 LIMIT 10"
+            );
+            $stmt->execute([$like, $clubId]);
+        }
+
+        $rows = $stmt->fetchAll();
+
+        if (empty($rows)) {
+            echo json_encode(['members' => [], 'error' => 'Nie znaleziono zawodnika w tym klubie.']);
             exit;
         }
 
-        echo json_encode(['member' => [
-            'id'             => (int)$row['id'],
-            'full_name'      => $row['last_name'] . ' ' . $row['first_name'],
-            'member_number'  => $row['member_number'],
-            'status'         => $row['status'],
-            'permit_number'  => $row['firearm_permit_number'] ?? '',
-        ]]);
+        $members = [];
+        foreach ($rows as $row) {
+            $members[] = [
+                'id'             => (int)$row['id'],
+                'full_name'      => $row['last_name'] . ' ' . $row['first_name'],
+                'member_number'  => $row['member_number'],
+                'status'         => $row['status'],
+                'permit_number'  => $row['firearm_permit_number'] ?? '',
+            ];
+        }
+
+        echo json_encode(['members' => $members]);
         exit;
     }
 

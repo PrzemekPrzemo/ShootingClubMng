@@ -487,6 +487,8 @@ $router->post('/config/fee-rates/type/:id/delete',      [\App\Controllers\FeeCon
 $router->post('/config/fee-rates/save',                 [\App\Controllers\FeeConfigController::class, 'saveRates']);
 // AJAX: suggested fee amount
 $router->get('/api/fee-rate',                           [\App\Controllers\FeeConfigController::class, 'getRate']);
+// AJAX: member search (by last name or PESEL)
+$router->get('/api/member-search',                      [\App\Controllers\FinancesController::class, 'memberSearch']);
 
 // JSON API v1 (read-only, API-key authenticated)
 $router->get('/api/v1/clubs/:slug/competitions',        [\App\Controllers\ApiController::class, 'clubCompetitions']);

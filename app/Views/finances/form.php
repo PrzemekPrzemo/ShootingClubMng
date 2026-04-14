@@ -11,17 +11,30 @@
             <?= csrf_field() ?>
             <div class="mb-3">
                 <label class="form-label">Zawodnik <span class="text-danger">*</span></label>
-                <select name="member_id" id="memberSelect" class="form-select" required>
-                    <option value="">— wybierz —</option>
-                    <?php foreach ($members as $m): ?>
-                        <?php $sel = ($payment['member_id'] ?? $preselected['id'] ?? '') == $m['id']; ?>
-                        <option value="<?= $m['id'] ?>"
-                                data-class-id="<?= e($m['member_class_id'] ?? '') ?>"
-                                <?= $sel ? 'selected':'' ?>>
-                            <?= e($m['full_name']) ?> [<?= e($m['member_number']) ?>]
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <?php
+                    $preselId   = $payment['member_id'] ?? $preselected['id'] ?? '';
+                    $preselName = '';
+                    $preselClassId = '';
+                    if ($preselId) {
+                        foreach ($members as $m) {
+                            if ($m['id'] == $preselId) {
+                                $preselName = $m['full_name'] . ' [' . $m['member_number'] . ']';
+                                $preselClassId = $m['member_class_id'] ?? '';
+                                break;
+                            }
+                        }
+                    }
+                ?>
+                <input type="hidden" name="member_id" id="memberIdInput" value="<?= e($preselId) ?>">
+                <input type="hidden" id="memberClassId" value="<?= e($preselClassId) ?>">
+                <div class="position-relative">
+                    <input type="text" id="memberSearchInput" class="form-control"
+                           placeholder="Wpisz min. 3 litery nazwiska lub PESEL..."
+                           value="<?= e($preselName) ?>"
+                           autocomplete="off" required>
+                    <div id="memberSearchResults" class="list-group position-absolute w-100 shadow"
+                         style="display:none; z-index:1050; max-height:250px; overflow-y:auto;"></div>
+                </div>
             </div>
             <div class="mb-3">
                 <label class="form-label">Typ opłaty <span class="text-danger">*</span></label>
@@ -120,39 +133,97 @@
 
 <script>
 (function () {
-    const memberSel  = document.getElementById('memberSelect');
-    const typeSel    = document.getElementById('paymentTypeSelect');
-    const yearField  = document.getElementById('periodYear');
-    const amountFld  = document.getElementById('amountField');
-    const hint       = document.getElementById('suggestedAmountHint');
-    const hintVal    = document.getElementById('suggestedAmountVal');
-    const applyBtn   = document.getElementById('applySuggested');
+    var memberIdInput   = document.getElementById('memberIdInput');
+    var memberClassId   = document.getElementById('memberClassId');
+    var searchInput     = document.getElementById('memberSearchInput');
+    var resultsBox      = document.getElementById('memberSearchResults');
+    var typeSel         = document.getElementById('paymentTypeSelect');
+    var yearField       = document.getElementById('periodYear');
+    var amountFld       = document.getElementById('amountField');
+    var hint            = document.getElementById('suggestedAmountHint');
+    var hintVal         = document.getElementById('suggestedAmountVal');
+    var applyBtn        = document.getElementById('applySuggested');
+    var searchUrl       = <?= json_encode(url('api/member-search')) ?>;
 
-    let lastSuggested = null;
+    var lastSuggested = null;
+    var searchTimer   = null;
+
+    /* ── Member search ──────────────────────────────────── */
+
+    function doSearch() {
+        var q = searchInput.value.trim();
+        if (q.length < 3) { resultsBox.style.display = 'none'; return; }
+
+        fetch(searchUrl + '?q=' + encodeURIComponent(q))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                resultsBox.innerHTML = '';
+                if (!data.members || data.members.length === 0) {
+                    resultsBox.innerHTML = '<div class="list-group-item text-muted small">Brak wyników</div>';
+                    resultsBox.style.display = '';
+                    return;
+                }
+                data.members.forEach(function(m) {
+                    var item = document.createElement('a');
+                    item.href = '#';
+                    item.className = 'list-group-item list-group-item-action py-1 px-2 small';
+                    item.textContent = m.full_name + ' [' + m.member_number + ']';
+                    item.addEventListener('mousedown', function(e) {
+                        e.preventDefault();
+                        selectMember(m);
+                    });
+                    resultsBox.appendChild(item);
+                });
+                resultsBox.style.display = '';
+            })
+            .catch(function() { resultsBox.style.display = 'none'; });
+    }
+
+    function selectMember(m) {
+        memberIdInput.value = m.id;
+        memberClassId.value = m.member_class_id || '';
+        searchInput.value   = m.full_name + ' [' + m.member_number + ']';
+        resultsBox.style.display = 'none';
+        fetchSuggested();
+    }
+
+    searchInput.addEventListener('input', function() {
+        memberIdInput.value = '';
+        memberClassId.value = '';
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(doSearch, 300);
+    });
+
+    searchInput.addEventListener('blur', function() {
+        setTimeout(function() { resultsBox.style.display = 'none'; }, 200);
+    });
+
+    searchInput.addEventListener('focus', function() {
+        if (searchInput.value.trim().length >= 3 && !memberIdInput.value) {
+            doSearch();
+        }
+    });
+
+    /* ── Suggested fee amount ───────────────────────────── */
 
     function fetchSuggested() {
-        const typeId  = typeSel.value;
-        const year    = yearField.value || '<?= date('Y') ?>';
+        var typeId  = typeSel.value;
+        var year    = yearField.value || '<?= date('Y') ?>';
 
         if (!typeId) { hint.style.display = 'none'; return; }
 
-        // Get member_class_id from selected member option
-        const memberOpt = memberSel.options[memberSel.selectedIndex];
-        const classId   = memberOpt ? (memberOpt.dataset.classId || '') : '';
-
-        const url = '<?= url('api/fee-rate') ?>?type_id=' + encodeURIComponent(typeId)
-                  + '&class_id=' + encodeURIComponent(classId)
-                  + '&year='    + encodeURIComponent(year);
+        var classId = memberClassId.value || '';
+        var url = '<?= url('api/fee-rate') ?>?type_id=' + encodeURIComponent(typeId)
+                + '&class_id=' + encodeURIComponent(classId)
+                + '&year='    + encodeURIComponent(year);
 
         fetch(url)
-            .then(r => r.json())
-            .then(data => {
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
                 if (data.amount > 0) {
                     lastSuggested = parseFloat(data.amount).toFixed(2);
                     hintVal.textContent = parseFloat(data.amount).toFixed(2).replace('.', ',') + ' PLN';
                     hint.style.display = '';
-
-                    // Auto-fill if amount field is empty
                     if (!amountFld.value || amountFld.value === '0') {
                         amountFld.value = lastSuggested;
                         hint.style.display = 'none';
@@ -161,7 +232,7 @@
                     hint.style.display = 'none';
                 }
             })
-            .catch(() => hint.style.display = 'none');
+            .catch(function() { hint.style.display = 'none'; });
     }
 
     applyBtn.addEventListener('click', function(e) {
@@ -173,10 +244,21 @@
     });
 
     typeSel.addEventListener('change',  fetchSuggested);
-    memberSel.addEventListener('change', fetchSuggested);
     yearField.addEventListener('change', fetchSuggested);
 
+    // Prevent submit without selecting a member
+    searchInput.closest('form').addEventListener('submit', function(e) {
+        if (!memberIdInput.value) {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.classList.add('is-invalid');
+        }
+    });
+    searchInput.addEventListener('input', function() {
+        searchInput.classList.remove('is-invalid');
+    });
+
     // Trigger on load if editing
-    if (typeSel.value) fetchSuggested();
+    if (typeSel.value && memberIdInput.value) fetchSuggested();
 })();
 </script>

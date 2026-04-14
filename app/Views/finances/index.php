@@ -122,4 +122,15 @@
         </div>
     </div>
 </div>
+<?php if ($result['last_page'] > 1): ?>
+<nav class="mt-3">
+    <ul class="pagination pagination-sm justify-content-center">
+        <?php for ($p = 1; $p <= $result['last_page']; $p++): ?>
+            <li class="page-item <?= $p === $result['current_page'] ? 'active' : '' ?>">
+                <a class="page-link" href="<?= url('finances?' . http_build_query(array_merge($filters, ['page' => $p]))) ?>"><?= $p ?></a>
+            </li>
+        <?php endfor; ?>
+    </ul>
+</nav>
+<?php endif; ?>
 <p class="text-muted small mt-2">Łącznie: <?= $result['total'] ?> wpłat</p>

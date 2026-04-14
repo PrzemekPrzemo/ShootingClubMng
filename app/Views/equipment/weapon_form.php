@@ -117,17 +117,18 @@ $action = $isEdit
             </div>
             <div class="card-body">
 
-                <!-- PESEL search -->
+                <!-- Member search -->
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">PESEL zawodnika</label>
+                    <label class="form-label fw-semibold">Nazwisko lub PESEL zawodnika</label>
                     <div class="input-group">
                         <input type="text" id="peselInput" class="form-control"
-                               placeholder="Wpisz PESEL…" maxlength="11" inputmode="numeric"
+                               placeholder="Wpisz min. 3 litery nazwiska lub PESEL..."
                                autocomplete="off">
                         <button type="button" class="btn btn-outline-primary" id="peselSearchBtn">
                             <i class="bi bi-search"></i> Szukaj
                         </button>
                     </div>
+                    <div id="memberSearchList" class="list-group mt-1" style="display:none"></div>
                 </div>
 
                 <!-- Member result -->
@@ -321,45 +322,68 @@ $action = $isEdit
     var permitField  = document.getElementById('mwPermitNumber');
     var searchUrl    = <?= json_encode(url('equipment/member-search')) ?>;
 
+    var searchList = document.getElementById('memberSearchList');
+
     function reset() {
         memberResult.style.display = 'none';
         memberError.style.display  = 'none';
         memberForm.style.display   = 'none';
+        searchList.style.display   = 'none';
         memberIdIn.value = '';
     }
 
+    function selectMember(m) {
+        searchList.style.display = 'none';
+        memberIdIn.value = m.id;
+        memberName.textContent   = m.full_name;
+        memberNumber.textContent = '[' + m.member_number + ']';
+        if (m.status !== 'aktywny') {
+            memberStatus.textContent = m.status;
+            memberStatus.className   = 'badge bg-warning ms-1';
+        } else {
+            memberStatus.textContent = '';
+        }
+        if (m.permit_number && permitField) {
+            permitField.value = m.permit_number;
+        }
+        memberResult.style.display = '';
+        memberForm.style.display   = '';
+    }
+
     function doSearch() {
-        var pesel = peselInput.value.trim();
-        if (pesel.length < 5) return;
+        var q = peselInput.value.trim();
+        if (q.length < 3) return;
         reset();
         searchBtn.disabled = true;
         searchBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
-        fetch(searchUrl + '?pesel=' + encodeURIComponent(pesel))
+        fetch(searchUrl + '?q=' + encodeURIComponent(q))
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 searchBtn.disabled = false;
                 searchBtn.innerHTML = '<i class="bi bi-search"></i> Szukaj';
-                if (data.error || !data.member) {
+                if (!data.members || data.members.length === 0) {
                     memberError.textContent = data.error || 'Nie znaleziono zawodnika.';
                     memberError.style.display = '';
                     return;
                 }
-                var m = data.member;
-                memberIdIn.value = m.id;
-                memberName.textContent   = m.full_name;
-                memberNumber.textContent = '[' + m.member_number + ']';
-                if (m.status !== 'aktywny') {
-                    memberStatus.textContent = m.status;
-                    memberStatus.className   = 'badge bg-warning ms-1';
-                } else {
-                    memberStatus.textContent = '';
+                if (data.members.length === 1) {
+                    selectMember(data.members[0]);
+                    return;
                 }
-                if (m.permit_number && permitField) {
-                    permitField.value = m.permit_number;
-                }
-                memberResult.style.display = '';
-                memberForm.style.display   = '';
+                searchList.innerHTML = '';
+                data.members.forEach(function(m) {
+                    var item = document.createElement('a');
+                    item.href = '#';
+                    item.className = 'list-group-item list-group-item-action py-1 px-2 small';
+                    item.textContent = m.full_name + ' [' + m.member_number + ']';
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        selectMember(m);
+                    });
+                    searchList.appendChild(item);
+                });
+                searchList.style.display = '';
             })
             .catch(function() {
                 searchBtn.disabled = false;
