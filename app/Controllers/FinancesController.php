@@ -162,7 +162,7 @@ class FinancesController extends BaseController
         $whereClause = implode(' AND ', $where);
         $stmt = $db->prepare(
             "SELECT m.id, CONCAT(m.last_name, ' ', m.first_name) AS full_name,
-                    m.member_number, m.member_class_id
+                    m.member_number, m.member_class_id, m.birth_date
              FROM members m
              WHERE {$whereClause}
              ORDER BY m.last_name, m.first_name

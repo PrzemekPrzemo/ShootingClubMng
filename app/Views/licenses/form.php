@@ -14,6 +14,7 @@
                 <?php
                     $preselId   = $license['member_id'] ?? $preselected['id'] ?? '';
                     $preselName = '';
+                    $preselBirth = '';
                     if ($preselId) {
                         foreach ($members as $m) {
                             if ($m['id'] == $preselId) {
@@ -21,9 +22,13 @@
                                 break;
                             }
                         }
+                        if (!empty($preselected['birth_date'])) {
+                            $preselBirth = $preselected['birth_date'];
+                        }
                     }
                 ?>
                 <input type="hidden" name="member_id" id="memberIdInput" value="<?= e($preselId) ?>">
+                <input type="hidden" id="memberBirthDate" value="<?= e($preselBirth) ?>">
                 <div class="position-relative">
                     <input type="text" id="memberSearchInput" class="form-control"
                            placeholder="Wpisz min. 3 litery nazwiska lub PESEL..."
@@ -122,11 +127,41 @@
         </form>
 <script>
 (function () {
-    var memberIdInput = document.getElementById('memberIdInput');
-    var searchInput   = document.getElementById('memberSearchInput');
-    var resultsBox    = document.getElementById('memberSearchResults');
-    var searchUrl     = <?= json_encode(url('api/member-search')) ?>;
-    var searchTimer   = null;
+    var memberIdInput  = document.getElementById('memberIdInput');
+    var memberBirthEl  = document.getElementById('memberBirthDate');
+    var searchInput    = document.getElementById('memberSearchInput');
+    var resultsBox     = document.getElementById('memberSearchResults');
+    var validUntil     = document.getElementById('validUntil');
+    var isCreate       = <?= $mode === 'create' ? 'true' : 'false' ?>;
+    var searchUrl      = <?= json_encode(url('api/member-search')) ?>;
+    var searchTimer    = null;
+
+    function calcValidUntil(birthDate) {
+        if (!isCreate || !validUntil) return;
+        var now = new Date();
+        var year = now.getFullYear();
+
+        if (birthDate) {
+            var bd = new Date(birthDate);
+            var age = year - bd.getFullYear();
+            if (now < new Date(bd.getFullYear() + age, bd.getMonth(), bd.getDate())) {
+                age--;
+            }
+            if (age < 18) {
+                year = bd.getFullYear() + 18;
+            }
+        }
+
+        validUntil.value = year + '-12-31';
+    }
+
+    function selectMember(m) {
+        memberIdInput.value = m.id;
+        memberBirthEl.value = m.birth_date || '';
+        searchInput.value   = m.full_name + ' [' + m.member_number + ']';
+        resultsBox.style.display = 'none';
+        calcValidUntil(m.birth_date);
+    }
 
     function doSearch() {
         var q = searchInput.value.trim();
@@ -147,9 +182,7 @@
                     item.textContent = m.full_name + ' [' + m.member_number + ']';
                     item.addEventListener('mousedown', function(e) {
                         e.preventDefault();
-                        memberIdInput.value = m.id;
-                        searchInput.value   = m.full_name + ' [' + m.member_number + ']';
-                        resultsBox.style.display = 'none';
+                        selectMember(m);
                     });
                     resultsBox.appendChild(item);
                 });
@@ -160,6 +193,7 @@
 
     searchInput.addEventListener('input', function() {
         memberIdInput.value = '';
+        memberBirthEl.value = '';
         clearTimeout(searchTimer);
         searchTimer = setTimeout(doSearch, 300);
     });
@@ -177,6 +211,11 @@
         }
     });
     searchInput.addEventListener('input', function() { searchInput.classList.remove('is-invalid'); });
+
+    // Auto-calculate on load if member is preselected in create mode
+    if (isCreate && memberIdInput.value && memberBirthEl.value && !validUntil.value) {
+        calcValidUntil(memberBirthEl.value);
+    }
 })();
 </script>
 
