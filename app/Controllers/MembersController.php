@@ -383,9 +383,12 @@ class MembersController extends BaseController
             $member['id_card_expiry'] = Crypto::decrypt($member['id_card_expiry']) ?? '';
         }
 
+        $memberPage = $this->memberModel->findPageFor((int)$id);
+
         $this->render('members/form', [
             'title'         => 'Edytuj zawodnika',
             'member'        => $member,
+            'memberPage'    => $memberPage,
             'categories'    => $this->categoryModel->getAll(),
             'memberClasses' => $this->memberClassModel->getActive(),
             'disciplines'   => $this->disciplineModel->getActive(),
@@ -468,8 +471,7 @@ class MembersController extends BaseController
             exit;
         }
 
-        $page = $this->memberModel->findPageFor((int)$id);
-        $this->redirect('members' . ($page > 1 ? '?page=' . $page : ''));
+        $this->redirect("members/{$id}/edit");
     }
 
     public function destroy(string $id): void

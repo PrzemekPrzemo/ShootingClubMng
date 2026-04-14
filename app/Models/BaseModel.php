@@ -54,8 +54,17 @@ abstract class BaseModel
     protected function update(int $id, array $data): bool
     {
         $set  = implode(' = ?, ', array_map(fn($c) => "`{$c}`", array_keys($data))) . ' = ?';
-        $stmt = $this->db->prepare("UPDATE `{$this->table}` SET {$set} WHERE id = ?");
-        return $stmt->execute([...array_values($data), $id]);
+        $sql  = "UPDATE `{$this->table}` SET {$set} WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        try {
+            return $stmt->execute([...array_values($data), $id]);
+        } catch (\PDOException $e) {
+            throw new \PDOException(
+                $e->getMessage() . ' | Table: ' . $this->table
+                . ' | Columns: ' . implode(', ', array_keys($data)),
+                0, $e
+            );
+        }
     }
 
     public function getDb(): PDO

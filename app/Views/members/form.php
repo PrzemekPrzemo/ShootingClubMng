@@ -1,5 +1,6 @@
 <div class="d-flex align-items-center mb-3 gap-2">
-    <a href="<?= url('members') ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+    <?php $backUrl = url('members' . (!empty($memberPage) && $memberPage > 1 ? '?page=' . $memberPage : '')); ?>
+    <a href="<?= $backUrl ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
     <h2 class="h4 mb-0"><?= e($title) ?></h2>
 </div>
 
@@ -372,7 +373,7 @@
                     <i class="bi bi-check-lg"></i>
                     <?= $mode === 'create' ? 'Dodaj zawodnika' : 'Zapisz zmiany' ?>
                 </button>
-                <a href="<?= url('members') ?>" class="btn btn-outline-secondary">Anuluj</a>
+                <a href="<?= $backUrl ?>" class="btn btn-outline-secondary">Anuluj</a>
             </div>
         </div>
     </div>
