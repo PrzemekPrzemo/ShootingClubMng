@@ -172,15 +172,16 @@ class MemberWeaponsController extends BaseController
     private function collectData(int $memberId): array
     {
         return [
-            'member_id'     => $memberId,
-            'name'          => trim($_POST['name'] ?? ''),
-            'type'          => $_POST['type'] ?? 'inne',
-            'serial_number' => trim($_POST['serial_number'] ?? '') ?: null,
-            'caliber'       => trim($_POST['caliber'] ?? '') ?: null,
-            'manufacturer'  => trim($_POST['manufacturer'] ?? '') ?: null,
-            'permit_number' => trim($_POST['permit_number'] ?? '') ?: null,
-            'notes'         => trim($_POST['notes'] ?? '') ?: null,
-            'is_active'     => isset($_POST['is_active']) ? 1 : 0,
+            'member_id'      => $memberId,
+            'name'           => trim($_POST['name'] ?? ''),
+            'type'           => $_POST['type'] ?? 'inne',
+            'serial_number'  => trim($_POST['serial_number'] ?? '') ?: null,
+            'caliber'        => trim($_POST['caliber'] ?? '') ?: null,
+            'manufacturer'   => trim($_POST['manufacturer'] ?? '') ?: null,
+            'permit_number'  => trim($_POST['permit_number'] ?? '') ?: null,
+            'booklet_number' => trim($_POST['booklet_number'] ?? '') ?: null,
+            'notes'          => trim($_POST['notes'] ?? '') ?: null,
+            'is_active'      => isset($_POST['is_active']) ? 1 : 0,
         ];
     }
 

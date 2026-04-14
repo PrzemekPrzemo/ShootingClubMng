@@ -53,9 +53,13 @@
                         <label class="form-label">Numer seryjny</label>
                         <input type="text" class="form-control" name="serial_number" placeholder="np. AB123456">
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Nr pozwolenia</label>
+                    <div class="col-md-6">
+                        <label class="form-label">Nr pozwolenia na broń</label>
                         <input type="text" class="form-control" name="permit_number" placeholder="np. MSW/123/2024">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nr książeczki broni</label>
+                        <input type="text" class="form-control" name="booklet_number" placeholder="Nr karty rejestracyjnej">
                     </div>
                     <div class="col-12">
                         <label class="form-label">Uwagi</label>

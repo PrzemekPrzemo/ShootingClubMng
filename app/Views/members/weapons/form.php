@@ -55,13 +55,19 @@
                 </div>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Numer pozwolenia na tę broń
-                    <span class="text-muted small">(opcjonalny — jeśli inny niż główny)</span>
-                </label>
-                <input type="text" name="permit_number" class="form-control"
-                       value="<?= e($weapon['permit_number'] ?? '') ?>"
-                       placeholder="Nr decyzji / pozwolenia">
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Nr pozwolenia na broń</label>
+                    <input type="text" name="permit_number" class="form-control"
+                           value="<?= e($weapon['permit_number'] ?? '') ?>"
+                           placeholder="Nr decyzji / pozwolenia">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Nr książeczki broni</label>
+                    <input type="text" name="booklet_number" class="form-control"
+                           value="<?= e($weapon['booklet_number'] ?? '') ?>"
+                           placeholder="Nr karty rejestracyjnej">
+                </div>
             </div>
 
             <div class="mb-3">

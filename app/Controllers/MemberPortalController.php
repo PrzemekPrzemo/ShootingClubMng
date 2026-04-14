@@ -575,15 +575,16 @@ class MemberPortalController
         }
 
         (new \App\Models\MemberWeaponModel())->create([
-            'member_id'     => $memberId,
-            'name'          => $name,
-            'type'          => $type,
-            'manufacturer'  => trim($_POST['manufacturer'] ?? ''),
-            'caliber'       => trim($_POST['caliber'] ?? ''),
-            'serial_number' => trim($_POST['serial_number'] ?? ''),
-            'permit_number' => trim($_POST['permit_number'] ?? ''),
-            'notes'         => trim($_POST['notes'] ?? ''),
-            'is_active'     => 1,
+            'member_id'      => $memberId,
+            'name'           => $name,
+            'type'           => $type,
+            'manufacturer'   => trim($_POST['manufacturer'] ?? ''),
+            'caliber'        => trim($_POST['caliber'] ?? ''),
+            'serial_number'  => trim($_POST['serial_number'] ?? ''),
+            'permit_number'  => trim($_POST['permit_number'] ?? '') ?: null,
+            'booklet_number' => trim($_POST['booklet_number'] ?? '') ?: null,
+            'notes'          => trim($_POST['notes'] ?? ''),
+            'is_active'      => 1,
         ]);
 
         Session::flash('success', 'Broń została dodana do Twojego profilu.');

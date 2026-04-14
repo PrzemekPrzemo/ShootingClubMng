@@ -316,16 +316,17 @@ class EquipmentController extends BaseController
         }
 
         $this->memberWeaponModel->create([
-            'member_id'     => $memberId,
-            'name'          => $name,
-            'type'          => $_POST['mw_type'] ?? 'inne',
-            'caliber'       => trim($_POST['mw_caliber'] ?? '') ?: null,
-            'manufacturer'  => trim($_POST['mw_manufacturer'] ?? '') ?: null,
-            'serial_number' => trim($_POST['mw_serial_number'] ?? '') ?: null,
-            'permit_number' => trim($_POST['mw_permit_number'] ?? '') ?: null,
-            'notes'         => trim($_POST['mw_notes'] ?? '') ?: null,
-            'is_active'     => 1,
-            'created_by'    => Auth::id(),
+            'member_id'      => $memberId,
+            'name'           => $name,
+            'type'           => $_POST['mw_type'] ?? 'inne',
+            'caliber'        => trim($_POST['mw_caliber'] ?? '') ?: null,
+            'manufacturer'   => trim($_POST['mw_manufacturer'] ?? '') ?: null,
+            'serial_number'  => trim($_POST['mw_serial_number'] ?? '') ?: null,
+            'permit_number'  => trim($_POST['mw_permit_number'] ?? '') ?: null,
+            'booklet_number' => trim($_POST['mw_booklet_number'] ?? '') ?: null,
+            'notes'          => trim($_POST['mw_notes'] ?? '') ?: null,
+            'is_active'      => 1,
+            'created_by'     => Auth::id(),
         ]);
 
         Session::flash('success', 'Broń zawodnika została dodana i jest widoczna w jego portalu.');

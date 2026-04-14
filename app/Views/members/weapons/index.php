@@ -57,9 +57,14 @@
                                placeholder="Nr seryjny">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Nr pozwolenia</label>
+                        <label class="form-label">Nr pozwolenia na broń</label>
                         <input type="text" class="form-control" name="permit_number"
                                placeholder="Nr decyzji">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Nr książeczki broni</label>
+                        <input type="text" class="form-control" name="booklet_number"
+                               placeholder="Nr karty rejestracyjnej">
                     </div>
                     <div class="col-12">
                         <label class="form-label">Uwagi</label>
