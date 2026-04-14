@@ -170,6 +170,15 @@
         var opt      = typeSelect.options[typeSelect.selectedIndex];
         var noExpiry = opt && opt.dataset.noExpiry === '1';
 
+        // Force no-expiry for Patent regardless of DB config
+        if (opt) {
+            var code = (opt.dataset.shortCode || '').toLowerCase();
+            var name = (opt.dataset.name || opt.textContent || '').toLowerCase();
+            if (code === 'patent' || code === 'pat' || name.indexOf('patent') !== -1) {
+                noExpiry = true;
+            }
+        }
+
         if (noExpiry) {
             validUntilWrap.style.display = 'none';
             validUntil.removeAttribute('required');

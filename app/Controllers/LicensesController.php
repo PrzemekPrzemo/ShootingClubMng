@@ -243,6 +243,13 @@ class LicensesController extends BaseController
             $lt = (new LicenseTypeModel())->findById($typeId);
             $typeCode = $lt['short_code'] ?? 'zawodnicza';
             $noExpiry = $lt !== null && $lt['validity_months'] === null;
+
+            // Force no-expiry for Patent regardless of DB config
+            $codeLc = strtolower($typeCode);
+            $nameLc = strtolower($lt['name'] ?? '');
+            if ($codeLc === 'patent' || $codeLc === 'pat' || str_contains($nameLc, 'patent')) {
+                $noExpiry = true;
+            }
         }
         $disciplineIds = array_values(array_filter(
             array_map('intval', (array)($_POST['discipline_ids'] ?? [])),
