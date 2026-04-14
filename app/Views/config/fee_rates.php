@@ -14,6 +14,7 @@ $currentPath = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
 ?>
 
 <div class="d-flex align-items-center mb-3 gap-2">
+    <a href="<?= url('config') ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
     <h2 class="h4 mb-0"><i class="bi bi-gear"></i> Konfiguracja systemu</h2>
 </div>
 

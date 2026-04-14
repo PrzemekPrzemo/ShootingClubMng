@@ -1,5 +1,8 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="h4 mb-0"><i class="bi bi-people-fill"></i> Użytkownicy &amp; Uprawnienia</h2>
+    <div class="d-flex align-items-center gap-2">
+        <a href="<?= url('config') ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+        <h2 class="h4 mb-0"><i class="bi bi-people-fill"></i> Użytkownicy &amp; Uprawnienia</h2>
+    </div>
     <a href="<?= url('config/users/create') ?>" class="btn btn-danger btn-sm">
         <i class="bi bi-plus-lg"></i> Dodaj użytkownika
     </a>
