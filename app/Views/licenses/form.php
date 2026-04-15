@@ -35,7 +35,7 @@
                            value="<?= e($preselName) ?>"
                            autocomplete="off" required>
                     <div id="memberSearchResults" class="list-group position-absolute w-100 shadow"
-                         style="display:none; z-index:1050; max-height:250px; overflow-y:auto;"></div>
+                         style="display:none; top:100%; left:0; right:0; z-index:1050; max-height:250px; overflow-y:auto;"></div>
                 </div>
             </div>
             <div class="row g-3 mb-3">
