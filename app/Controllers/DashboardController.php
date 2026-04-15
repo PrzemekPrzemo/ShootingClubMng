@@ -206,6 +206,7 @@ class DashboardController extends BaseController
         $this->render('dashboard/index', [
             'title'                => 'Dashboard',
             'memberStats'          => $memberModel->countByStatus(),
+            'expiredLicensesCount' => $licenseModel->countExpired(),
             'expiringLicenses'     => $licenseModel->getExpiring($alertLicDays),
             'expiringMedicals'     => $examModel->getExpiring($alertMedDays),
             'expiringJudgeLic'     => $judgeModel->getExpiring($alertLicDays),

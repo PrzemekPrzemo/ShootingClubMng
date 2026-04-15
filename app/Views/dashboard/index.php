@@ -44,7 +44,16 @@ $isAdminRole   = in_array($role, ['admin','zarzad','instruktor','sędzia']);
             <div class="card-body">
                 <div class="text-muted small"><i class="bi bi-card-checklist"></i> Licencje wygasające (<?= $alertLicDays ?> dni)</div>
                 <div class="display-6 fw-bold text-<?= count($expiringLicenses) > 0 ? 'warning' : 'success' ?>"><?= count($expiringLicenses) ?></div>
-                <a href="<?= url('licenses') ?>" class="small">Zarządzaj licencjami</a>
+                <a href="<?= url('licenses?expiring_days=' . $alertLicDays) ?>" class="small">Pokaż wygasające</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-danger h-100">
+            <div class="card-body">
+                <div class="text-muted small"><i class="bi bi-x-circle"></i> Licencje wygasłe</div>
+                <div class="display-6 fw-bold text-<?= ($expiredLicensesCount ?? 0) > 0 ? 'danger' : 'success' ?>"><?= (int)($expiredLicensesCount ?? 0) ?></div>
+                <a href="<?= url('licenses?expired=1') ?>" class="small">Pokaż wygasłe</a>
             </div>
         </div>
     </div>
@@ -58,8 +67,9 @@ $isAdminRole   = in_array($role, ['admin','zarzad','instruktor','sędzia']);
         <div class="card border-warning">
             <div class="card-header bg-warning text-dark">
                 <i class="bi bi-exclamation-circle"></i>
-                <strong>Licencje wymagające uwagi</strong>
+                <strong>Licencje wygasające (najbliższe <?= $alertLicDays ?> dni)</strong>
                 <span class="badge bg-dark ms-2"><?= count($expiringLicenses) ?></span>
+                <a href="<?= url('licenses?expiring_days=' . $alertLicDays) ?>" class="btn btn-sm btn-dark py-0 ms-2">Pokaż wszystkie</a>
             </div>
             <div class="card-body p-0">
                 <table class="table table-sm mb-0">

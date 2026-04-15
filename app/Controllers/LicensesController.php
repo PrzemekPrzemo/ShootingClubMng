@@ -37,10 +37,12 @@ class LicensesController extends BaseController
         }
 
         $filters = [
-            'q'            => trim($_GET['q'] ?? ''),
-            'license_type' => $_GET['license_type'] ?? '',
-            'status'       => $_GET['status'] ?? '',
-            'member_id'    => $_GET['member_id'] ?? '',
+            'q'             => trim($_GET['q'] ?? ''),
+            'license_type'  => $_GET['license_type'] ?? '',
+            'status'        => $_GET['status'] ?? '',
+            'member_id'     => $_GET['member_id'] ?? '',
+            'expiring_days' => isset($_GET['expiring_days']) ? (int)$_GET['expiring_days'] : 0,
+            'expired'       => !empty($_GET['expired']) ? 1 : 0,
         ];
         $page   = max(1, (int)($_GET['page'] ?? 1));
         $result = $this->licenseModel->search($filters, $page);
