@@ -15,7 +15,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="<?= url('css/app.css') ?>">
     <link rel="icon" type="image/svg+xml" href="<?= url('favicon.svg') ?>">
-    <script>(function(){var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-bs-theme',t);})();</script>
     <style>
         :root {
             --sht-gold: #D4A373;

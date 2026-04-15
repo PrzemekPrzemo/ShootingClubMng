@@ -18,7 +18,6 @@
     <!-- Shootero design system -->
     <link rel="stylesheet" href="<?= url('css/app.css') ?>">
     <link rel="icon" type="image/svg+xml" href="<?= url('favicon.svg') ?>">
-    <script>(function(){var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-bs-theme',t);})();</script>
     <style>
         :root {
             --sht-gold: #D4A373;

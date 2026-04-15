@@ -47,6 +47,7 @@ class MemberPortalController
         $year     = (int)date('Y');
 
         $licenses        = $this->portalModel->getMemberLicenses($memberId);
+        $judgeLicenses   = (new \App\Models\JudgeLicenseModel())->getForMember($memberId);
         $openComps       = $this->portalModel->getOpenCompetitions($memberId);
         $recentResults   = array_slice($this->portalModel->getMemberResults($memberId), 0, 3);
         $payments        = $this->portalModel->getFeesSummary($memberId, $year);
@@ -55,6 +56,7 @@ class MemberPortalController
         $this->render('portal/dashboard', [
             'title'            => 'Portal Zawodnika',
             'licenses'         => $licenses,
+            'judgeLicenses'    => $judgeLicenses,
             'openCompetitions' => $openComps,
             'recentResults'    => $recentResults,
             'pendingFees'      => $pendingFees,
@@ -67,19 +69,24 @@ class MemberPortalController
     {
         $db   = Database::getInstance();
         $stmt = $db->prepare("
-            SELECT m.*, mac.name AS age_category_name
+            SELECT m.*,
+                   mac.name AS age_category_name,
+                   mc.name  AS sport_class
             FROM members m
             LEFT JOIN member_age_categories mac ON mac.id = m.age_category_id
+            LEFT JOIN member_classes mc ON mc.id = m.member_class_id
             WHERE m.id = ?
         ");
         $stmt->execute([MemberAuth::id()]);
         $member = $stmt->fetch() ?: [];
 
-        // Member disciplines
+        // Member disciplines with class + join date
         $dStmt = $db->prepare("
-            SELECT d.name FROM member_disciplines md
+            SELECT d.name, md.class, md.joined_at
+            FROM member_disciplines md
             JOIN disciplines d ON d.id = md.discipline_id
             WHERE md.member_id = ?
+            ORDER BY d.name
         ");
         $dStmt->execute([MemberAuth::id()]);
         $disciplines = $dStmt->fetchAll();

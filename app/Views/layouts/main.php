@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="<?= url('css/app.css') ?>">
     <link rel="icon" type="image/svg+xml" href="<?= url('favicon.svg') ?>">
     <!-- Apply saved theme before paint to prevent flash -->
-    <script>(function(){var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-bs-theme',t);})();</script>
+    <script>(function(){var t=localStorage.getItem('bs-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-bs-theme',t);})();</script>
     <?php
     $__primaryColor = $clubBranding['primary_color'] ?? '#D4A373';
     $__navbarBg     = $clubBranding['navbar_bg']     ?? '#0F172A';
@@ -765,7 +765,7 @@ $__brandText       = $__hasClubCtx
         html.setAttribute('data-bs-theme', theme);
         if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
         if (btn)  btn.title = theme === 'dark' ? 'Przełącz na jasny motyw' : 'Przełącz na ciemny motyw';
-        localStorage.setItem('theme', theme);
+        localStorage.setItem('bs-theme', theme);
     }
 
     // Sync icon to current theme (already applied by head script)
