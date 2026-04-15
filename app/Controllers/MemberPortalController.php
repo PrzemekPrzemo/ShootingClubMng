@@ -124,16 +124,67 @@ class MemberPortalController
             }
         }
 
+        // Handle photo upload (ID-card format, max 2 MB, JPG/PNG)
+        $newPhoto = $this->handleMemberPhotoUpload($memberId);
+        if ($newPhoto !== null) {
+            // Remove previous photo file if present
+            $stmt = Database::getInstance()->prepare("SELECT photo_path FROM members WHERE id = ?");
+            $stmt->execute([$memberId]);
+            $oldPhoto = (string)($stmt->fetchColumn() ?: '');
+            if ($oldPhoto && file_exists(ROOT_PATH . '/storage/photos/' . $oldPhoto)) {
+                @unlink(ROOT_PATH . '/storage/photos/' . $oldPhoto);
+            }
+            $data['photo_path'] = $newPhoto;
+        }
+
         if (!empty($data)) {
             $sets   = implode(', ', array_map(fn($f) => "`{$f}` = ?", array_keys($data)));
             $params = array_values($data);
             $params[] = $memberId;
             Database::getInstance()->prepare("UPDATE members SET {$sets} WHERE id = ?")
                 ->execute($params);
-            Session::flash('success', 'Dane kontaktowe zostały zaktualizowane.');
+            Session::flash('success', 'Dane zostały zaktualizowane.');
         }
 
         $this->redirectTo('portal/profile');
+    }
+
+    /**
+     * Handle member photo upload from portal.
+     * Max 2 MB, JPG/PNG only. Returns stored filename or null.
+     */
+    private function handleMemberPhotoUpload(int $memberId): ?string
+    {
+        if (empty($_FILES['photo']['name'])) {
+            return null;
+        }
+        $file = $_FILES['photo'];
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            Session::flash('error', 'Nie udało się wczytać zdjęcia (błąd przesyłania).');
+            return null;
+        }
+        if ($file['size'] > 2 * 1024 * 1024) {
+            Session::flash('error', 'Zdjęcie nie może przekraczać 2 MB.');
+            return null;
+        }
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mime  = $finfo->file($file['tmp_name']);
+        if (!in_array($mime, ['image/jpeg', 'image/png'], true)) {
+            Session::flash('error', 'Dozwolone formaty zdjęcia: JPG, PNG.');
+            return null;
+        }
+        $storageDir = ROOT_PATH . '/storage/photos';
+        if (!is_dir($storageDir)) {
+            @mkdir($storageDir, 0775, true);
+        }
+        $ext      = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION) ?: 'jpg');
+        if (!in_array($ext, ['jpg', 'jpeg', 'png'], true)) $ext = 'jpg';
+        $filename = 'member' . $memberId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+        if (!move_uploaded_file($file['tmp_name'], $storageDir . '/' . $filename)) {
+            Session::flash('error', 'Nie udało się zapisać zdjęcia na serwerze.');
+            return null;
+        }
+        return $filename;
     }
 
     // ── Medical Exams ─────────────────────────────────────────────────────────
