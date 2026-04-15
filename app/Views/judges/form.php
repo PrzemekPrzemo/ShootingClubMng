@@ -74,10 +74,32 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Ważna do <span class="text-danger">*</span></label>
-                    <input type="date" name="valid_until" class="form-control"
+                    <input type="date" name="valid_until" id="judgeValidUntil" class="form-control"
                            value="<?= e($license['valid_until'] ?? '') ?>" required>
+                    <div id="judgeValidUntilWarning" class="alert alert-warning py-2 px-2 mt-2 small"
+                         style="display:none">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Uwaga:</strong> ta data jest już <strong>przeszła</strong> — licencja sędziowska jest wygasła.
+                        Możesz zapisać, ale zawodnik nie będzie widoczny jako aktywny sędzia.
+                    </div>
                 </div>
             </div>
+            <script>
+            (function () {
+                var el = document.getElementById('judgeValidUntil');
+                var w  = document.getElementById('judgeValidUntilWarning');
+                if (!el || !w) return;
+                function check() {
+                    if (!el.value) { w.style.display = 'none'; return; }
+                    var d = new Date(el.value + 'T00:00:00');
+                    var t = new Date(); t.setHours(0,0,0,0);
+                    w.style.display = d < t ? '' : 'none';
+                }
+                el.addEventListener('change', check);
+                el.addEventListener('input', check);
+                check();
+            })();
+            </script>
 
             <div class="mb-3">
                 <label class="form-label">Uwagi</label>
