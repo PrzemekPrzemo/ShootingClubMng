@@ -61,44 +61,6 @@ $isAdminRole   = in_array($role, ['admin','zarzad','instruktor','sędzia']);
 <?php endif; // $isAdminRole — stats row ?>
 
 <div class="row g-3">
-    <!-- Alert: Licencje -->
-    <?php if ($expiringLicenses): ?>
-    <div class="col-lg-6">
-        <div class="card border-warning">
-            <div class="card-header bg-warning text-dark">
-                <i class="bi bi-exclamation-circle"></i>
-                <strong>Licencje wygasające (najbliższe <?= $alertLicDays ?> dni)</strong>
-                <span class="badge bg-dark ms-2"><?= count($expiringLicenses) ?></span>
-                <a href="<?= url('licenses?expiring_days=' . $alertLicDays) ?>" class="btn btn-sm btn-dark py-0 ms-2">Pokaż wszystkie</a>
-            </div>
-            <div class="card-body p-0">
-                <table class="table table-sm mb-0">
-                    <thead><tr><th>Zawodnik</th><th>Nr licencji</th><th>Ważna do</th><th>Termin</th></tr></thead>
-                    <tbody>
-                    <?php foreach (array_slice($expiringLicenses, 0, 8) as $lic): ?>
-                        <tr>
-                            <td><a href="<?= url('members/' . $lic['member_id']) ?>"><?= e($lic['last_name']) ?> <?= e($lic['first_name']) ?></a></td>
-                            <td><small><?= e($lic['license_number']) ?></small></td>
-                            <td><small><?= format_date($lic['valid_until']) ?></small></td>
-                            <td>
-                                <span class="badge bg-<?= alert_class($lic['days_left'], $alertLicDays) ?>">
-                                    <?= $lic['days_left'] >= 0 ? 'za ' . $lic['days_left'] . ' dni' : 'WYGASŁA' ?>
-                                </span>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-            <?php if (count($expiringLicenses) > 8): ?>
-            <div class="card-footer text-center">
-                <a href="<?= url('licenses') ?>" class="small">i <?= count($expiringLicenses)-8 ?> więcej…</a>
-            </div>
-            <?php endif; ?>
-        </div>
-    </div>
-    <?php endif; ?>
-
     <!-- Alert: Badania lekarskie -->
     <?php if ($expiringMedicals): ?>
     <div class="col-lg-6">

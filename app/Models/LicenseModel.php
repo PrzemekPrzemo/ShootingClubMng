@@ -172,7 +172,7 @@ class LicenseModel extends BaseModel
             JOIN members m ON m.id = l.member_id
             WHERE l.status = 'aktywna'
               AND m.status = 'aktywny'
-              AND DATEDIFF(l.valid_until, CURDATE()) <= ?
+              AND DATEDIFF(l.valid_until, CURDATE()) BETWEEN 0 AND ?
             ORDER BY days_left ASC
         ");
         $stmt->execute([$days]);
