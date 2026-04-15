@@ -79,6 +79,105 @@ class DemoController extends BaseController
         ]);
     }
 
+    /** GET /admin/demos/:id/activity — activity log for one demo environment */
+    public function adminActivity(string $id): void
+    {
+        $this->requireSuperAdmin();
+        $db = Database::getInstance();
+
+        $stmt = $db->prepare("SELECT * FROM clubs WHERE id = ? AND is_demo = 1 LIMIT 1");
+        $stmt->execute([(int)$id]);
+        $demo = $stmt->fetch();
+        if (!$demo) {
+            Session::flash('error', 'Demo nie istnieje.');
+            $this->redirect('admin/demos');
+        }
+
+        $days = max(1, min(90, (int)($_GET['days'] ?? 14)));
+
+        $stmt = $db->prepare(
+            "SELECT al.*, u.username, u.full_name, u.email, u.is_demo
+             FROM activity_log al
+             LEFT JOIN users u ON u.id = al.user_id
+             WHERE al.club_id = ?
+               AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+             ORDER BY al.created_at DESC
+             LIMIT 1000"
+        );
+        $stmt->execute([(int)$id, $days]);
+        $events = $stmt->fetchAll();
+
+        // Aggregate: top actions + per-user summary + per-hour histogram
+        $byAction = [];
+        $byUser   = [];
+        $byDay    = [];
+        foreach ($events as $e) {
+            $a = $e['action'] ?: '—';
+            $byAction[$a] = ($byAction[$a] ?? 0) + 1;
+            $u = $e['username'] ?? ($e['user_id'] ? '#' . $e['user_id'] : 'anonim');
+            $byUser[$u] = ($byUser[$u] ?? 0) + 1;
+            $d = substr((string)$e['created_at'], 0, 10);
+            $byDay[$d] = ($byDay[$d] ?? 0) + 1;
+        }
+        arsort($byAction);
+        arsort($byUser);
+        ksort($byDay);
+
+        $this->render('admin/demo_activity', [
+            'title'    => 'Aktywność demo — ' . ($demo['name'] ?? ''),
+            'demo'     => $demo,
+            'events'   => $events,
+            'days'     => $days,
+            'byAction' => $byAction,
+            'byUser'   => $byUser,
+            'byDay'    => $byDay,
+        ]);
+    }
+
+    /** GET /admin/demos/activity — overview across all demo environments */
+    public function adminActivityOverview(): void
+    {
+        $this->requireSuperAdmin();
+        $db = Database::getInstance();
+
+        $days = max(1, min(90, (int)($_GET['days'] ?? 14)));
+
+        $rows = $db->prepare(
+            "SELECT c.id, c.name, c.short_name, c.demo_expires_at,
+                    COUNT(al.id) AS event_count,
+                    COUNT(DISTINCT al.user_id) AS unique_users,
+                    MAX(al.created_at) AS last_activity
+             FROM clubs c
+             LEFT JOIN activity_log al ON al.club_id = c.id
+                 AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+             WHERE c.is_demo = 1
+             GROUP BY c.id
+             ORDER BY event_count DESC, c.name"
+        );
+        $rows->execute([$days]);
+        $stats = $rows->fetchAll();
+
+        // Top actions across all demos
+        $topActions = $db->prepare(
+            "SELECT al.action, COUNT(*) AS cnt
+             FROM activity_log al
+             JOIN clubs c ON c.id = al.club_id
+             WHERE c.is_demo = 1
+               AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+             GROUP BY al.action
+             ORDER BY cnt DESC
+             LIMIT 20"
+        );
+        $topActions->execute([$days]);
+
+        $this->render('admin/demo_activity_overview', [
+            'title'      => 'Aktywność wszystkich demo',
+            'stats'      => $stats,
+            'topActions' => $topActions->fetchAll(),
+            'days'       => $days,
+        ]);
+    }
+
     // ── Super-admin management ────────────────────────────────────────────────
 
     /** GET /admin/demos */

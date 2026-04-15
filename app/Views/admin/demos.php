@@ -1,4 +1,9 @@
-<h2 class="mb-4"><i class="bi bi-joystick"></i> Środowiska demo</h2>
+<div class="d-flex align-items-center mb-4 gap-2">
+    <h2 class="mb-0"><i class="bi bi-joystick"></i> Środowiska demo</h2>
+    <a href="<?= url('admin/demos/activity') ?>" class="btn btn-sm btn-outline-primary ms-auto">
+        <i class="bi bi-activity"></i> Raport aktywności
+    </a>
+</div>
 
 <!-- Create form -->
 <div class="card mb-4" style="max-width:600px">
@@ -100,6 +105,12 @@
                                 Portal
                             </a>
                         </div>
+
+                        <!-- Activity -->
+                        <a href="<?= url("admin/demos/{$demo['id']}/activity") ?>"
+                           class="btn btn-sm btn-outline-primary" title="Raport aktywności">
+                            <i class="bi bi-activity"></i>
+                        </a>
 
                         <!-- Extend form -->
                         <form method="post" action="<?= url("admin/demos/{$demo['id']}/extend") ?>" class="d-inline">

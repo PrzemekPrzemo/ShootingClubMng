@@ -320,9 +320,9 @@ class DemoSeeder
 
         // Past competition — status ENUM: 'planowane','otwarte','zamkniete','zakonczone' (no diacritics)
         $db->prepare(
-            "INSERT INTO competitions (club_id, name, competition_date, location, status, description)
-             VALUES (?, ?, ?, 'Strzelnica miejska', 'zakonczone', 'Zawody strzeleckie dla zawodników klubu')"
-        )->execute([$cid, 'Zawody Wiosenne ' . date('Y'), date('Y-m-d', strtotime('-30 days'))]);
+            "INSERT INTO competitions (club_id, name, competition_date, location, status, description, created_by)
+             VALUES (?, ?, ?, 'Strzelnica miejska', 'zakonczone', 'Zawody strzeleckie dla zawodników klubu', ?)"
+        )->execute([$cid, 'Zawody Wiosenne ' . date('Y'), date('Y-m-d', strtotime('-30 days')), $userId]);
         $compId1 = (int)$db->lastInsertId();
 
         // competition_entries: status ENUM 'zgloszony','potwierdzony','wycofany','zdyskwalifikowany'
@@ -342,9 +342,9 @@ class DemoSeeder
 
         // Upcoming open competition
         $db->prepare(
-            "INSERT INTO competitions (club_id, name, competition_date, location, status, description, max_entries)
-             VALUES (?, ?, ?, 'Strzelnica klubowa', 'otwarte', 'Coroczne mistrzostwa klubu we wszystkich dyscyplinach', 20)"
-        )->execute([$cid, 'Mistrzostwa Klubowe ' . date('Y'), date('Y-m-d', strtotime('+21 days'))]);
+            "INSERT INTO competitions (club_id, name, competition_date, location, status, description, max_entries, created_by)
+             VALUES (?, ?, ?, 'Strzelnica klubowa', 'otwarte', 'Coroczne mistrzostwa klubu we wszystkich dyscyplinach', 20, ?)"
+        )->execute([$cid, 'Mistrzostwa Klubowe ' . date('Y'), date('Y-m-d', strtotime('+21 days')), $userId]);
         $compId2 = (int)$db->lastInsertId();
 
         foreach (array_slice($memberIds, 0, 5) as $memberId) {
