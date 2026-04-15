@@ -31,7 +31,13 @@
                 <dt class="col-sm-5">PESEL</dt>
                 <dd class="col-sm-7"><?php
                     $p = $member['pesel'] ?? '';
-                    echo $p ? (substr($p, 0, 3) . '****' . substr($p, -4)) : '—';
+                    if ($p) {
+                        $len = strlen($p);
+                        $mask = $len > 3 ? str_repeat('*', $len - 3) : str_repeat('*', max(0, $len - 3));
+                        echo e(substr($p, 0, 2) . $mask . substr($p, -1));
+                    } else {
+                        echo '—';
+                    }
                 ?></dd>
 
                 <dt class="col-sm-5">Płeć</dt>
@@ -66,7 +72,14 @@
         <div class="card-body">
             <dl class="row mb-0">
                 <dt class="col-sm-5">E-mail</dt>
-                <dd class="col-sm-7"><?= e($member['email'] ?? '—') ?></dd>
+                <dd class="col-sm-7"><?php
+                    $email = $member['email'] ?? '';
+                    if (empty($email)) {
+                        // Fallback to session (set at login) in case query returns empty
+                        $email = \App\Helpers\Session::get('member_email', '');
+                    }
+                    echo $email ? e($email) : '<span class="text-muted">brak — skontaktuj się z zarządem klubu</span>';
+                ?></dd>
 
                 <dt class="col-sm-5">Telefon</dt>
                 <dd class="col-sm-7"><?= e($member['phone'] ?? '—') ?></dd>
