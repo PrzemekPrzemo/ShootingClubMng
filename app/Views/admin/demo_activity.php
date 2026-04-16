@@ -14,6 +14,15 @@
     </form>
 </div>
 
+<?php if (empty($hasClubId)): ?>
+<div class="alert alert-warning small py-2">
+    <i class="bi bi-info-circle"></i>
+    <strong>Tryb fallback:</strong> kolumna <code>activity_log.club_id</code> nie istnieje.
+    Raport filtruje po powiązaniach <code>user_clubs</code> — anonimowe zdarzenia (bez user_id) nie są zaliczane do klubu.
+    Uruchom migrację v25, aby uzyskać pełny raport.
+</div>
+<?php endif; ?>
+
 <div class="row g-3 mb-3">
     <div class="col-sm-4">
         <div class="card">
