@@ -124,21 +124,20 @@ class DemoController extends BaseController
         //  B) al.club_id = this club (catches actions logged with explicit club context)
         // Combine via UNION so both are included without duplication.
         if ($hasClubId) {
-            $sql = "
-                SELECT al.*, u.username, u.full_name, u.email, u.is_demo
-                FROM activity_log al
-                LEFT JOIN users u ON u.id = al.user_id
-                WHERE (
-                        al.club_id = :cid
-                        OR al.user_id IN (SELECT uc.user_id FROM user_clubs uc WHERE uc.club_id = :cid)
-                      )
-                  AND al.created_at >= DATE_SUB(NOW(), INTERVAL :d DAY)
-                ORDER BY al.created_at DESC
-                LIMIT 1000";
-            $stmt = $db->prepare($sql);
-            $stmt->bindValue(':cid', (int)$id, \PDO::PARAM_INT);
-            $stmt->bindValue(':d',   (int)$days, \PDO::PARAM_INT);
-            $stmt->execute();
+            // Use positional ? — PDO native prepares don't allow re-using a named placeholder.
+            $stmt = $db->prepare(
+                "SELECT al.*, u.username, u.full_name, u.email, u.is_demo
+                 FROM activity_log al
+                 LEFT JOIN users u ON u.id = al.user_id
+                 WHERE (
+                         al.club_id = ?
+                         OR al.user_id IN (SELECT uc.user_id FROM user_clubs uc WHERE uc.club_id = ?)
+                       )
+                   AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                 ORDER BY al.created_at DESC
+                 LIMIT 1000"
+            );
+            $stmt->execute([(int)$id, (int)$id, (int)$days]);
         } else {
             // Fallback without club_id column — only user_clubs source.
             $stmt = $db->prepare(
