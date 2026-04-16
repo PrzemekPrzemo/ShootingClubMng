@@ -118,26 +118,35 @@ class DemoController extends BaseController
         $days      = max(1, min(90, (int)($_GET['days'] ?? 14)));
         $hasClubId = self::activityLogHasClubId($db);
 
+        // Two sources of "events for this club":
+        //  A) al.user_id is a staff user in user_clubs for this club
+        //     (catches login/logout and all staff actions)
+        //  B) al.club_id = this club (catches actions logged with explicit club context)
+        // Combine via UNION so both are included without duplication.
         if ($hasClubId) {
-            $stmt = $db->prepare(
-                "SELECT al.*, u.username, u.full_name, u.email, u.is_demo
-                 FROM activity_log al
-                 LEFT JOIN users u ON u.id = al.user_id
-                 WHERE al.club_id = ?
-                   AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-                 ORDER BY al.created_at DESC
-                 LIMIT 1000"
-            );
-            $stmt->execute([(int)$id, $days]);
+            $sql = "
+                SELECT al.*, u.username, u.full_name, u.email, u.is_demo
+                FROM activity_log al
+                LEFT JOIN users u ON u.id = al.user_id
+                WHERE (
+                        al.club_id = :cid
+                        OR al.user_id IN (SELECT uc.user_id FROM user_clubs uc WHERE uc.club_id = :cid)
+                      )
+                  AND al.created_at >= DATE_SUB(NOW(), INTERVAL :d DAY)
+                ORDER BY al.created_at DESC
+                LIMIT 1000";
+            $stmt = $db->prepare($sql);
+            $stmt->bindValue(':cid', (int)$id, \PDO::PARAM_INT);
+            $stmt->bindValue(':d',   (int)$days, \PDO::PARAM_INT);
+            $stmt->execute();
         } else {
-            // Fallback: no club_id column — filter via user_clubs membership.
-            // Drawback: anonymous events (user_id=NULL) aren't tied to a club.
+            // Fallback without club_id column — only user_clubs source.
             $stmt = $db->prepare(
                 "SELECT al.*, u.username, u.full_name, u.email, u.is_demo
                  FROM activity_log al
                  JOIN users u      ON u.id = al.user_id
-                 JOIN user_clubs uc ON uc.user_id = u.id AND uc.club_id = ?
-                 WHERE al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                 WHERE al.user_id IN (SELECT uc.user_id FROM user_clubs uc WHERE uc.club_id = ?)
+                   AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
                  ORDER BY al.created_at DESC
                  LIMIT 1000"
             );
@@ -182,6 +191,9 @@ class DemoController extends BaseController
         $days      = max(1, min(90, (int)($_GET['days'] ?? 14)));
         $hasClubId = self::activityLogHasClubId($db);
 
+        // Events per demo club — count events where:
+        //  - al.club_id matches the club (if column exists), OR
+        //  - al.user_id is a user in user_clubs for that club
         if ($hasClubId) {
             $rows = $db->prepare(
                 "SELECT c.id, c.name, c.short_name, c.demo_expires_at,
@@ -189,15 +201,18 @@ class DemoController extends BaseController
                         COUNT(DISTINCT al.user_id) AS unique_users,
                         MAX(al.created_at) AS last_activity
                  FROM clubs c
-                 LEFT JOIN activity_log al ON al.club_id = c.id
-                     AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                 LEFT JOIN activity_log al ON (
+                     al.club_id = c.id
+                     OR al.user_id IN (SELECT uc.user_id FROM user_clubs uc WHERE uc.club_id = c.id)
+                 )
+                 AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
                  WHERE c.is_demo = 1
                  GROUP BY c.id
                  ORDER BY event_count DESC, c.name"
             );
             $rows->execute([$days]);
         } else {
-            // Fallback via user_clubs
+            // Fallback without club_id column
             $rows = $db->prepare(
                 "SELECT c.id, c.name, c.short_name, c.demo_expires_at,
                         COUNT(al.id) AS event_count,
@@ -215,14 +230,18 @@ class DemoController extends BaseController
         }
         $stats = $rows->fetchAll();
 
-        // Top actions across all demos
+        // Top actions across all demos (same OR logic as per-club query)
         if ($hasClubId) {
             $topActions = $db->prepare(
                 "SELECT al.action, COUNT(*) AS cnt
                  FROM activity_log al
-                 JOIN clubs c ON c.id = al.club_id
-                 WHERE c.is_demo = 1
-                   AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                 WHERE al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                   AND (
+                     al.club_id IN (SELECT id FROM clubs WHERE is_demo = 1)
+                     OR al.user_id IN (SELECT uc.user_id FROM user_clubs uc
+                                       JOIN clubs c ON c.id = uc.club_id
+                                       WHERE c.is_demo = 1)
+                   )
                  GROUP BY al.action
                  ORDER BY cnt DESC
                  LIMIT 20"
