@@ -699,10 +699,14 @@ class MembersController extends BaseController
             $data['id_card_expiry'] = $rawExpiry !== '' ? Crypto::encrypt($rawExpiry) : null;
         }
 
-        // is_board_linked — only admin/zarząd can modify; field omitted for others
-        // (form hides the checkbox so unchecked POST would otherwise reset the value).
-        if (in_array(Auth::role(), ['admin', 'zarzad'], true)) {
-            $data['is_board_linked'] = !empty($_POST['is_board_linked']) ? 1 : 0;
+        // is_board_linked — only admin/zarząd can modify; guarded if column missing
+        if (in_array(Auth::role(), ['admin', 'zarzad'], true) && isset($_POST['is_board_linked'])) {
+            try {
+                $this->memberModel->getDb()->query("SELECT is_board_linked FROM members LIMIT 0");
+                $data['is_board_linked'] = !empty($_POST['is_board_linked']) ? 1 : 0;
+            } catch (\PDOException) {
+                // Column not yet created (migration v32 pending) — skip
+            }
         }
 
         return $data;
