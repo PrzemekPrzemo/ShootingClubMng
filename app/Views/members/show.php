@@ -270,6 +270,14 @@
                 </p>
                 <?php endif; ?>
                 <?php endif; ?>
+                <?php if (!empty($member['is_board_linked'])): ?>
+                <p class="mb-0 mt-2">
+                    <span class="badge bg-info">
+                        <i class="bi bi-people-fill"></i>
+                        Powiązany z zarządem — 50% składki, inne zniżki nie obowiązują
+                    </span>
+                </p>
+                <?php endif; ?>
                 <a href="<?= url('finances?member_id=' . $member['id']) ?>" class="small">Historia wpłat</a>
             </div>
         </div>

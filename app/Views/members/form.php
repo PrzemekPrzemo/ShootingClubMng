@@ -268,6 +268,21 @@
                         </select>
                         <div class="form-text">Klasa zdefiniowana w słowniku (<a href="<?= url('config/member-classes') ?>">Konfiguracja</a>)</div>
                     </div>
+                    <?php if (in_array($authUser['role'] ?? '', ['admin','zarzad'], true)): ?>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="isBoardLinked"
+                                   name="is_board_linked" value="1"
+                                   <?= !empty($member['is_board_linked']) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="isBoardLinked">
+                                <strong>Powiązany z zarządem klubu</strong>
+                                <span class="text-muted small d-block">
+                                    Składka = 50% bazy. Inne zniżki (klasa, osiągnięcia) są pomijane.
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                     <div class="mb-3">
                         <label class="form-label">Numer karty dostępu</label>
                         <input type="text" name="card_number" class="form-control"
@@ -379,6 +394,18 @@
     </div>
 </form>
 
+<?php if ($mode === 'edit' && in_array($authUser['role'] ?? '', ['admin','zarzad'], true)): ?>
+<div class="d-flex justify-content-end mt-3" style="max-width:1200px">
+    <form method="post" action="<?= url('members/' . $member['id'] . '/recalc-fee') ?>"
+          onsubmit="return confirm('Niezapisane zmiany w formularzu nie zostaną uwzględnione. Najpierw zapisz formularz, potem przelicz. Kontynuować?');">
+        <?= csrf_field() ?>
+        <button type="submit" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-clockwise"></i> Przelicz składkę
+        </button>
+    </form>
+</div>
+<?php endif; ?>
+
 <!-- Discipline row template (hidden) -->
 <template id="disciplineRowTemplate">
     <div class="row g-2 mb-2 discipline-row">
@@ -439,6 +466,26 @@ document.getElementById('disciplinesContainer').addEventListener('click', functi
         e.target.closest('.discipline-row').remove();
     }
 });
+
+// Warning when class or joined-at changes — affects fee discounts
+(function () {
+    var container = document.getElementById('disciplinesContainer');
+    if (!container) return;
+    var warn = document.createElement('div');
+    warn.className = 'alert alert-warning small py-2 mt-2 mb-0';
+    warn.style.display = 'none';
+    warn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> '
+        + '<strong>Zmiana ma wpływ na zniżki.</strong> '
+        + 'Po zapisaniu formularza kliknij "Przelicz składkę".';
+    container.appendChild(warn);
+
+    container.addEventListener('change', function (e) {
+        var n = e.target && e.target.name ? e.target.name : '';
+        if (n === 'discipline_classes[]' || n === 'discipline_joined[]') {
+            warn.style.display = '';
+        }
+    });
+})();
 
 // PESEL → data urodzenia + płeć
 (function () {

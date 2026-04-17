@@ -699,6 +699,12 @@ class MembersController extends BaseController
             $data['id_card_expiry'] = $rawExpiry !== '' ? Crypto::encrypt($rawExpiry) : null;
         }
 
+        // is_board_linked — only admin/zarząd can modify; field omitted for others
+        // (form hides the checkbox so unchecked POST would otherwise reset the value).
+        if (in_array(Auth::role(), ['admin', 'zarzad'], true)) {
+            $data['is_board_linked'] = !empty($_POST['is_board_linked']) ? 1 : 0;
+        }
+
         return $data;
     }
 
