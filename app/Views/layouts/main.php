@@ -624,11 +624,8 @@ $__brandText       = $__hasClubCtx
                     <i class="bi bi-building" style="font-size:1rem"></i>
                 </a>
             <?php endif; ?>
-            <button id="themeToggle" title="Zmień motyw"
-                    style="background:none;border:none;color:var(--sht-dim);font-size:1rem;padding:.2rem .3rem;border-radius:.3rem;cursor:pointer;transition:color .14s,background .14s;line-height:1"
-                    onmouseover="this.style.color='var(--sht-gold)';this.style.background='rgba(212,163,115,.1)'"
-                    onmouseout="this.style.color='var(--sht-dim)';this.style.background='none'">
-                <i class="bi bi-sun-fill" id="themeIcon"></i>
+            <button id="themeToggle" class="sb-action-btn" title="Zmień motyw">
+                <i class="bi bi-sun" id="themeIcon"></i>
             </button>
             <span class="d-none d-md-inline" style="color:#94A3B8"><?= e($authUser['full_name'] ?? '') ?></span>
             <a href="<?= url('auth/logout') ?>" title="Wyloguj">
