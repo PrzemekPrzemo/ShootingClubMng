@@ -200,12 +200,16 @@
         .sb-user-info { min-width: 0; overflow: hidden; transition: opacity .2s; }
         #sidebar.collapsed .sb-user-info { opacity: 0; width: 0; }
         .sb-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
             color: var(--sht-dim);
             font-size: 1.05rem;
             text-decoration: none;
             padding: .2rem .3rem;
             border-radius: .3rem;
             flex-shrink: 0;
+            line-height: 1;
             transition: color .14s, background .14s;
         }
         .sb-action-btn:hover { color: var(--sht-gold); background: rgba(212,163,115,.1); }
@@ -569,7 +573,7 @@ $__brandText       = $__hasClubCtx
             <i class="bi bi-chevron-left"></i>
         </button>
         <button type="button" class="sb-action-btn" id="themeToggleBtn" title="Przełącz tryb jasny/ciemny">
-            <i class="bi bi-moon-stars" id="themeIcon"></i>
+            <i class="bi bi-moon-stars" id="sbThemeIcon"></i>
         </button>
         <a href="<?= url('2fa/setup') ?>" class="sb-action-btn" title="Ustawienia 2FA">
             <i class="bi bi-shield-lock"></i>
@@ -755,25 +759,34 @@ $__brandText       = $__hasClubCtx
     });
 })();
 
-// Theme toggle
+// Theme toggle (topbar + sidebar buttons share the same handler)
 (function () {
-    var btn  = document.getElementById('themeToggle');
-    var icon = document.getElementById('themeIcon');
+    var topbarBtn  = document.getElementById('themeToggle');
+    var sidebarBtn = document.getElementById('themeToggleBtn');
+    var topbarIcon  = document.getElementById('themeIcon');
+    var sidebarIcon = document.getElementById('sbThemeIcon');
     var html = document.documentElement;
 
     function applyTheme(theme) {
         html.setAttribute('data-bs-theme', theme);
-        if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
-        if (btn)  btn.title = theme === 'dark' ? 'Przełącz na jasny motyw' : 'Przełącz na ciemny motyw';
+        // Use outline variants to match surrounding sidebar icons
+        var iconClass = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+        if (topbarIcon)  topbarIcon.className  = iconClass;
+        if (sidebarIcon) sidebarIcon.className = iconClass;
+        var newTitle = theme === 'dark' ? 'Przełącz na jasny motyw' : 'Przełącz na ciemny motyw';
+        if (topbarBtn)  topbarBtn.title  = newTitle;
+        if (sidebarBtn) sidebarBtn.title = newTitle;
         localStorage.setItem('bs-theme', theme);
     }
 
     // Sync icon to current theme (already applied by head script)
     applyTheme(html.getAttribute('data-bs-theme') || 'dark');
 
-    btn && btn.addEventListener('click', function () {
+    function toggle() {
         applyTheme(html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark');
-    });
+    }
+    topbarBtn  && topbarBtn.addEventListener('click', toggle);
+    sidebarBtn && sidebarBtn.addEventListener('click', toggle);
 })();
 </script>
 </body>
