@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Shootero design system -->
-    <link rel="stylesheet" href="<?= url('css/app.css') ?>">
+    <link rel="stylesheet" href="<?= url('css/app.css') ?>?v=<?= @filemtime(ROOT_PATH . '/public/css/app.css') ?: time() ?>">
     <link rel="icon" type="image/svg+xml" href="<?= url('favicon.svg') ?>">
     <style>
         :root {

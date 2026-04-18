@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Shootero design system -->
-    <link rel="stylesheet" href="<?= url('css/app.css') ?>">
+    <link rel="stylesheet" href="<?= url('css/app.css') ?>?v=<?= @filemtime(ROOT_PATH . '/public/css/app.css') ?: time() ?>">
     <link rel="icon" type="image/svg+xml" href="<?= url('favicon.svg') ?>">
     <!-- Apply saved theme before paint to prevent flash -->
     <script>(function(){var t=localStorage.getItem('bs-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-bs-theme',t);})();</script>
@@ -756,34 +756,32 @@ $__brandText       = $__hasClubCtx
     });
 })();
 
-// Theme toggle (topbar + sidebar buttons share the same handler)
+// Theme toggle (topbar + sidebar buttons via event delegation)
 (function () {
-    var topbarBtn  = document.getElementById('themeToggle');
-    var sidebarBtn = document.getElementById('themeToggleBtn');
-    var topbarIcon  = document.getElementById('themeIcon');
-    var sidebarIcon = document.getElementById('sbThemeIcon');
     var html = document.documentElement;
 
     function applyTheme(theme) {
         html.setAttribute('data-bs-theme', theme);
-        // Use outline variants to match surrounding sidebar icons
         var iconClass = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
-        if (topbarIcon)  topbarIcon.className  = iconClass;
-        if (sidebarIcon) sidebarIcon.className = iconClass;
+        var icons = document.querySelectorAll('#themeIcon, #sbThemeIcon');
+        icons.forEach(function (i) { i.className = iconClass; });
         var newTitle = theme === 'dark' ? 'Przełącz na jasny motyw' : 'Przełącz na ciemny motyw';
-        if (topbarBtn)  topbarBtn.title  = newTitle;
-        if (sidebarBtn) sidebarBtn.title = newTitle;
-        localStorage.setItem('bs-theme', theme);
+        var btns = document.querySelectorAll('#themeToggle, #themeToggleBtn');
+        btns.forEach(function (b) { b.title = newTitle; });
+        try { localStorage.setItem('bs-theme', theme); } catch (e) {}
     }
 
-    // Sync icon to current theme (already applied by head script)
+    // Sync icons with current theme (already applied by head script)
     applyTheme(html.getAttribute('data-bs-theme') || 'dark');
 
-    function toggle() {
+    // Event delegation — survives DOM re-renders and works even if the
+    // element isn't in the DOM yet when script runs.
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('#themeToggle, #themeToggleBtn');
+        if (!btn) return;
+        e.preventDefault();
         applyTheme(html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark');
-    }
-    topbarBtn  && topbarBtn.addEventListener('click', toggle);
-    sidebarBtn && sidebarBtn.addEventListener('click', toggle);
+    });
 })();
 </script>
 </body>
