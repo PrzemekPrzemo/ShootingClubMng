@@ -39,7 +39,7 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
         <?php if (!empty($subdomainClub['logo_path'])): ?>
         <div class="d-flex align-items-center justify-content-center gap-3 mt-3 mb-1">
             <div class="border-end border-secondary pe-3">
-                <span class="fw-bold" style="font-family:'Poppins',sans-serif;font-size:.8rem;letter-spacing:2px;color:#E6C200">
+                <span class="fw-bold" style="font-family:'Poppins',sans-serif;font-size:.8rem;letter-spacing:2px;color:var(--sht-gold-bright)">
                     <?= e($systemBranding['name'] ?? 'SHOOTERO') ?>
                 </span>
             </div>
@@ -47,19 +47,19 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
                  style="height:38px; max-width:110px; object-fit:contain">
         </div>
         <?php endif; ?>
-        <h5 class="mt-3 mb-0 fw-bold" style="font-family:'Poppins',sans-serif;color:#fff">
+        <h5 class="mt-3 mb-0 fw-bold" style="font-family:'Poppins',sans-serif;color:var(--sht-brand)">
             <?= e($subdomainClub['name']) ?>
         </h5>
-        <p class="small mt-1 mb-0" style="color:#D4A373;font-family:'Poppins',sans-serif;letter-spacing:.5px">
+        <p class="small mt-1 mb-0" style="color:var(--sht-gold);font-family:'Poppins',sans-serif;letter-spacing:.5px">
             <?= e($systemBranding['name'] ?? 'SHOOTERO') ?> — System zarządzania klubem
         </p>
     <?php else: ?>
         <?php if (empty($systemBranding['logo'])): ?>
-        <h4 class="mt-3 mb-0" style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.65rem;letter-spacing:4px;text-transform:uppercase;color:#fff;line-height:1.1">
+        <h4 class="mt-3 mb-0" style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.65rem;letter-spacing:4px;text-transform:uppercase;color:var(--sht-brand);line-height:1.1">
             <?= e($systemBranding['name'] ?? 'SHOOTERO') ?>
         </h4>
         <?php endif; ?>
-        <p class="mt-2 mb-0" style="color:#D4A373;font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:2px;font-size:.7rem;text-transform:uppercase">
+        <p class="mt-2 mb-0" style="color:var(--sht-gold);font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:2px;font-size:.7rem;text-transform:uppercase">
             ZARZĄDZAJ KLUBEM.&nbsp;&nbsp;WSPIERAJ LUDZI.
         </p>
     <?php endif; ?>
@@ -69,20 +69,20 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
     <?= csrf_field() ?>
 
     <div class="mb-3">
-        <label for="username" class="form-label fw-semibold small" style="color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;font-size:.72rem">
+        <label for="username" class="form-label fw-semibold small" style="color:var(--sht-muted);text-transform:uppercase;letter-spacing:.5px;font-size:.72rem">
             Login
         </label>
         <input type="text" class="form-control" id="username" name="username"
                value="<?= e($_POST['username'] ?? '') ?>"
                required autofocus autocomplete="username"
                placeholder="Login, e-mail, PESEL lub nr licencji">
-        <div class="form-text small" style="color:#64748B;font-size:.7rem">
+        <div class="form-text small" style="color:var(--sht-dim);font-size:.7rem">
             Zawodnicy: zaloguj się e-mailem / PESEL (hasło przy pierwszym logowaniu = PESEL)
         </div>
     </div>
 
     <div class="mb-4">
-        <label for="password" class="form-label fw-semibold small" style="color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;font-size:.72rem">
+        <label for="password" class="form-label fw-semibold small" style="color:var(--sht-muted);text-transform:uppercase;letter-spacing:.5px;font-size:.72rem">
             Hasło
         </label>
         <input type="password" class="form-control" id="password" name="password"
@@ -96,10 +96,10 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
     </button>
 </form>
 
-<div class="text-center mt-4 pt-2" style="border-top:1px solid rgba(255,255,255,.06)">
-    <span class="small" style="color:#475569">Nowy klub?</span>
-    <a href="<?= url('register') ?>" class="small ms-1" style="color:#D4A373">Zarejestruj się bezpłatnie →</a>
+<div class="text-center mt-4 pt-2" style="border-top:1px solid var(--sht-border)">
+    <span class="small" style="color:var(--sht-muted)">Nowy klub?</span>
+    <a href="<?= url('register') ?>" class="small ms-1" style="color:var(--sht-gold)">Zarejestruj się bezpłatnie →</a>
 </div>
-<p class="text-center mt-2 mb-0" style="color:#334155;font-size:.72rem">
+<p class="text-center mt-2 mb-0" style="color:var(--sht-dim);font-size:.72rem">
     &copy; <?= date('Y') ?> <?= e($systemBranding['name'] ?? 'Shootero') ?>
 </p>

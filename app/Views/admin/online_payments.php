@@ -26,7 +26,7 @@ $cntFailed     = (int)($stats['failed']['cnt']   ?? 0);
     <div class="col-sm-6 col-lg-3">
         <div class="card text-center">
             <div class="card-body py-3">
-                <div class="fw-bold" style="font-size:1.6rem;color:#22c55e"><?= number_format((float)$totalVerified, 2, ',', ' ') ?> zł</div>
+                <div class="fw-bold text-success" style="font-size:1.6rem"><?= number_format((float)$totalVerified, 2, ',', ' ') ?> zł</div>
                 <div class="text-muted small mt-1"><i class="bi bi-check-circle me-1"></i>Zweryfikowane (<?= $cntVerified ?>)</div>
             </div>
         </div>
@@ -34,7 +34,7 @@ $cntFailed     = (int)($stats['failed']['cnt']   ?? 0);
     <div class="col-sm-6 col-lg-3">
         <div class="card text-center">
             <div class="card-body py-3">
-                <div class="fw-bold" style="font-size:1.6rem;color:#f59e0b"><?= number_format((float)$totalPending, 2, ',', ' ') ?> zł</div>
+                <div class="fw-bold text-warning" style="font-size:1.6rem"><?= number_format((float)$totalPending, 2, ',', ' ') ?> zł</div>
                 <div class="text-muted small mt-1"><i class="bi bi-hourglass-split me-1"></i>Oczekujące (<?= $cntPending ?>)</div>
             </div>
         </div>
@@ -42,7 +42,7 @@ $cntFailed     = (int)($stats['failed']['cnt']   ?? 0);
     <div class="col-sm-6 col-lg-3">
         <div class="card text-center">
             <div class="card-body py-3">
-                <div class="fw-bold" style="font-size:1.6rem;color:#ef4444"><?= $cntFailed ?></div>
+                <div class="fw-bold text-danger" style="font-size:1.6rem"><?= $cntFailed ?></div>
                 <div class="text-muted small mt-1"><i class="bi bi-x-circle me-1"></i>Nieudane</div>
             </div>
         </div>

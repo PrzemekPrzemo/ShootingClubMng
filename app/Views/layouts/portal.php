@@ -30,14 +30,18 @@
             --sht-text: #e2e8f0;
             --sht-muted: #94A3B8;
             --sht-dim:   #475569;
+            --sht-border: rgba(255,255,255,.06);
+            --sht-brand:  #ffffff;
         }
         [data-bs-theme="light"] {
             --sht-900: #f8fafc;
             --sht-800: #ffffff;
             --sht-700: #f1f5f9;
             --sht-text: #1e293b;
-            --sht-muted: #64748b;
-            --sht-dim:   #94a3b8;
+            --sht-muted: #475569;
+            --sht-dim:   #64748b;
+            --sht-border: rgba(0,0,0,.1);
+            --sht-brand:  #1e293b;
         }
 
         html, body {
@@ -52,11 +56,11 @@
         /* ── Navbar ── */
         .portal-navbar {
             background: var(--sht-800);
-            border-bottom: 1px solid rgba(255,255,255,.06);
+            border-bottom: 1px solid var(--sht-border);
             padding: .5rem 0;
         }
         .portal-navbar .navbar-brand {
-            color: #fff;
+            color: var(--sht-brand);
             font-family: 'Poppins', sans-serif;
             font-weight: 700;
             font-size: .98rem;
@@ -119,7 +123,7 @@
         /* ── Footer ── */
         .portal-foot {
             background: var(--sht-800);
-            border-top: 1px solid rgba(255,255,255,.06);
+            border-top: 1px solid var(--sht-border);
             padding: .85rem 1.5rem;
             display: flex;
             align-items: center;

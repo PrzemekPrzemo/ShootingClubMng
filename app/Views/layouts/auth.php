@@ -26,6 +26,10 @@
             --sht-700: #1E2838;
             --sht-text: #e2e8f0;
             --sht-card-border: rgba(255,255,255,.07);
+            --sht-muted: #94A3B8;
+            --sht-dim:   #64748B;
+            --sht-border: rgba(255,255,255,.06);
+            --sht-brand:  #ffffff;
         }
         [data-bs-theme="light"] {
             --sht-900: #f8fafc;
@@ -33,6 +37,10 @@
             --sht-700: #f1f5f9;
             --sht-text: #1e293b;
             --sht-card-border: rgba(0,0,0,.08);
+            --sht-muted: #475569;
+            --sht-dim:   #64748B;
+            --sht-border: rgba(0,0,0,.1);
+            --sht-brand:  #1e293b;
         }
         html, body {
             height: 100%;
