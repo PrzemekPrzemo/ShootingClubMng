@@ -26,11 +26,18 @@ class PaymentTypeModel extends ClubScopedModel
         return array_map(fn($r) => self::$defaults + $r, $rows);
     }
 
+    private function hasClubColumn(): bool
+    {
+        try { $this->db->query("SELECT club_id FROM payment_types LIMIT 0"); return true; }
+        catch (\PDOException) { return false; }
+    }
+
     public function getAll(): array
     {
         $cid = $this->clubId();
-        $clubFilter = $cid !== null ? ' WHERE club_id = ?' : '';
-        $params = $cid !== null ? [$cid] : [];
+        $hasCol = ($cid !== null) ? $this->hasClubColumn() : false;
+        $clubFilter = $hasCol ? ' WHERE club_id = ?' : '';
+        $params = $hasCol ? [$cid] : [];
         try {
             $stmt = $this->db->prepare("
                 SELECT * FROM payment_types{$clubFilter}
@@ -38,7 +45,6 @@ class PaymentTypeModel extends ClubScopedModel
             ");
             $stmt->execute($params);
         } catch (\PDOException) {
-            // migration_v4 not yet run — fallback to name only
             $stmt = $this->db->prepare("SELECT * FROM payment_types{$clubFilter} ORDER BY name");
             $stmt->execute($params);
         }
@@ -48,8 +54,9 @@ class PaymentTypeModel extends ClubScopedModel
     public function getActive(): array
     {
         $cid = $this->clubId();
-        $clubFilter = $cid !== null ? ' AND club_id = ?' : '';
-        $params = $cid !== null ? [$cid] : [];
+        $hasCol = ($cid !== null) ? $this->hasClubColumn() : false;
+        $clubFilter = $hasCol ? ' AND club_id = ?' : '';
+        $params = $hasCol ? [$cid] : [];
         try {
             $stmt = $this->db->prepare("
                 SELECT * FROM payment_types WHERE is_active = 1{$clubFilter}
@@ -84,7 +91,12 @@ class PaymentTypeModel extends ClubScopedModel
         $cid = $this->clubId();
         $sql = "SELECT COUNT(*) FROM payments WHERE payment_type_id = ?";
         $params = [$id];
-        if ($cid !== null) { $sql .= " AND club_id = ?"; $params[] = $cid; }
+        if ($cid !== null) {
+            try {
+                $this->db->query("SELECT club_id FROM payments LIMIT 0");
+                $sql .= " AND club_id = ?"; $params[] = $cid;
+            } catch (\PDOException) {}
+        }
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return (int)$stmt->fetchColumn() > 0;

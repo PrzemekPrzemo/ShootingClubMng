@@ -51,11 +51,14 @@ class DashboardController extends BaseController
         // Payments by month (current year) — scoped to current club
         $paymentsByMonth = [];
         try {
+            $db = \App\Helpers\Database::pdo();
+            $hasPayClub = true;
+            try { $db->query("SELECT club_id FROM payments LIMIT 0"); } catch (\Throwable) { $hasPayClub = false; }
             $sql = "SELECT MONTH(payment_date) AS m, SUM(amount) AS total
                     FROM payments
                     WHERE YEAR(payment_date) = ?";
             $params = [$year];
-            if ($cid !== null) { $sql .= " AND club_id = ?"; $params[] = $cid; }
+            if ($cid !== null && $hasPayClub) { $sql .= " AND club_id = ?"; $params[] = $cid; }
             $sql .= " GROUP BY MONTH(payment_date) ORDER BY m";
             $stmt = \App\Helpers\Database::pdo()->prepare($sql);
             $stmt->execute($params);

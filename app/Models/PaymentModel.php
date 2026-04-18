@@ -5,6 +5,22 @@ namespace App\Models;
 class PaymentModel extends ClubScopedModel
 {
     protected string $table = 'payments';
+    private ?bool $_hasClubCol = null;
+
+    private function hasClubCol(): bool
+    {
+        if ($this->_hasClubCol === null) {
+            try { $this->db->query("SELECT club_id FROM payments LIMIT 0"); $this->_hasClubCol = true; }
+            catch (\PDOException) { $this->_hasClubCol = false; }
+        }
+        return $this->_hasClubCol;
+    }
+
+    private function scopedClubId(): ?int
+    {
+        $cid = $this->clubId();
+        return ($cid !== null && $this->hasClubCol()) ? $cid : null;
+    }
 
     public function search(array $filters = [], int $page = 1, int $perPage = 25): array
     {
@@ -29,10 +45,10 @@ class PaymentModel extends ClubScopedModel
             $params[] = $filters['payment_type_id'];
         }
 
-        $cid = $this->clubId();
-        if ($cid !== null) {
+        $sCid = $this->scopedClubId();
+        if ($sCid !== null) {
             $where[]  = "p.club_id = ?";
-            $params[] = $cid;
+            $params[] = $sCid;
         }
 
         $whereClause = implode(' AND ', $where);
@@ -48,10 +64,10 @@ class PaymentModel extends ClubScopedModel
 
     public function getTotalByYear(int $year): float
     {
-        $cid = $this->clubId();
+        $sCid = $this->scopedClubId();
         $sql = "SELECT COALESCE(SUM(amount), 0) FROM payments WHERE period_year = ?";
         $params = [$year];
-        if ($cid !== null) { $sql .= " AND club_id = ?"; $params[] = $cid; }
+        if ($sCid !== null) { $sql .= " AND club_id = ?"; $params[] = $sCid; }
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return (float)$stmt->fetchColumn();
@@ -78,12 +94,13 @@ class PaymentModel extends ClubScopedModel
         $memberWhere = '';
         $ptWhere     = '';
         $ptDefaultWhere = '';
-        $extraParams = [];
         if ($cid !== null) {
             $memberWhere = " AND m.club_id = ?";
-            $ptWhere     = " AND pt.club_id = ?";
-            $ptDefaultWhere = " AND club_id = ?";
-            $extraParams = [$cid, $cid, $cid];
+            try {
+                $this->db->query("SELECT club_id FROM payment_types LIMIT 0");
+                $ptWhere        = " AND pt.club_id = ?";
+                $ptDefaultWhere = " AND club_id = ?";
+            } catch (\PDOException) {}
         }
         $stmt = $this->db->prepare("
             SELECT m.id, m.first_name, m.last_name, m.member_number, m.email, m.phone,
@@ -103,7 +120,8 @@ class PaymentModel extends ClubScopedModel
             ORDER BY m.last_name, m.first_name
         ");
         $params = [$year];
-        if ($cid !== null) { $params[] = $cid; $params[] = $cid; } // pt subqueries
+        if ($ptWhere)        { $params[] = $cid; }
+        if ($ptDefaultWhere) { $params[] = $cid; }
         $params[] = $year;
         $params[] = $year;
         if ($cid !== null) { $params[] = $cid; } // member WHERE
@@ -180,13 +198,13 @@ class PaymentModel extends ClubScopedModel
 
     public function getSummaryByType(int $year): array
     {
-        $cid = $this->clubId();
+        $sCid = $this->scopedClubId();
         $sql = "SELECT pt.name, SUM(p.amount) AS total, COUNT(*) AS count
                 FROM payments p
                 JOIN payment_types pt ON pt.id = p.payment_type_id
                 WHERE p.period_year = ?";
         $params = [$year];
-        if ($cid !== null) { $sql .= " AND p.club_id = ?"; $params[] = $cid; }
+        if ($sCid !== null) { $sql .= " AND p.club_id = ?"; $params[] = $sCid; }
         $sql .= " GROUP BY pt.id, pt.name ORDER BY total DESC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
@@ -195,8 +213,8 @@ class PaymentModel extends ClubScopedModel
 
     public function create(array $data): int
     {
-        if (!isset($data['club_id']) && $this->clubId() !== null) {
-            $data['club_id'] = $this->clubId();
+        if (!isset($data['club_id']) && $this->scopedClubId() !== null) {
+            $data['club_id'] = $this->scopedClubId();
         }
         return $this->insert($data);
     }
@@ -209,14 +227,14 @@ class PaymentModel extends ClubScopedModel
 
     public function getWithDetails(int $id): ?array
     {
-        $cid = $this->clubId();
+        $sCid = $this->scopedClubId();
         $sql = "SELECT p.*, m.first_name, m.last_name, m.member_number, pt.name AS type_name
                 FROM payments p
                 JOIN members m ON m.id = p.member_id
                 JOIN payment_types pt ON pt.id = p.payment_type_id
                 WHERE p.id = ?";
         $params = [$id];
-        if ($cid !== null) { $sql .= " AND p.club_id = ?"; $params[] = $cid; }
+        if ($sCid !== null) { $sql .= " AND p.club_id = ?"; $params[] = $sCid; }
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         $row = $stmt->fetch();
@@ -228,7 +246,12 @@ class PaymentModel extends ClubScopedModel
         $cid = $this->clubId();
         $sql = "SELECT * FROM payment_types WHERE is_active = 1";
         $params = [];
-        if ($cid !== null) { $sql .= " AND club_id = ?"; $params[] = $cid; }
+        if ($cid !== null) {
+            try {
+                $this->db->query("SELECT club_id FROM payment_types LIMIT 0");
+                $sql .= " AND club_id = ?"; $params[] = $cid;
+            } catch (\PDOException) {}
+        }
         $sql .= " ORDER BY name";
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
