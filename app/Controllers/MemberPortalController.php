@@ -44,13 +44,14 @@ class MemberPortalController
     public function dashboard(): void
     {
         $memberId = MemberAuth::id();
+        $clubId   = MemberAuth::clubId();
         $year     = (int)date('Y');
 
         $licenses        = $this->portalModel->getMemberLicenses($memberId);
         $judgeLicenses   = (new \App\Models\JudgeLicenseModel())->getForMember($memberId);
-        $openComps       = $this->portalModel->getOpenCompetitions($memberId);
+        $openComps       = $this->portalModel->getOpenCompetitions($memberId, $clubId);
         $recentResults   = array_slice($this->portalModel->getMemberResults($memberId), 0, 3);
-        $payments        = $this->portalModel->getFeesSummary($memberId, $year);
+        $payments        = $this->portalModel->getFeesSummary($memberId, $year, $clubId);
         $pendingFees     = array_filter($payments, fn($p) => empty($p['paid_date'] ?? ''));
 
         $this->render('portal/dashboard', [

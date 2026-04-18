@@ -36,7 +36,26 @@ class MemberAuth
     public static function clubId(): ?int
     {
         $cid = Session::get('member_club_id');
-        return $cid !== null ? (int)$cid : null;
+        if ($cid !== null) {
+            return (int)$cid;
+        }
+        // Old session predating member_club_id — backfill from DB once.
+        $mid = self::id();
+        if ($mid === null) {
+            return null;
+        }
+        try {
+            $stmt = \App\Helpers\Database::pdo()->prepare(
+                "SELECT club_id FROM members WHERE id = ? LIMIT 1"
+            );
+            $stmt->execute([$mid]);
+            $val = $stmt->fetchColumn();
+            if ($val !== false && $val !== null) {
+                Session::set('member_club_id', (int)$val);
+                return (int)$val;
+            }
+        } catch (\Throwable) {}
+        return null;
     }
 
     public static function mustChangePassword(): bool
