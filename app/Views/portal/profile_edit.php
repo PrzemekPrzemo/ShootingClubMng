@@ -7,14 +7,34 @@
 
 <div class="alert alert-info small">
     <i class="bi bi-info-circle"></i>
-    Możesz edytować swoje dane kontaktowe (telefon, adres).
+    Możesz edytować swoje dane kontaktowe (telefon, adres) oraz zdjęcie legitymacyjne.
     Imię, nazwisko, PESEL i e-mail może zmieniać wyłącznie administracja klubu.
 </div>
 
 <div class="card" style="max-width:540px">
     <div class="card-body">
-        <form method="post" action="<?= url('portal/profile/edit') ?>">
+        <form method="post" action="<?= url('portal/profile/edit') ?>" enctype="multipart/form-data">
             <?= csrf_field() ?>
+
+            <div class="mb-3">
+                <label for="photo" class="form-label">Zdjęcie legitymacyjne</label>
+                <?php if (!empty($member['photo_path'])): ?>
+                <div class="mb-2">
+                    <img src="<?= url('members/' . (int)$member['id'] . '/photo') ?>"
+                         alt="Aktualne zdjęcie"
+                         style="width:90px; height:110px; object-fit:cover; border:1px solid rgba(127,127,127,.2); border-radius:4px;">
+                    <div class="small text-muted mt-1">Aktualne zdjęcie</div>
+                </div>
+                <?php endif; ?>
+                <input type="file" class="form-control" id="photo" name="photo" accept="image/jpeg,image/png">
+                <div class="form-text small">
+                    Format: <strong>portretowe</strong> jak do dowodu osobistego (proporcja ok. 35×45 mm).
+                    JPG lub PNG, maksymalnie <strong>2 MB</strong>.
+                    Zdjęcie będzie widoczne dla administracji klubu przy weryfikacji na zawodach i do legitymacji.
+                </div>
+            </div>
+
+            <hr class="my-3">
 
             <div class="mb-3">
                 <label for="phone" class="form-label">Telefon</label>

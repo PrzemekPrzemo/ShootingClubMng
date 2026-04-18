@@ -252,17 +252,25 @@ class DemoSeeder
         $db  = self::$db;
         $cid = self::$clubId;
 
+        // ammo_stock is a movement log (each row = inbound/outbound transaction).
+        // Schema: caliber, type, quantity (+ inbound / - outbound), notes,
+        //         recorded_at, recorded_by, club_id (added in v25)
         $rows = [
-            ['Amunicja 9mm FMJ',  '9mm',  500, 200],
-            ['Amunicja .223 FMJ', '.223', 300, 100],
-            ['Amunicja .308 HPBT','.308', 150,  50],
+            ['9mm',  'FMJ',  500, 'Stan początkowy — zakup klubowy'],
+            ['.223', 'FMJ',  300, 'Stan początkowy — zakup klubowy'],
+            ['.308', 'HPBT', 150, 'Stan początkowy — zakup klubowy'],
+            ['9mm',  'FMJ', -120, 'Wydano na trening grupowy'],
+            ['.223', 'FMJ', -180, 'Wydano na zawody'],
+            ['.308', 'HPBT',-100, 'Wydano na zawody'],
         ];
 
-        foreach ($rows as [$name, $caliber, $qty_initial, $qty_current]) {
-            $db->prepare(
-                "INSERT INTO ammo_stock (club_id, name, caliber, quantity_initial, quantity_current)
-                 VALUES (?, ?, ?, ?, ?)"
-            )->execute([$cid, $name, $caliber, $qty_initial, $qty_current]);
+        $stmt = $db->prepare(
+            "INSERT INTO ammo_stock (club_id, caliber, type, quantity, notes, recorded_at)
+             VALUES (?, ?, ?, ?, ?, ?)"
+        );
+        foreach ($rows as [$caliber, $type, $qty, $notes]) {
+            $date = date('Y-m-d', strtotime(($qty > 0 ? '-30' : '-5') . ' days'));
+            $stmt->execute([$cid, $caliber, $type, $qty, $notes, $date]);
         }
     }
 
@@ -312,9 +320,9 @@ class DemoSeeder
 
         // Past competition — status ENUM: 'planowane','otwarte','zamkniete','zakonczone' (no diacritics)
         $db->prepare(
-            "INSERT INTO competitions (club_id, name, competition_date, location, status, description)
-             VALUES (?, ?, ?, 'Strzelnica miejska', 'zakonczone', 'Zawody strzeleckie dla zawodników klubu')"
-        )->execute([$cid, 'Zawody Wiosenne ' . date('Y'), date('Y-m-d', strtotime('-30 days'))]);
+            "INSERT INTO competitions (club_id, name, competition_date, location, status, description, created_by)
+             VALUES (?, ?, ?, 'Strzelnica miejska', 'zakonczone', 'Zawody strzeleckie dla zawodników klubu', ?)"
+        )->execute([$cid, 'Zawody Wiosenne ' . date('Y'), date('Y-m-d', strtotime('-30 days')), $userId]);
         $compId1 = (int)$db->lastInsertId();
 
         // competition_entries: status ENUM 'zgloszony','potwierdzony','wycofany','zdyskwalifikowany'
@@ -334,9 +342,9 @@ class DemoSeeder
 
         // Upcoming open competition
         $db->prepare(
-            "INSERT INTO competitions (club_id, name, competition_date, location, status, description, max_entries)
-             VALUES (?, ?, ?, 'Strzelnica klubowa', 'otwarte', 'Coroczne mistrzostwa klubu we wszystkich dyscyplinach', 20)"
-        )->execute([$cid, 'Mistrzostwa Klubowe ' . date('Y'), date('Y-m-d', strtotime('+21 days'))]);
+            "INSERT INTO competitions (club_id, name, competition_date, location, status, description, max_entries, created_by)
+             VALUES (?, ?, ?, 'Strzelnica klubowa', 'otwarte', 'Coroczne mistrzostwa klubu we wszystkich dyscyplinach', 20, ?)"
+        )->execute([$cid, 'Mistrzostwa Klubowe ' . date('Y'), date('Y-m-d', strtotime('+21 days')), $userId]);
         $compId2 = (int)$db->lastInsertId();
 
         foreach (array_slice($memberIds, 0, 5) as $memberId) {

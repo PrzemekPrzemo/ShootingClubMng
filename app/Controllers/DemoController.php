@@ -79,6 +79,197 @@ class DemoController extends BaseController
         ]);
     }
 
+    /**
+     * Checks whether activity_log has a club_id column (added in migration_v25).
+     * Cached for the request; false fallback path uses user_clubs JOIN.
+     */
+    private static function activityLogHasClubId(\PDO $db): bool
+    {
+        static $cache = null;
+        if ($cache !== null) return $cache;
+        try {
+            $row = $db->query(
+                "SELECT 1 FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME   = 'activity_log'
+                   AND COLUMN_NAME  = 'club_id'
+                 LIMIT 1"
+            )->fetchColumn();
+            return $cache = (bool)$row;
+        } catch (\Throwable) {
+            return $cache = false;
+        }
+    }
+
+    /** GET /admin/demos/:id/activity — activity log for one demo environment */
+    public function adminActivity(string $id): void
+    {
+        $this->requireSuperAdmin();
+        $db = Database::getInstance();
+
+        $stmt = $db->prepare("SELECT * FROM clubs WHERE id = ? AND is_demo = 1 LIMIT 1");
+        $stmt->execute([(int)$id]);
+        $demo = $stmt->fetch();
+        if (!$demo) {
+            Session::flash('error', 'Demo nie istnieje.');
+            $this->redirect('admin/demos');
+        }
+
+        $days      = max(1, min(90, (int)($_GET['days'] ?? 14)));
+        $hasClubId = self::activityLogHasClubId($db);
+
+        // Two sources of "events for this club":
+        //  A) al.user_id is a staff user in user_clubs for this club
+        //     (catches login/logout and all staff actions)
+        //  B) al.club_id = this club (catches actions logged with explicit club context)
+        // Combine via UNION so both are included without duplication.
+        if ($hasClubId) {
+            // Use positional ? — PDO native prepares don't allow re-using a named placeholder.
+            $stmt = $db->prepare(
+                "SELECT al.*, u.username, u.full_name, u.email, u.is_demo
+                 FROM activity_log al
+                 LEFT JOIN users u ON u.id = al.user_id
+                 WHERE (
+                         al.club_id = ?
+                         OR al.user_id IN (SELECT uc.user_id FROM user_clubs uc WHERE uc.club_id = ?)
+                       )
+                   AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                 ORDER BY al.created_at DESC
+                 LIMIT 1000"
+            );
+            $stmt->execute([(int)$id, (int)$id, (int)$days]);
+        } else {
+            // Fallback without club_id column — only user_clubs source.
+            $stmt = $db->prepare(
+                "SELECT al.*, u.username, u.full_name, u.email, u.is_demo
+                 FROM activity_log al
+                 JOIN users u      ON u.id = al.user_id
+                 WHERE al.user_id IN (SELECT uc.user_id FROM user_clubs uc WHERE uc.club_id = ?)
+                   AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                 ORDER BY al.created_at DESC
+                 LIMIT 1000"
+            );
+            $stmt->execute([(int)$id, $days]);
+        }
+        $events = $stmt->fetchAll();
+
+        // Aggregate: top actions + per-user summary + per-hour histogram
+        $byAction = [];
+        $byUser   = [];
+        $byDay    = [];
+        foreach ($events as $e) {
+            $a = $e['action'] ?: '—';
+            $byAction[$a] = ($byAction[$a] ?? 0) + 1;
+            $u = $e['username'] ?? ($e['user_id'] ? '#' . $e['user_id'] : 'anonim');
+            $byUser[$u] = ($byUser[$u] ?? 0) + 1;
+            $d = substr((string)$e['created_at'], 0, 10);
+            $byDay[$d] = ($byDay[$d] ?? 0) + 1;
+        }
+        arsort($byAction);
+        arsort($byUser);
+        ksort($byDay);
+
+        $this->render('admin/demo_activity', [
+            'title'     => 'Aktywność demo — ' . ($demo['name'] ?? ''),
+            'demo'      => $demo,
+            'events'    => $events,
+            'days'      => $days,
+            'byAction'  => $byAction,
+            'byUser'    => $byUser,
+            'byDay'     => $byDay,
+            'hasClubId' => $hasClubId,
+        ]);
+    }
+
+    /** GET /admin/demos/activity — overview across all demo environments */
+    public function adminActivityOverview(): void
+    {
+        $this->requireSuperAdmin();
+        $db = Database::getInstance();
+
+        $days      = max(1, min(90, (int)($_GET['days'] ?? 14)));
+        $hasClubId = self::activityLogHasClubId($db);
+
+        // Events per demo club — count events where:
+        //  - al.club_id matches the club (if column exists), OR
+        //  - al.user_id is a user in user_clubs for that club
+        if ($hasClubId) {
+            $rows = $db->prepare(
+                "SELECT c.id, c.name, c.short_name, c.demo_expires_at,
+                        COUNT(al.id) AS event_count,
+                        COUNT(DISTINCT al.user_id) AS unique_users,
+                        MAX(al.created_at) AS last_activity
+                 FROM clubs c
+                 LEFT JOIN activity_log al ON (
+                     al.club_id = c.id
+                     OR al.user_id IN (SELECT uc.user_id FROM user_clubs uc WHERE uc.club_id = c.id)
+                 )
+                 AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                 WHERE c.is_demo = 1
+                 GROUP BY c.id
+                 ORDER BY event_count DESC, c.name"
+            );
+            $rows->execute([$days]);
+        } else {
+            // Fallback without club_id column
+            $rows = $db->prepare(
+                "SELECT c.id, c.name, c.short_name, c.demo_expires_at,
+                        COUNT(al.id) AS event_count,
+                        COUNT(DISTINCT al.user_id) AS unique_users,
+                        MAX(al.created_at) AS last_activity
+                 FROM clubs c
+                 LEFT JOIN user_clubs uc  ON uc.club_id = c.id
+                 LEFT JOIN activity_log al ON al.user_id = uc.user_id
+                     AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                 WHERE c.is_demo = 1
+                 GROUP BY c.id
+                 ORDER BY event_count DESC, c.name"
+            );
+            $rows->execute([$days]);
+        }
+        $stats = $rows->fetchAll();
+
+        // Top actions across all demos (same OR logic as per-club query)
+        if ($hasClubId) {
+            $topActions = $db->prepare(
+                "SELECT al.action, COUNT(*) AS cnt
+                 FROM activity_log al
+                 WHERE al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                   AND (
+                     al.club_id IN (SELECT id FROM clubs WHERE is_demo = 1)
+                     OR al.user_id IN (SELECT uc.user_id FROM user_clubs uc
+                                       JOIN clubs c ON c.id = uc.club_id
+                                       WHERE c.is_demo = 1)
+                   )
+                 GROUP BY al.action
+                 ORDER BY cnt DESC
+                 LIMIT 20"
+            );
+            $topActions->execute([$days]);
+        } else {
+            $topActions = $db->prepare(
+                "SELECT al.action, COUNT(*) AS cnt
+                 FROM activity_log al
+                 JOIN user_clubs uc ON uc.user_id = al.user_id
+                 JOIN clubs c      ON c.id = uc.club_id
+                 WHERE c.is_demo = 1
+                   AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                 GROUP BY al.action
+                 ORDER BY cnt DESC
+                 LIMIT 20"
+            );
+            $topActions->execute([$days]);
+        }
+
+        $this->render('admin/demo_activity_overview', [
+            'title'      => 'Aktywność wszystkich demo',
+            'stats'      => $stats,
+            'topActions' => $topActions->fetchAll(),
+            'days'       => $days,
+            'hasClubId'  => $hasClubId,
+        ]);
+    }
+
     // ── Super-admin management ────────────────────────────────────────────────
 
     /** GET /admin/demos */

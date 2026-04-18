@@ -1,5 +1,14 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="h4 mb-0"><i class="bi bi-card-checklist"></i> Licencje PZSS</h2>
+    <h2 class="h4 mb-0">
+        <i class="bi bi-card-checklist"></i> Licencje PZSS
+        <?php if (!empty($filters['expiring_days'])): ?>
+            <span class="badge bg-warning text-dark ms-2">wygasające w ciągu <?= (int)$filters['expiring_days'] ?> dni</span>
+            <a href="<?= url('licenses') ?>" class="small text-decoration-none ms-1" title="Wyczyść filtr">✕</a>
+        <?php elseif (!empty($filters['expired'])): ?>
+            <span class="badge bg-danger ms-2">tylko wygasłe</span>
+            <a href="<?= url('licenses') ?>" class="small text-decoration-none ms-1" title="Wyczyść filtr">✕</a>
+        <?php endif; ?>
+    </h2>
     <div class="d-flex gap-2">
         <a href="<?= url('judges') ?>" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-person-badge"></i> Licencje sędziowskie

@@ -430,9 +430,40 @@ class AuthController extends BaseController
     private function logActivity(?int $userId, string $action, string $entity, ?int $entityId, string $details): void
     {
         try {
-            $this->userModel->getDb()->prepare(
-                "INSERT INTO activity_log (user_id, action, entity, entity_id, details, ip_address) VALUES (?,?,?,?,?,?)"
-            )->execute([$userId, $action, $entity, $entityId, $details, $_SERVER['REMOTE_ADDR'] ?? null]);
+            $db = $this->userModel->getDb();
+            // Detect if club_id column exists (migration_v25) — cached
+            static $hasClubId = null;
+            if ($hasClubId === null) {
+                try {
+                    $hasClubId = (bool)$db->query(
+                        "SELECT 1 FROM information_schema.COLUMNS
+                         WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='activity_log'
+                           AND COLUMN_NAME='club_id' LIMIT 1"
+                    )->fetchColumn();
+                } catch (\Throwable) { $hasClubId = false; }
+            }
+
+            $clubId = ClubContext::current();
+            // Fallback: derive club from user's primary membership when no context yet
+            if ($clubId === null && $userId !== null) {
+                try {
+                    $s = $db->prepare("SELECT club_id FROM user_clubs WHERE user_id = ? ORDER BY id LIMIT 1");
+                    $s->execute([$userId]);
+                    $row = $s->fetchColumn();
+                    if ($row) $clubId = (int)$row;
+                } catch (\Throwable) {}
+            }
+
+            if ($hasClubId) {
+                $db->prepare(
+                    "INSERT INTO activity_log (user_id, club_id, action, entity, entity_id, details, ip_address)
+                     VALUES (?,?,?,?,?,?,?)"
+                )->execute([$userId, $clubId, $action, $entity, $entityId, $details, $_SERVER['REMOTE_ADDR'] ?? null]);
+            } else {
+                $db->prepare(
+                    "INSERT INTO activity_log (user_id, action, entity, entity_id, details, ip_address) VALUES (?,?,?,?,?,?)"
+                )->execute([$userId, $action, $entity, $entityId, $details, $_SERVER['REMOTE_ADDR'] ?? null]);
+            }
         } catch (\Throwable) {}
     }
 }

@@ -176,9 +176,34 @@ class ClubFeeConfigModel extends BaseModel
         $base  = $feeConfig[$memberType]['max_annual_fee']    ?? 0.0;
         $early = $feeConfig[$memberType]['early_payment_fee'] ?? 0.0;
 
+        // Board-linked override: if member is linked with a board user
+        // → 50% of base, no other discounts apply.
+        $boardLinked = false;
+        try {
+            $bs = $this->db->prepare("SELECT is_board_linked FROM members WHERE id = ?");
+            $bs->execute([(int)$member['id']]);
+            $boardLinked = (bool)$bs->fetchColumn();
+        } catch (\PDOException) {
+            // Column missing (migration v32 not applied) — ignore, treat as false
+        }
+        if ($boardLinked) {
+            $finalAnnual = round($base * 0.5, 2);
+            return [
+                'base'               => $base,
+                'discount_class'     => 0.0,
+                'discount_achieve'   => 0.0,
+                'final_annual'       => $finalAnnual,
+                'monthly'            => round($finalAnnual / 12, 2),
+                'early_payment_final'=> round($early * 0.5, 2),
+                'is_board_linked'    => true,
+            ];
+        }
+
         // Sum discount across all disciplines the member has a class in.
         // Each discipline with a matching class contributes its discount.
         // Classes may be club-specific (club_id = X) or global (club_id IS NULL).
+        // Class discount is valid only until the END of the year FOLLOWING the
+        // year stored in member_disciplines.joined_at — i.e. (year - YEAR(joined_at)) <= 1.
         $discountClass = 0.0;
         if (!empty($classDiscounts)) {
             try {
@@ -187,9 +212,12 @@ class ClubFeeConfigModel extends BaseModel
                      FROM member_disciplines md
                      JOIN discipline_classes dc ON dc.name = md.class
                         AND (dc.club_id = ? OR dc.club_id IS NULL)
-                     WHERE md.member_id = ? AND md.class IS NOT NULL AND md.class <> ''"
+                     WHERE md.member_id = ?
+                       AND md.class IS NOT NULL AND md.class <> ''
+                       AND md.joined_at IS NOT NULL
+                       AND (? - YEAR(md.joined_at)) <= 1"
                 );
-                $stmt->execute([$clubId, (int)$member['id']]);
+                $stmt->execute([$clubId, (int)$member['id'], $year]);
                 // Deduplicate by discipline (one class per discipline counts once).
                 // If member has class in multiple matching discipline_classes rows
                 // (e.g., club-specific + global with same name), pick the highest rank.

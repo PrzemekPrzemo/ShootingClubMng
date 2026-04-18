@@ -131,4 +131,52 @@
         </div>
     </div>
     <?php endif; ?>
+
+    <?php if (!empty($judgeLicenses)): ?>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><strong><i class="bi bi-person-badge"></i> Licencje sędziowskie</strong></div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Klasa</th>
+                            <th>Dyscyplina</th>
+                            <th>Nr</th>
+                            <th>Ważna do</th>
+                            <th>Opł. PomZSS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($judgeLicenses as $jl): ?>
+                        <?php
+                            $days    = (int)($jl['days_left'] ?? 0);
+                            $cls     = $days < 0 ? 'danger' : ($days <= 30 ? 'warning' : 'success');
+                            $feePaid = ($jl['fee_paid_year'] ?? 0) == (int)date('Y');
+                        ?>
+                        <tr>
+                            <td><span class="badge bg-dark"><?= e($jl['judge_class']) ?></span></td>
+                            <td class="small"><?= e($jl['discipline_name'] ?? '—') ?></td>
+                            <td class="small"><?= e($jl['license_number'] ?? '—') ?></td>
+                            <td class="small">
+                                <?= format_date($jl['valid_until']) ?>
+                                <span class="badge bg-<?= $cls ?>">
+                                    <?= $days >= 0 ? "za {$days} dni" : 'WYGASŁA' ?>
+                                </span>
+                            </td>
+                            <td class="small">
+                                <?php if ($feePaid): ?>
+                                    <span class="badge bg-success">✓ <?= (int)date('Y') ?></span>
+                                <?php else: ?>
+                                    <span class="badge bg-danger">brak</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>

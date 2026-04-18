@@ -752,6 +752,16 @@ class AdminController extends BaseController
         exit;
     }
 
+    /**
+     * Pricing calculator — estimate subscription cost for a new club.
+     */
+    public function pricingCalculator(): void
+    {
+        $this->render('admin/pricing_calculator', [
+            'title' => 'Kalkulator cen',
+        ]);
+    }
+
     private function logImpersonation(int $targetId, string $targetType, int $clubId): void
     {
         try {

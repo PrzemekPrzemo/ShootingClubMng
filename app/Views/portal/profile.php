@@ -31,7 +31,13 @@
                 <dt class="col-sm-5">PESEL</dt>
                 <dd class="col-sm-7"><?php
                     $p = $member['pesel'] ?? '';
-                    echo $p ? (substr($p, 0, 3) . '****' . substr($p, -4)) : '—';
+                    if ($p) {
+                        $len = strlen($p);
+                        $mask = $len > 3 ? str_repeat('*', $len - 3) : str_repeat('*', max(0, $len - 3));
+                        echo e(substr($p, 0, 2) . $mask . substr($p, -1));
+                    } else {
+                        echo '—';
+                    }
                 ?></dd>
 
                 <dt class="col-sm-5">Płeć</dt>
@@ -66,13 +72,28 @@
         <div class="card-body">
             <dl class="row mb-0">
                 <dt class="col-sm-5">E-mail</dt>
-                <dd class="col-sm-7"><?= e($member['email'] ?? '—') ?></dd>
+                <dd class="col-sm-7"><?php
+                    $email = $member['email'] ?? '';
+                    if (empty($email)) {
+                        // Fallback to session (set at login) in case query returns empty
+                        $email = \App\Helpers\Session::get('member_email', '');
+                    }
+                    echo $email ? e($email) : '<span class="text-muted">brak — skontaktuj się z zarządem klubu</span>';
+                ?></dd>
 
                 <dt class="col-sm-5">Telefon</dt>
                 <dd class="col-sm-7"><?= e($member['phone'] ?? '—') ?></dd>
 
                 <dt class="col-sm-5">Adres</dt>
-                <dd class="col-sm-7"><?= e($member['address'] ?? '—') ?></dd>
+                <dd class="col-sm-7">
+                    <?php
+                        $addrParts = [];
+                        if (!empty($member['address_street'])) $addrParts[] = $member['address_street'];
+                        $postCity = trim(($member['address_postal'] ?? '') . ' ' . ($member['address_city'] ?? ''));
+                        if ($postCity !== '') $addrParts[] = $postCity;
+                        echo $addrParts ? e(implode(', ', $addrParts)) : '—';
+                    ?>
+                </dd>
             </dl>
         </div>
     </div>
@@ -86,15 +107,38 @@
         </div>
     </div>
 
-    <?php if ($disciplines): ?>
     <div class="card mt-3">
         <div class="card-header"><strong>Dyscypliny</strong></div>
-        <div class="card-body">
-            <?php foreach ($disciplines as $d): ?>
-                <span class="badge bg-secondary me-1"><?= e($d['name']) ?></span>
-            <?php endforeach; ?>
+        <div class="card-body p-0">
+            <?php if ($disciplines): ?>
+            <table class="table table-sm mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Dyscyplina</th>
+                        <th>Klasa</th>
+                        <th>Od</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($disciplines as $d): ?>
+                    <tr>
+                        <td><?= e($d['name'] ?? '—') ?></td>
+                        <td>
+                            <?php if (!empty($d['class'])): ?>
+                                <span class="badge bg-info text-dark"><?= e($d['class']) ?></span>
+                            <?php else: ?><span class="text-muted">—</span><?php endif; ?>
+                        </td>
+                        <td class="small text-muted">
+                            <?= !empty($d['joined_at']) ? format_date($d['joined_at']) : '—' ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+            <?php else: ?>
+            <p class="text-muted m-3 mb-0 small">Brak przypisanych dyscyplin.</p>
+            <?php endif; ?>
         </div>
     </div>
-    <?php endif; ?>
 </div>
 </div>

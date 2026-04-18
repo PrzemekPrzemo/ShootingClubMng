@@ -253,6 +253,9 @@ $router->get('/admin/security/export.md',   [\App\Controllers\AdminSecurityContr
 $router->get('/admin/online-payments',               [\App\Controllers\PaymentGatewayController::class, 'adminIndex']);
 $router->post('/admin/online-payments/:id/cancel',   [\App\Controllers\PaymentGatewayController::class, 'adminCancel']);
 
+// Pricing calculator (superadmin)
+$router->get('/admin/pricing-calculator',   [\App\Controllers\AdminController::class, 'pricingCalculator']);
+
 // Backups (superadmin)
 $router->get('/admin/backups',              [\App\Controllers\BackupController::class, 'index']);
 $router->post('/admin/backups/run',         [\App\Controllers\BackupController::class, 'run']);
@@ -277,7 +280,9 @@ $router->post('/admin/ads/:id/delete',   [\App\Controllers\AdsController::class,
 // Demo environments (public + superadmin)
 $router->get('/demo',                          [\App\Controllers\DemoController::class, 'landing']);
 $router->get('/admin/demos',                   [\App\Controllers\DemoController::class, 'adminIndex']);
+$router->get('/admin/demos/activity',          [\App\Controllers\DemoController::class, 'adminActivityOverview']);
 $router->post('/admin/demos',                  [\App\Controllers\DemoController::class, 'adminCreate']);
+$router->get('/admin/demos/:id/activity',      [\App\Controllers\DemoController::class, 'adminActivity']);
 $router->post('/admin/demos/:id/reset',        [\App\Controllers\DemoController::class, 'adminReset']);
 $router->post('/admin/demos/:id/extend',       [\App\Controllers\DemoController::class, 'adminExtend']);
 $router->post('/admin/demos/:id/delete',       [\App\Controllers\DemoController::class, 'adminDelete']);

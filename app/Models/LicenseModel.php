@@ -25,6 +25,15 @@ class LicenseModel extends BaseModel
             $where[]  = "l.status = ?";
             $params[] = $filters['status'];
         }
+        // Licenses expiring within N days from today (and not yet expired)
+        if (!empty($filters['expiring_days'])) {
+            $days = max(1, (int)$filters['expiring_days']);
+            $where[] = "l.valid_until BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY)";
+        }
+        // Licenses that are already expired (valid_until in the past)
+        if (!empty($filters['expired'])) {
+            $where[] = "l.valid_until < CURDATE()";
+        }
         if (!empty($filters['member_id'])) {
             $where[]  = "l.member_id = ?";
             $params[] = $filters['member_id'];
@@ -141,6 +150,19 @@ class LicenseModel extends BaseModel
         return $row ?: null;
     }
 
+    /**
+     * Count already-expired licenses (valid_until < today).
+     */
+    public function countExpired(): int
+    {
+        $stmt = $this->db->query("
+            SELECT COUNT(*) FROM licenses l
+            JOIN members m ON m.id = l.member_id
+            WHERE l.valid_until < CURDATE() AND m.status = 'aktywny'
+        ");
+        return (int)$stmt->fetchColumn();
+    }
+
     public function getExpiring(int $days = 60): array
     {
         $stmt = $this->db->prepare("
@@ -150,7 +172,7 @@ class LicenseModel extends BaseModel
             JOIN members m ON m.id = l.member_id
             WHERE l.status = 'aktywna'
               AND m.status = 'aktywny'
-              AND DATEDIFF(l.valid_until, CURDATE()) <= ?
+              AND DATEDIFF(l.valid_until, CURDATE()) BETWEEN 0 AND ?
             ORDER BY days_left ASC
         ");
         $stmt->execute([$days]);

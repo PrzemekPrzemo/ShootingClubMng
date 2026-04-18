@@ -44,7 +44,16 @@ $isAdminRole   = in_array($role, ['admin','zarzad','instruktor','sędzia']);
             <div class="card-body">
                 <div class="text-muted small"><i class="bi bi-card-checklist"></i> Licencje wygasające (<?= $alertLicDays ?> dni)</div>
                 <div class="display-6 fw-bold text-<?= count($expiringLicenses) > 0 ? 'warning' : 'success' ?>"><?= count($expiringLicenses) ?></div>
-                <a href="<?= url('licenses') ?>" class="small">Zarządzaj licencjami</a>
+                <a href="<?= url('licenses?expiring_days=' . $alertLicDays) ?>" class="small">Pokaż wygasające</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-danger h-100">
+            <div class="card-body">
+                <div class="text-muted small"><i class="bi bi-x-circle"></i> Licencje wygasłe</div>
+                <div class="display-6 fw-bold text-<?= ($expiredLicensesCount ?? 0) > 0 ? 'danger' : 'success' ?>"><?= (int)($expiredLicensesCount ?? 0) ?></div>
+                <a href="<?= url('licenses?expired=1') ?>" class="small">Pokaż wygasłe</a>
             </div>
         </div>
     </div>
@@ -52,43 +61,6 @@ $isAdminRole   = in_array($role, ['admin','zarzad','instruktor','sędzia']);
 <?php endif; // $isAdminRole — stats row ?>
 
 <div class="row g-3">
-    <!-- Alert: Licencje -->
-    <?php if ($expiringLicenses): ?>
-    <div class="col-lg-6">
-        <div class="card border-warning">
-            <div class="card-header bg-warning text-dark">
-                <i class="bi bi-exclamation-circle"></i>
-                <strong>Licencje wymagające uwagi</strong>
-                <span class="badge bg-dark ms-2"><?= count($expiringLicenses) ?></span>
-            </div>
-            <div class="card-body p-0">
-                <table class="table table-sm mb-0">
-                    <thead><tr><th>Zawodnik</th><th>Nr licencji</th><th>Ważna do</th><th>Termin</th></tr></thead>
-                    <tbody>
-                    <?php foreach (array_slice($expiringLicenses, 0, 8) as $lic): ?>
-                        <tr>
-                            <td><a href="<?= url('members/' . $lic['member_id']) ?>"><?= e($lic['last_name']) ?> <?= e($lic['first_name']) ?></a></td>
-                            <td><small><?= e($lic['license_number']) ?></small></td>
-                            <td><small><?= format_date($lic['valid_until']) ?></small></td>
-                            <td>
-                                <span class="badge bg-<?= alert_class($lic['days_left'], $alertLicDays) ?>">
-                                    <?= $lic['days_left'] >= 0 ? 'za ' . $lic['days_left'] . ' dni' : 'WYGASŁA' ?>
-                                </span>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-            <?php if (count($expiringLicenses) > 8): ?>
-            <div class="card-footer text-center">
-                <a href="<?= url('licenses') ?>" class="small">i <?= count($expiringLicenses)-8 ?> więcej…</a>
-            </div>
-            <?php endif; ?>
-        </div>
-    </div>
-    <?php endif; ?>
-
     <!-- Alert: Badania lekarskie -->
     <?php if ($expiringMedicals): ?>
     <div class="col-lg-6">

@@ -35,7 +35,7 @@
                            value="<?= e($preselName) ?>"
                            autocomplete="off" required>
                     <div id="memberSearchResults" class="list-group position-absolute w-100 shadow"
-                         style="display:none; z-index:1050; max-height:250px; overflow-y:auto;"></div>
+                         style="display:none; top:100%; left:0; right:0; z-index:1050; max-height:250px; overflow-y:auto;"></div>
                 </div>
             </div>
             <div class="row g-3 mb-3">
@@ -100,6 +100,12 @@
                     <label class="form-label" id="validUntilLabel">Ważna do <span class="text-danger">*</span></label>
                     <input type="date" name="valid_until" id="validUntil" class="form-control"
                            value="<?= e($license['valid_until'] ?? '') ?>" required>
+                    <div id="validUntilWarning" class="alert alert-warning py-2 px-2 mt-2 small"
+                         style="display:none">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Uwaga:</strong> ta data jest już <strong>przeszła</strong> — licencja jest wygasła.
+                        Możesz zapisać, ale status zostanie ustawiony na <em>wygasła</em>.
+                    </div>
                 </div>
             </div>
             <div class="mb-3">
@@ -302,6 +308,29 @@
         licenseNumberInput.addEventListener('blur',  detectLicenseType);
     }
 
+    /* ── Warn if valid_until is in the past ── */
+
+    var expiredWarn = document.getElementById('validUntilWarning');
+    var statusSelect = document.querySelector('select[name="status"]');
+
+    function checkExpired() {
+        if (!validUntil || !expiredWarn) return;
+        var v = validUntil.value;
+        if (!v) { expiredWarn.style.display = 'none'; return; }
+        var picked = new Date(v + 'T00:00:00');
+        var today  = new Date();
+        today.setHours(0, 0, 0, 0);
+        var isPast = picked < today;
+        expiredWarn.style.display = isPast ? '' : 'none';
+
+        // Auto-set status to 'wygasla' when date is past (only if not manually set to zawieszona)
+        if (statusSelect && isPast && statusSelect.value !== 'zawieszona') {
+            statusSelect.value = 'wygasla';
+        }
+    }
+    validUntil && validUntil.addEventListener('change', checkExpired);
+    validUntil && validUntil.addEventListener('input',  checkExpired);
+
     /* ── Init on load ── */
 
     if (isCreate && !validUntil.value) {
@@ -309,6 +338,7 @@
     }
     if (typeSelect.value) recalcType();
     if (isCreate && licenseNumberInput && licenseNumberInput.value) detectLicenseType();
+    checkExpired();
 })();
 </script>
     </div>

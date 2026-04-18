@@ -150,6 +150,33 @@
             color: var(--sht-dim);
             font-style: italic;
         }
+
+        /* Theme toggle in navbar */
+        .portal-theme-btn {
+            background: none;
+            border: 1px solid rgba(255,255,255,.15);
+            color: var(--sht-muted);
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: .9rem;
+            transition: background .15s, color .15s, border-color .15s;
+            flex-shrink: 0;
+        }
+        .portal-theme-btn:hover { background: rgba(212,163,115,.12); color: var(--sht-gold); border-color: rgba(212,163,115,.3); }
+
+        /* Light mode overrides */
+        [data-bs-theme="light"] body { background: #F1F5F9; color: #1E293B; }
+        [data-bs-theme="light"] .portal-main { background: #F1F5F9; }
+        [data-bs-theme="light"] .portal-theme-btn {
+            border-color: rgba(0,0,0,.15);
+            color: #64748B;
+        }
+        [data-bs-theme="light"] .portal-theme-btn:hover { background: rgba(139,69,19,.08); color: #8B4513; border-color: rgba(139,69,19,.25); }
     </style>
 </head>
 <body>

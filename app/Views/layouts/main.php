@@ -14,6 +14,8 @@
     <!-- Shootero design system -->
     <link rel="stylesheet" href="<?= url('css/app.css') ?>">
     <link rel="icon" type="image/svg+xml" href="<?= url('favicon.svg') ?>">
+    <!-- Apply saved theme before paint to prevent flash -->
+    <script>(function(){var t=localStorage.getItem('bs-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-bs-theme',t);})();</script>
     <?php
     $__primaryColor = $clubBranding['primary_color'] ?? '#D4A373';
     $__navbarBg     = $clubBranding['navbar_bg']     ?? '#0F172A';
@@ -350,6 +352,26 @@
             #page-area { background: #fff; }
             #main-content { padding: 0; }
         }
+        /* ── Light mode layout overrides (sidebar stays dark) ── */
+        [data-bs-theme="light"] body {
+            background: #F1F5F9;
+            color: #1E293B;
+        }
+        [data-bs-theme="light"] #page-area { background: #F1F5F9; }
+        [data-bs-theme="light"] #topbar {
+            background: #FFFFFF;
+            border-bottom-color: rgba(0,0,0,.1);
+        }
+        [data-bs-theme="light"] .topbar-title { color: #1E293B; }
+        [data-bs-theme="light"] .topbar-user { color: #475569; }
+        [data-bs-theme="light"] .topbar-user a { color: #64748B; }
+        [data-bs-theme="light"] .topbar-user a:hover { color: #8B4513; background: rgba(139,69,19,.08); }
+        [data-bs-theme="light"] footer.main-foot {
+            background: #FFFFFF;
+            border-top-color: rgba(0,0,0,.08);
+        }
+        [data-bs-theme="light"] #main-content { background: #F1F5F9; }
+
         <?php if ($__customCss): ?>
         /* Custom CSS per klub */
         <?= $__customCss ?>
@@ -458,6 +480,7 @@ $__brandText       = $__hasClubCtx
             ['icon' => 'joystick',             'label' => 'Demo',           'url' => 'admin/demos',        'match' => '/admin/demos'],
             ['icon' => 'credit-card-2-front',  'label' => 'Subskrypcje',   'url' => 'admin/subscriptions','match' => '/admin/subscriptions'],
             ['icon' => 'calculator',           'label' => 'Cennik pakietów','url' => 'admin/subscriptions/plans', 'match' => '/admin/subscriptions/plans'],
+            ['icon' => 'cash-stack',           'label' => 'Kalkulator cen','url' => 'admin/pricing-calculator','match' => '/admin/pricing-calculator'],
             ['icon' => 'bar-chart-line',       'label' => 'Analityka',      'url' => 'admin/analytics',    'match' => '/admin/analytics'],
             ['icon' => 'megaphone',            'label' => 'Reklamy',        'url' => 'admin/ads',          'match' => '/admin/ads'],
             ['icon' => 'gear',                 'label' => 'Ustawienia',     'url' => 'admin/settings',     'match' => '/admin/settings'],
@@ -597,6 +620,12 @@ $__brandText       = $__hasClubCtx
                     <i class="bi bi-building" style="font-size:1rem"></i>
                 </a>
             <?php endif; ?>
+            <button id="themeToggle" title="Zmień motyw"
+                    style="background:none;border:none;color:var(--sht-dim);font-size:1rem;padding:.2rem .3rem;border-radius:.3rem;cursor:pointer;transition:color .14s,background .14s;line-height:1"
+                    onmouseover="this.style.color='var(--sht-gold)';this.style.background='rgba(212,163,115,.1)'"
+                    onmouseout="this.style.color='var(--sht-dim)';this.style.background='none'">
+                <i class="bi bi-sun-fill" id="themeIcon"></i>
+            </button>
             <span class="d-none d-md-inline" style="color:#94A3B8"><?= e($authUser['full_name'] ?? '') ?></span>
             <a href="<?= url('auth/logout') ?>" title="Wyloguj">
                 <i class="bi bi-box-arrow-right"></i>
@@ -723,6 +752,27 @@ $__brandText       = $__hasClubCtx
         sidebar.classList.toggle('collapsed');
         localStorage.setItem('sbCollapsed', sidebar.classList.contains('collapsed') ? '1' : '0');
         updateCollapseBtn();
+    });
+})();
+
+// Theme toggle
+(function () {
+    var btn  = document.getElementById('themeToggle');
+    var icon = document.getElementById('themeIcon');
+    var html = document.documentElement;
+
+    function applyTheme(theme) {
+        html.setAttribute('data-bs-theme', theme);
+        if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+        if (btn)  btn.title = theme === 'dark' ? 'Przełącz na jasny motyw' : 'Przełącz na ciemny motyw';
+        localStorage.setItem('bs-theme', theme);
+    }
+
+    // Sync icon to current theme (already applied by head script)
+    applyTheme(html.getAttribute('data-bs-theme') || 'dark');
+
+    btn && btn.addEventListener('click', function () {
+        applyTheme(html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark');
     });
 })();
 </script>
