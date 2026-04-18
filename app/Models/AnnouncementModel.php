@@ -11,15 +11,16 @@ class AnnouncementModel extends ClubScopedModel
     public function getAll(bool $publishedOnly = false): array
     {
         try {
-            $sql    = "SELECT a.*, u.full_name AS created_by_name
-                       FROM announcements a
-                       LEFT JOIN users u ON u.id = a.created_by";
+            $cid    = $this->clubId();
+            $where  = [];
             $params = [];
+            if ($publishedOnly) { $where[] = "a.is_published = 1"; }
+            if ($cid !== null)  { $where[] = "a.club_id = ?"; $params[] = $cid; }
 
-            if ($publishedOnly) {
-                $sql   .= " WHERE a.is_published = 1";
-            }
-
+            $sql = "SELECT a.*, u.full_name AS created_by_name
+                    FROM announcements a
+                    LEFT JOIN users u ON u.id = a.created_by";
+            if ($where) { $sql .= " WHERE " . implode(' AND ', $where); }
             $sql .= " ORDER BY
                        FIELD(a.priority,'pilne','wazne','normal'),
                        a.created_at DESC";
@@ -35,17 +36,19 @@ class AnnouncementModel extends ClubScopedModel
     public function getActive(): array
     {
         try {
-            $stmt = $this->db->prepare(
-                "SELECT a.*, u.full_name AS created_by_name
-                 FROM announcements a
-                 LEFT JOIN users u ON u.id = a.created_by
-                 WHERE a.is_published = 1
-                   AND (a.expires_at IS NULL OR a.expires_at >= CURDATE())
-                 ORDER BY
-                   FIELD(a.priority,'pilne','wazne','normal'),
-                   a.published_at DESC"
-            );
-            $stmt->execute();
+            $cid = $this->clubId();
+            $sql = "SELECT a.*, u.full_name AS created_by_name
+                    FROM announcements a
+                    LEFT JOIN users u ON u.id = a.created_by
+                    WHERE a.is_published = 1
+                      AND (a.expires_at IS NULL OR a.expires_at >= CURDATE())";
+            $params = [];
+            if ($cid !== null) { $sql .= " AND a.club_id = ?"; $params[] = $cid; }
+            $sql .= " ORDER BY
+                       FIELD(a.priority,'pilne','wazne','normal'),
+                       a.published_at DESC";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
             return $stmt->fetchAll();
         } catch (\PDOException) {
             return [];
@@ -55,13 +58,15 @@ class AnnouncementModel extends ClubScopedModel
     public function findById(int $id): ?array
     {
         try {
-            $stmt = $this->db->prepare(
-                "SELECT a.*, u.full_name AS created_by_name
-                 FROM announcements a
-                 LEFT JOIN users u ON u.id = a.created_by
-                 WHERE a.id = ?"
-            );
-            $stmt->execute([$id]);
+            $cid = $this->clubId();
+            $sql = "SELECT a.*, u.full_name AS created_by_name
+                    FROM announcements a
+                    LEFT JOIN users u ON u.id = a.created_by
+                    WHERE a.id = ?";
+            $params = [$id];
+            if ($cid !== null) { $sql .= " AND a.club_id = ?"; $params[] = $cid; }
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
             $row = $stmt->fetch();
             return $row ?: null;
         } catch (\PDOException) {
@@ -91,7 +96,11 @@ class AnnouncementModel extends ClubScopedModel
     public function delete(int $id): bool
     {
         try {
-            $this->db->prepare("DELETE FROM announcements WHERE id = ?")->execute([$id]);
+            $cid = $this->clubId();
+            $sql = "DELETE FROM announcements WHERE id = ?";
+            $params = [$id];
+            if ($cid !== null) { $sql .= " AND club_id = ?"; $params[] = $cid; }
+            $this->db->prepare($sql)->execute($params);
             return true;
         } catch (\PDOException) {
             return false;
