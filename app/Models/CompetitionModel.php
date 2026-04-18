@@ -24,6 +24,12 @@ class CompetitionModel extends ClubScopedModel
             $params[] = $filters['year'];
         }
 
+        $cid = $this->clubId();
+        if ($cid !== null) {
+            $where[]  = "c.club_id = ?";
+            $params[] = $cid;
+        }
+
         $whereClause = implode(' AND ', $where);
         $sql = "SELECT c.*, d.name AS discipline_name,
                        (SELECT COUNT(*) FROM competition_entries WHERE competition_id = c.id) AS entry_count
@@ -37,13 +43,15 @@ class CompetitionModel extends ClubScopedModel
 
     public function getWithDetails(int $id): ?array
     {
-        $stmt = $this->db->prepare("
-            SELECT c.*, d.name AS discipline_name
-            FROM competitions c
-            LEFT JOIN disciplines d ON d.id = c.discipline_id
-            WHERE c.id = ?
-        ");
-        $stmt->execute([$id]);
+        $cid = $this->clubId();
+        $sql = "SELECT c.*, d.name AS discipline_name
+                FROM competitions c
+                LEFT JOIN disciplines d ON d.id = c.discipline_id
+                WHERE c.id = ?";
+        $params = [$id];
+        if ($cid !== null) { $sql .= " AND c.club_id = ?"; $params[] = $cid; }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         $row = $stmt->fetch();
         return $row ?: null;
     }
@@ -574,32 +582,38 @@ class CompetitionModel extends ClubScopedModel
         return $output;
     }
 
-    public function getForMonth(int $year, int $month): array
+    public function getForMonth(int $year, int $month, bool $publicOnly = false): array
     {
-        $stmt = $this->db->prepare("
-            SELECT c.*, d.name AS discipline_name,
-                   (SELECT COUNT(*) FROM competition_entries WHERE competition_id = c.id) AS entry_count
-            FROM competitions c
-            LEFT JOIN disciplines d ON d.id = c.discipline_id
-            WHERE YEAR(c.competition_date) = ? AND MONTH(c.competition_date) = ?
-            ORDER BY c.competition_date ASC, c.name ASC
-        ");
-        $stmt->execute([$year, $month]);
+        $cid = $this->clubId();
+        $sql = "SELECT c.*, d.name AS discipline_name,
+                       (SELECT COUNT(*) FROM competition_entries WHERE competition_id = c.id) AS entry_count
+                FROM competitions c
+                LEFT JOIN disciplines d ON d.id = c.discipline_id
+                WHERE YEAR(c.competition_date) = ? AND MONTH(c.competition_date) = ?";
+        $params = [$year, $month];
+        if ($cid !== null) { $sql .= " AND c.club_id = ?"; $params[] = $cid; }
+        if ($publicOnly)   { $sql .= " AND c.is_public = 1"; }
+        $sql .= " ORDER BY c.competition_date ASC, c.name ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 
-    public function getUpcoming(int $days = 30): array
+    public function getUpcoming(int $days = 30, bool $publicOnly = false): array
     {
-        $stmt = $this->db->prepare("
-            SELECT c.*, d.name AS discipline_name,
-                   (SELECT COUNT(*) FROM competition_entries WHERE competition_id = c.id) AS entry_count
-            FROM competitions c
-            LEFT JOIN disciplines d ON d.id = c.discipline_id
-            WHERE c.competition_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL ? DAY)
-              AND c.status IN ('planowane','otwarte')
-            ORDER BY c.competition_date ASC
-        ");
-        $stmt->execute([$days]);
+        $cid = $this->clubId();
+        $sql = "SELECT c.*, d.name AS discipline_name,
+                       (SELECT COUNT(*) FROM competition_entries WHERE competition_id = c.id) AS entry_count
+                FROM competitions c
+                LEFT JOIN disciplines d ON d.id = c.discipline_id
+                WHERE c.competition_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL ? DAY)
+                  AND c.status IN ('planowane','otwarte')";
+        $params = [$days];
+        if ($cid !== null) { $sql .= " AND c.club_id = ?"; $params[] = $cid; }
+        if ($publicOnly)   { $sql .= " AND c.is_public = 1"; }
+        $sql .= " ORDER BY c.competition_date ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 

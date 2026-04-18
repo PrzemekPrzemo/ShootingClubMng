@@ -72,17 +72,19 @@ class JudgeLicenseModel extends BaseModel
 
     public function getExpiring(int $days = 30): array
     {
-        $stmt = $this->db->prepare("
-            SELECT jl.*, m.first_name, m.last_name, m.member_number,
-                   d.name AS discipline_name,
-                   DATEDIFF(jl.valid_until, CURDATE()) AS days_left
-            FROM judge_licenses jl
-            JOIN members m ON m.id = jl.member_id
-            LEFT JOIN disciplines d ON d.id = jl.discipline_id
-            WHERE jl.valid_until BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL ? DAY)
-            ORDER BY days_left ASC
-        ");
-        $stmt->execute([$days]);
+        $cid = \App\Helpers\ClubContext::current();
+        $sql = "SELECT jl.*, m.first_name, m.last_name, m.member_number,
+                       d.name AS discipline_name,
+                       DATEDIFF(jl.valid_until, CURDATE()) AS days_left
+                FROM judge_licenses jl
+                JOIN members m ON m.id = jl.member_id
+                LEFT JOIN disciplines d ON d.id = jl.discipline_id
+                WHERE jl.valid_until BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL ? DAY)";
+        $params = [$days];
+        if ($cid !== null) { $sql .= " AND m.club_id = ?"; $params[] = $cid; }
+        $sql .= " ORDER BY days_left ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 

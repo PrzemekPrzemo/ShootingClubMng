@@ -25,14 +25,16 @@ class ClubFeeModel extends ClubScopedModel
 
     public function getByYear(int $year): array
     {
-        $stmt = $this->db->prepare("
-            SELECT cf.*, u.full_name AS created_by_name
-            FROM club_fees cf
-            LEFT JOIN users u ON u.id = cf.created_by
-            WHERE cf.year = ?
-            ORDER BY FIELD(cf.fee_type,'licencja_pzss','czlonek_pzss','czlonek_pomzss','licencje_zawodnicze','licencje_sedziowskie')
-        ");
-        $stmt->execute([$year]);
+        $cid = $this->clubId();
+        $sql = "SELECT cf.*, u.full_name AS created_by_name
+                FROM club_fees cf
+                LEFT JOIN users u ON u.id = cf.created_by
+                WHERE cf.year = ?";
+        $params = [$year];
+        if ($cid !== null) { $sql .= " AND cf.club_id = ?"; $params[] = $cid; }
+        $sql .= " ORDER BY FIELD(cf.fee_type,'licencja_pzss','czlonek_pzss','czlonek_pomzss','licencje_zawodnicze','licencje_sedziowskie')";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         // Index by fee_type for easy lookup
@@ -77,21 +79,24 @@ class ClubFeeModel extends ClubScopedModel
     public function calculateDue(int $year): array
     {
         $dueDate = $year . '-03-31';
+        $cid = $this->clubId();
 
         // Count active members with a license for the year
-        $stmtMembers = $this->db->prepare("
-            SELECT COUNT(*) FROM members
-            WHERE status = 'aktywny'
-        ");
-        $stmtMembers->execute();
+        $sql = "SELECT COUNT(*) FROM members WHERE status = 'aktywny'";
+        $params = [];
+        if ($cid !== null) { $sql .= " AND club_id = ?"; $params[] = $cid; }
+        $stmtMembers = $this->db->prepare($sql);
+        $stmtMembers->execute($params);
         $activeMembers = (int)$stmtMembers->fetchColumn();
 
         // Count active judge licenses valid in given year
-        $stmtJudges = $this->db->prepare("
-            SELECT COUNT(DISTINCT member_id) FROM judge_licenses
-            WHERE valid_until >= ? AND valid_until <= ?
-        ");
-        $stmtJudges->execute([$year . '-01-01', $year . '-12-31']);
+        $sql = "SELECT COUNT(DISTINCT jl.member_id) FROM judge_licenses jl
+                JOIN members m ON m.id = jl.member_id
+                WHERE jl.valid_until >= ? AND jl.valid_until <= ?";
+        $params = [$year . '-01-01', $year . '-12-31'];
+        if ($cid !== null) { $sql .= " AND m.club_id = ?"; $params[] = $cid; }
+        $stmtJudges = $this->db->prepare($sql);
+        $stmtJudges->execute($params);
         $activeJudges = (int)$stmtJudges->fetchColumn();
 
         return [
@@ -125,21 +130,35 @@ class ClubFeeModel extends ClubScopedModel
 
     public function getTotalDue(int $year): float
     {
-        $stmt = $this->db->prepare("SELECT COALESCE(SUM(amount_due),0) FROM club_fees WHERE year = ?");
-        $stmt->execute([$year]);
+        $cid = $this->clubId();
+        $sql = "SELECT COALESCE(SUM(amount_due),0) FROM club_fees WHERE year = ?";
+        $params = [$year];
+        if ($cid !== null) { $sql .= " AND club_id = ?"; $params[] = $cid; }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return (float)$stmt->fetchColumn();
     }
 
     public function getTotalPaid(int $year): float
     {
-        $stmt = $this->db->prepare("SELECT COALESCE(SUM(paid_amount),0) FROM club_fees WHERE year = ? AND paid_date IS NOT NULL");
-        $stmt->execute([$year]);
+        $cid = $this->clubId();
+        $sql = "SELECT COALESCE(SUM(paid_amount),0) FROM club_fees WHERE year = ? AND paid_date IS NOT NULL";
+        $params = [$year];
+        if ($cid !== null) { $sql .= " AND club_id = ?"; $params[] = $cid; }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return (float)$stmt->fetchColumn();
     }
 
     public function getYears(): array
     {
-        $stmt = $this->db->query("SELECT DISTINCT year FROM club_fees ORDER BY year DESC");
+        $cid = $this->clubId();
+        $sql = "SELECT DISTINCT year FROM club_fees";
+        $params = [];
+        if ($cid !== null) { $sql .= " WHERE club_id = ?"; $params[] = $cid; }
+        $sql .= " ORDER BY year DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll(\PDO::FETCH_COLUMN);
     }
 }

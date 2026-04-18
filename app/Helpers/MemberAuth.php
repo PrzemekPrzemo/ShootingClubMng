@@ -20,6 +20,7 @@ class MemberAuth
         }
         return [
             'id'                  => Session::get('member_id'),
+            'club_id'             => Session::get('member_club_id'),
             'full_name'           => Session::get('member_full_name'),
             'email'               => Session::get('member_email'),
             'status'              => Session::get('member_status'),
@@ -30,6 +31,12 @@ class MemberAuth
     public static function id(): ?int
     {
         return Session::get('member_id');
+    }
+
+    public static function clubId(): ?int
+    {
+        $cid = Session::get('member_club_id');
+        return $cid !== null ? (int)$cid : null;
     }
 
     public static function mustChangePassword(): bool
@@ -49,6 +56,7 @@ class MemberAuth
         Session::remove('role');
 
         Session::set('member_id',            (int)$member['id']);
+        Session::set('member_club_id',       isset($member['club_id']) ? (int)$member['club_id'] : null);
         Session::set('member_full_name',     trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? '')));
         Session::set('member_email',         $member['email'] ?? '');
         Session::set('member_status',        $member['status'] ?? 'aktywny');
@@ -58,6 +66,7 @@ class MemberAuth
     public static function logout(): void
     {
         Session::remove('member_id');
+        Session::remove('member_club_id');
         Session::remove('member_full_name');
         Session::remove('member_email');
         Session::remove('member_status');

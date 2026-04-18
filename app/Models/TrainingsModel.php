@@ -7,7 +7,7 @@ class TrainingsModel extends ClubScopedModel
 {
     protected string $table = 'trainings';
 
-    public function getAll(array $filters = []): array
+    public function getAll(array $filters = [], bool $publicOnly = false): array
     {
         try {
             $where  = [];
@@ -26,6 +26,15 @@ class TrainingsModel extends ClubScopedModel
                 $params[] = (int)$filters['instructor_id'];
             }
 
+            $cid = $this->clubId();
+            if ($cid !== null) {
+                $where[]  = 't.club_id = ?';
+                $params[] = $cid;
+            }
+            if ($publicOnly) {
+                $where[] = 't.is_public = 1';
+            }
+
             $sql = "SELECT t.*,
                            u.full_name AS instructor_name,
                            (SELECT COUNT(*) FROM training_attendees ta WHERE ta.training_id = t.id) AS attendee_count
@@ -42,18 +51,21 @@ class TrainingsModel extends ClubScopedModel
         }
     }
 
-    public function getUpcoming(int $days = 30): array
+    public function getUpcoming(int $days = 30, bool $publicOnly = false): array
     {
         try {
-            $stmt = $this->db->prepare(
-                "SELECT t.*, u.full_name AS instructor_name
-                 FROM trainings t
-                 LEFT JOIN users u ON u.id = t.instructor_id
-                 WHERE t.training_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL ? DAY)
-                   AND t.status = 'planowany'
-                 ORDER BY t.training_date ASC, t.time_start ASC"
-            );
-            $stmt->execute([$days]);
+            $cid = $this->clubId();
+            $sql = "SELECT t.*, u.full_name AS instructor_name
+                    FROM trainings t
+                    LEFT JOIN users u ON u.id = t.instructor_id
+                    WHERE t.training_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL ? DAY)
+                      AND t.status = 'planowany'";
+            $params = [$days];
+            if ($cid !== null) { $sql .= " AND t.club_id = ?"; $params[] = $cid; }
+            if ($publicOnly)   { $sql .= " AND t.is_public = 1"; }
+            $sql .= " ORDER BY t.training_date ASC, t.time_start ASC";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
             return $stmt->fetchAll();
         } catch (\PDOException) {
             return [];
@@ -63,15 +75,17 @@ class TrainingsModel extends ClubScopedModel
     public function findWithDetails(int $id): ?array
     {
         try {
-            $stmt = $this->db->prepare(
-                "SELECT t.*, u.full_name AS instructor_name, u.username AS instructor_username,
-                        cb.full_name AS created_by_name
-                 FROM trainings t
-                 LEFT JOIN users u ON u.id = t.instructor_id
-                 LEFT JOIN users cb ON cb.id = t.created_by
-                 WHERE t.id = ?"
-            );
-            $stmt->execute([$id]);
+            $cid = $this->clubId();
+            $sql = "SELECT t.*, u.full_name AS instructor_name, u.username AS instructor_username,
+                           cb.full_name AS created_by_name
+                    FROM trainings t
+                    LEFT JOIN users u ON u.id = t.instructor_id
+                    LEFT JOIN users cb ON cb.id = t.created_by
+                    WHERE t.id = ?";
+            $params = [$id];
+            if ($cid !== null) { $sql .= " AND t.club_id = ?"; $params[] = $cid; }
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
             $row = $stmt->fetch();
             return $row ?: null;
         } catch (\PDOException) {

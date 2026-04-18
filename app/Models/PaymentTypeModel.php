@@ -28,27 +28,37 @@ class PaymentTypeModel extends ClubScopedModel
 
     public function getAll(): array
     {
+        $cid = $this->clubId();
+        $clubFilter = $cid !== null ? ' WHERE club_id = ?' : '';
+        $params = $cid !== null ? [$cid] : [];
         try {
-            $stmt = $this->db->query("
-                SELECT * FROM payment_types
+            $stmt = $this->db->prepare("
+                SELECT * FROM payment_types{$clubFilter}
                 ORDER BY sort_order, category, name
             ");
+            $stmt->execute($params);
         } catch (\PDOException) {
             // migration_v4 not yet run — fallback to name only
-            $stmt = $this->db->query("SELECT * FROM payment_types ORDER BY name");
+            $stmt = $this->db->prepare("SELECT * FROM payment_types{$clubFilter} ORDER BY name");
+            $stmt->execute($params);
         }
         return $this->normalize($stmt->fetchAll());
     }
 
     public function getActive(): array
     {
+        $cid = $this->clubId();
+        $clubFilter = $cid !== null ? ' AND club_id = ?' : '';
+        $params = $cid !== null ? [$cid] : [];
         try {
-            $stmt = $this->db->query("
-                SELECT * FROM payment_types WHERE is_active = 1
+            $stmt = $this->db->prepare("
+                SELECT * FROM payment_types WHERE is_active = 1{$clubFilter}
                 ORDER BY sort_order, category, name
             ");
+            $stmt->execute($params);
         } catch (\PDOException) {
-            $stmt = $this->db->query("SELECT * FROM payment_types WHERE is_active = 1 ORDER BY name");
+            $stmt = $this->db->prepare("SELECT * FROM payment_types WHERE is_active = 1{$clubFilter} ORDER BY name");
+            $stmt->execute($params);
         }
         return $this->normalize($stmt->fetchAll());
     }
@@ -71,8 +81,12 @@ class PaymentTypeModel extends ClubScopedModel
 
     public function isUsed(int $id): bool
     {
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM payments WHERE payment_type_id = ?");
-        $stmt->execute([$id]);
+        $cid = $this->clubId();
+        $sql = "SELECT COUNT(*) FROM payments WHERE payment_type_id = ?";
+        $params = [$id];
+        if ($cid !== null) { $sql .= " AND club_id = ?"; $params[] = $cid; }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return (int)$stmt->fetchColumn() > 0;
     }
 

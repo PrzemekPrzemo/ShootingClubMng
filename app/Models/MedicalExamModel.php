@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Helpers\ClubContext;
+
 class MedicalExamModel extends BaseModel
 {
     protected string $table = 'member_medical_exams';
@@ -64,18 +66,20 @@ class MedicalExamModel extends BaseModel
      */
     public function getExpiringByType(int $days = 30): array
     {
-        $stmt = $this->db->prepare("
-            SELECT m.id AS member_id, m.first_name, m.last_name, m.member_number,
-                   e.valid_until, DATEDIFF(e.valid_until, CURDATE()) AS days_left,
-                   t.name AS exam_type_name
-            FROM members m
-            JOIN member_medical_exams e ON e.member_id = m.id
-            LEFT JOIN medical_exam_types t ON t.id = e.exam_type_id
-            WHERE m.status = 'aktywny'
-              AND e.valid_until BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL ? DAY)
-            ORDER BY days_left ASC
-        ");
-        $stmt->execute([$days]);
+        $cid = ClubContext::current();
+        $sql = "SELECT m.id AS member_id, m.first_name, m.last_name, m.member_number,
+                       e.valid_until, DATEDIFF(e.valid_until, CURDATE()) AS days_left,
+                       t.name AS exam_type_name
+                FROM members m
+                JOIN member_medical_exams e ON e.member_id = m.id
+                LEFT JOIN medical_exam_types t ON t.id = e.exam_type_id
+                WHERE m.status = 'aktywny'
+                  AND e.valid_until BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL ? DAY)";
+        $params = [$days];
+        if ($cid !== null) { $sql .= " AND m.club_id = ?"; $params[] = $cid; }
+        $sql .= " ORDER BY days_left ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 
@@ -92,18 +96,20 @@ class MedicalExamModel extends BaseModel
     /** All exams expiring within $days days (for alerts) */
     public function getExpiring(int $days = 30): array
     {
-        $stmt = $this->db->prepare("
-            SELECT m.id AS member_id, m.first_name, m.last_name, m.member_number,
-                   e.valid_until, DATEDIFF(e.valid_until, CURDATE()) AS days_left,
-                   t.name AS exam_type_name
-            FROM members m
-            JOIN member_medical_exams e ON e.member_id = m.id
-            LEFT JOIN medical_exam_types t ON t.id = e.exam_type_id
-            WHERE m.status = 'aktywny'
-              AND DATEDIFF(e.valid_until, CURDATE()) <= ?
-            ORDER BY days_left ASC
-        ");
-        $stmt->execute([$days]);
+        $cid = ClubContext::current();
+        $sql = "SELECT m.id AS member_id, m.first_name, m.last_name, m.member_number,
+                       e.valid_until, DATEDIFF(e.valid_until, CURDATE()) AS days_left,
+                       t.name AS exam_type_name
+                FROM members m
+                JOIN member_medical_exams e ON e.member_id = m.id
+                LEFT JOIN medical_exam_types t ON t.id = e.exam_type_id
+                WHERE m.status = 'aktywny'
+                  AND DATEDIFF(e.valid_until, CURDATE()) <= ?";
+        $params = [$days];
+        if ($cid !== null) { $sql .= " AND m.club_id = ?"; $params[] = $cid; }
+        $sql .= " ORDER BY days_left ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 }

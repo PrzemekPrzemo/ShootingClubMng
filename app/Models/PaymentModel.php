@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class PaymentModel extends BaseModel
+class PaymentModel extends ClubScopedModel
 {
     protected string $table = 'payments';
 
@@ -29,6 +29,12 @@ class PaymentModel extends BaseModel
             $params[] = $filters['payment_type_id'];
         }
 
+        $cid = $this->clubId();
+        if ($cid !== null) {
+            $where[]  = "p.club_id = ?";
+            $params[] = $cid;
+        }
+
         $whereClause = implode(' AND ', $where);
         $sql = "SELECT p.*, m.first_name, m.last_name, m.member_number, pt.name AS type_name
                 FROM payments p
@@ -42,15 +48,23 @@ class PaymentModel extends BaseModel
 
     public function getTotalByYear(int $year): float
     {
-        $stmt = $this->db->prepare("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE period_year = ?");
-        $stmt->execute([$year]);
+        $cid = $this->clubId();
+        $sql = "SELECT COALESCE(SUM(amount), 0) FROM payments WHERE period_year = ?";
+        $params = [$year];
+        if ($cid !== null) { $sql .= " AND club_id = ?"; $params[] = $cid; }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return (float)$stmt->fetchColumn();
     }
 
     public function getTotalByMonth(int $year, int $month): float
     {
-        $stmt = $this->db->prepare("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE period_year = ? AND period_month = ?");
-        $stmt->execute([$year, $month]);
+        $cid = $this->clubId();
+        $sql = "SELECT COALESCE(SUM(amount), 0) FROM payments WHERE period_year = ? AND period_month = ?";
+        $params = [$year, $month];
+        if ($cid !== null) { $sql .= " AND club_id = ?"; $params[] = $cid; }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return (float)$stmt->fetchColumn();
     }
 
@@ -60,6 +74,17 @@ class PaymentModel extends BaseModel
         // First month free rule: if member joined in month M of $year, they pay
         // for months (M+1)..12 = (12 - M) months of the annual fee.
         // If joined in previous year(s) → full annual fee.
+        $cid = $this->clubId();
+        $memberWhere = '';
+        $ptWhere     = '';
+        $ptDefaultWhere = '';
+        $extraParams = [];
+        if ($cid !== null) {
+            $memberWhere = " AND m.club_id = ?";
+            $ptWhere     = " AND pt.club_id = ?";
+            $ptDefaultWhere = " AND club_id = ?";
+            $extraParams = [$cid, $cid, $cid];
+        }
         $stmt = $this->db->prepare("
             SELECT m.id, m.first_name, m.last_name, m.member_number, m.email, m.phone,
                    m.join_date, m.member_type, m.member_class_id,
@@ -67,16 +92,22 @@ class PaymentModel extends BaseModel
                    pt_default.amount AS default_amount, pt_default.id AS default_type_id
             FROM members m
             LEFT JOIN payments p ON p.member_id = m.id AND p.period_year = ?
-                AND p.payment_type_id IN (SELECT id FROM payment_types WHERE name LIKE '%składka roczna%')
+                AND p.payment_type_id IN (SELECT id FROM payment_types pt WHERE pt.name LIKE '%składka roczna%' {$ptWhere})
             LEFT JOIN payment_types pt_default ON pt_default.id = (
-                SELECT id FROM payment_types WHERE name LIKE '%składka roczna%' AND is_active = 1 ORDER BY id LIMIT 1
+                SELECT id FROM payment_types WHERE name LIKE '%składka roczna%' AND is_active = 1 {$ptDefaultWhere} ORDER BY id LIMIT 1
             )
             WHERE m.status = 'aktywny'
               AND (YEAR(m.join_date) < ? OR (YEAR(m.join_date) = ? AND MONTH(m.join_date) < 12))
+              {$memberWhere}
             GROUP BY m.id
             ORDER BY m.last_name, m.first_name
         ");
-        $stmt->execute([$year, $year, $year]);
+        $params = [$year];
+        if ($cid !== null) { $params[] = $cid; $params[] = $cid; } // pt subqueries
+        $params[] = $year;
+        $params[] = $year;
+        if ($cid !== null) { $params[] = $cid; } // member WHERE
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         $result = [];
@@ -149,44 +180,58 @@ class PaymentModel extends BaseModel
 
     public function getSummaryByType(int $year): array
     {
-        $stmt = $this->db->prepare("
-            SELECT pt.name, SUM(p.amount) AS total, COUNT(*) AS count
-            FROM payments p
-            JOIN payment_types pt ON pt.id = p.payment_type_id
-            WHERE p.period_year = ?
-            GROUP BY pt.id, pt.name
-            ORDER BY total DESC
-        ");
-        $stmt->execute([$year]);
+        $cid = $this->clubId();
+        $sql = "SELECT pt.name, SUM(p.amount) AS total, COUNT(*) AS count
+                FROM payments p
+                JOIN payment_types pt ON pt.id = p.payment_type_id
+                WHERE p.period_year = ?";
+        $params = [$year];
+        if ($cid !== null) { $sql .= " AND p.club_id = ?"; $params[] = $cid; }
+        $sql .= " GROUP BY pt.id, pt.name ORDER BY total DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 
     public function create(array $data): int
     {
+        if (!isset($data['club_id']) && $this->clubId() !== null) {
+            $data['club_id'] = $this->clubId();
+        }
         return $this->insert($data);
     }
 
     public function updatePayment(int $id, array $data): bool
     {
+        unset($data['club_id']);
         return $this->update($id, $data);
     }
 
     public function getWithDetails(int $id): ?array
     {
-        $stmt = $this->db->prepare("
-            SELECT p.*, m.first_name, m.last_name, m.member_number, pt.name AS type_name
-            FROM payments p
-            JOIN members m ON m.id = p.member_id
-            JOIN payment_types pt ON pt.id = p.payment_type_id
-            WHERE p.id = ?
-        ");
-        $stmt->execute([$id]);
+        $cid = $this->clubId();
+        $sql = "SELECT p.*, m.first_name, m.last_name, m.member_number, pt.name AS type_name
+                FROM payments p
+                JOIN members m ON m.id = p.member_id
+                JOIN payment_types pt ON pt.id = p.payment_type_id
+                WHERE p.id = ?";
+        $params = [$id];
+        if ($cid !== null) { $sql .= " AND p.club_id = ?"; $params[] = $cid; }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         $row = $stmt->fetch();
         return $row ?: null;
     }
 
     public function getPaymentTypes(): array
     {
-        return $this->db->query("SELECT * FROM payment_types WHERE is_active = 1 ORDER BY name")->fetchAll();
+        $cid = $this->clubId();
+        $sql = "SELECT * FROM payment_types WHERE is_active = 1";
+        $params = [];
+        if ($cid !== null) { $sql .= " AND club_id = ?"; $params[] = $cid; }
+        $sql .= " ORDER BY name";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
     }
 }
