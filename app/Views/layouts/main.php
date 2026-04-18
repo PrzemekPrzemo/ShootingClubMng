@@ -572,9 +572,6 @@ $__brandText       = $__hasClubCtx
         <button class="sb-collapse-btn" id="desktopCollapse" title="Zwiń sidebar">
             <i class="bi bi-chevron-left"></i>
         </button>
-        <button type="button" class="sb-action-btn" id="themeToggleBtn" title="Przełącz tryb jasny/ciemny">
-            <i class="bi bi-moon-stars" id="sbThemeIcon"></i>
-        </button>
         <a href="<?= url('2fa/setup') ?>" class="sb-action-btn" title="Ustawienia 2FA">
             <i class="bi bi-shield-lock"></i>
         </a>
@@ -763,11 +760,10 @@ $__brandText       = $__hasClubCtx
     function applyTheme(theme) {
         html.setAttribute('data-bs-theme', theme);
         var iconClass = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
-        var icons = document.querySelectorAll('#themeIcon, #sbThemeIcon');
-        icons.forEach(function (i) { i.className = iconClass; });
-        var newTitle = theme === 'dark' ? 'Przełącz na jasny motyw' : 'Przełącz na ciemny motyw';
-        var btns = document.querySelectorAll('#themeToggle, #themeToggleBtn');
-        btns.forEach(function (b) { b.title = newTitle; });
+        var icon = document.getElementById('themeIcon');
+        if (icon) icon.className = iconClass;
+        var btn = document.getElementById('themeToggle');
+        if (btn) btn.title = theme === 'dark' ? 'Przełącz na jasny motyw' : 'Przełącz na ciemny motyw';
         try { localStorage.setItem('bs-theme', theme); } catch (e) {}
     }
 
@@ -777,7 +773,7 @@ $__brandText       = $__hasClubCtx
     // Event delegation — survives DOM re-renders and works even if the
     // element isn't in the DOM yet when script runs.
     document.addEventListener('click', function (e) {
-        var btn = e.target.closest('#themeToggle, #themeToggleBtn');
+        var btn = e.target.closest('#themeToggle');
         if (!btn) return;
         e.preventDefault();
         applyTheme(html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark');
