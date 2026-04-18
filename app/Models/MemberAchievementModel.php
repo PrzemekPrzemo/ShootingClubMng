@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-class MemberAchievementModel extends BaseModel
+class MemberAchievementModel extends ClubScopedModel
 {
     protected string $table = 'member_achievements';
 
@@ -35,14 +35,13 @@ class MemberAchievementModel extends BaseModel
 
     public function getForMember(int $memberId): array
     {
-        $stmt = $this->db->prepare(
-            "SELECT a.*, u.full_name AS created_by_name
-             FROM member_achievements a
-             LEFT JOIN users u ON u.id = a.created_by
-             WHERE a.member_id = ?
-             ORDER BY a.year DESC, a.achievement_type ASC, a.place ASC"
-        );
-        $stmt->execute([$memberId]);
+        $sql = "SELECT a.*, u.full_name AS created_by_name
+                FROM member_achievements a
+                LEFT JOIN users u ON u.id = a.created_by
+                WHERE a.member_id = ?{$this->clubWhereAliased('a')}
+                ORDER BY a.year DESC, a.achievement_type ASC, a.place ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(array_merge([$memberId], $this->clubParams()));
         return $stmt->fetchAll();
     }
 
@@ -53,17 +52,12 @@ class MemberAchievementModel extends BaseModel
 
     public function getById(int $id): ?array
     {
-        $stmt = $this->db->prepare(
-            "SELECT * FROM member_achievements WHERE id = ?"
-        );
-        $stmt->execute([$id]);
-        $row = $stmt->fetch();
-        return $row ?: null;
+        // Override parent: use club-scoped lookup (ClubScopedModel::findById already scopes).
+        return $this->findById($id);
     }
 
-    public function delete(int $id): bool
+    private function clubWhereAliased(string $alias): string
     {
-        return (bool)$this->db->prepare("DELETE FROM member_achievements WHERE id = ?")
-                              ->execute([$id]);
+        return $this->clubId() !== null ? " AND {$alias}.club_id = ?" : '';
     }
 }

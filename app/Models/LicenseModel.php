@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Helpers\ClubContext;
+
 class LicenseModel extends BaseModel
 {
     protected string $table = 'licenses';
@@ -37,6 +39,12 @@ class LicenseModel extends BaseModel
         if (!empty($filters['member_id'])) {
             $where[]  = "l.member_id = ?";
             $params[] = $filters['member_id'];
+        }
+
+        $cid = ClubContext::current();
+        if ($cid !== null) {
+            $where[]  = "m.club_id = ?";
+            $params[] = $cid;
         }
 
         $whereClause = implode(' AND ', $where);
@@ -155,27 +163,32 @@ class LicenseModel extends BaseModel
      */
     public function countExpired(): int
     {
-        $stmt = $this->db->query("
-            SELECT COUNT(*) FROM licenses l
-            JOIN members m ON m.id = l.member_id
-            WHERE l.valid_until < CURDATE() AND m.status = 'aktywny'
-        ");
+        $cid = ClubContext::current();
+        $sql = "SELECT COUNT(*) FROM licenses l
+                JOIN members m ON m.id = l.member_id
+                WHERE l.valid_until < CURDATE() AND m.status = 'aktywny'";
+        $params = [];
+        if ($cid !== null) { $sql .= " AND m.club_id = ?"; $params[] = $cid; }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return (int)$stmt->fetchColumn();
     }
 
     public function getExpiring(int $days = 60): array
     {
-        $stmt = $this->db->prepare("
-            SELECT l.*, m.first_name, m.last_name, m.member_number,
-                   DATEDIFF(l.valid_until, CURDATE()) AS days_left
-            FROM licenses l
-            JOIN members m ON m.id = l.member_id
-            WHERE l.status = 'aktywna'
-              AND m.status = 'aktywny'
-              AND DATEDIFF(l.valid_until, CURDATE()) BETWEEN 0 AND ?
-            ORDER BY days_left ASC
-        ");
-        $stmt->execute([$days]);
+        $cid = ClubContext::current();
+        $sql = "SELECT l.*, m.first_name, m.last_name, m.member_number,
+                       DATEDIFF(l.valid_until, CURDATE()) AS days_left
+                FROM licenses l
+                JOIN members m ON m.id = l.member_id
+                WHERE l.status = 'aktywna'
+                  AND m.status = 'aktywny'
+                  AND DATEDIFF(l.valid_until, CURDATE()) BETWEEN 0 AND ?";
+        $params = [$days];
+        if ($cid !== null) { $sql .= " AND m.club_id = ?"; $params[] = $cid; }
+        $sql .= " ORDER BY days_left ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 }

@@ -319,30 +319,38 @@ class MemberPortalController
     public function competitions(): void
     {
         $memberId = MemberAuth::id();
+        $clubId   = MemberAuth::clubId();
         $db = Database::getInstance();
 
-        // Waitlist entries for this member
-        $wlStmt = $db->prepare(
-            "SELECT cw.position, c.name AS competition_name, c.competition_date
-             FROM competition_waitlist cw
-             JOIN competitions c ON c.id = cw.competition_id
-             WHERE cw.member_id = ?
-             ORDER BY c.competition_date"
-        );
-        $wlStmt->execute([$memberId]);
+        // Waitlist entries for this member (scoped to club)
+        $sql = "SELECT cw.position, c.name AS competition_name, c.competition_date
+                FROM competition_waitlist cw
+                JOIN competitions c ON c.id = cw.competition_id
+                WHERE cw.member_id = ?";
+        $params = [$memberId];
+        if ($clubId !== null) { $sql .= " AND c.club_id = ?"; $params[] = $clubId; }
+        $sql .= " ORDER BY c.competition_date";
+        $wlStmt = $db->prepare($sql);
+        $wlStmt->execute($params);
         $myWaitlist = $wlStmt->fetchAll();
 
         $this->render('portal/competitions', [
             'title'            => 'Zawody',
-            'openCompetitions' => $this->portalModel->getOpenCompetitions($memberId),
-            'allUpcoming'      => $this->portalModel->getUpcomingCompetitions($memberId),
-            'myEntries'        => $this->portalModel->getMemberEntries($memberId),
+            'openCompetitions' => $this->portalModel->getOpenCompetitions($memberId, $clubId),
+            'allUpcoming'      => $this->portalModel->getUpcomingCompetitions($memberId, $clubId),
+            'myEntries'        => $this->portalModel->getMemberEntries($memberId, $clubId),
             'myWaitlist'       => $myWaitlist,
         ]);
     }
 
     public function showRegister(string $id): void
     {
+        // Scope CompetitionModel::getWithDetails to member's club
+        $clubId = MemberAuth::clubId();
+        if ($clubId !== null) {
+            \App\Helpers\ClubContext::set($clubId);
+        }
+
         $compModel   = new CompetitionModel();
         $competition = $compModel->getWithDetails((int)$id);
         if (!$competition || $competition['status'] !== 'otwarte') {
@@ -410,8 +418,14 @@ class MemberPortalController
                     $posStmt->execute([(int)$id]);
                     $position = (int)$posStmt->fetchColumn();
 
-                    $db->prepare("INSERT INTO competition_waitlist (competition_id, member_id, position) VALUES (?, ?, ?)")
-                       ->execute([(int)$id, $memberId, $position]);
+                    // Tolerant INSERT: club_id column added in migration_v33 — fall back if absent
+                    try {
+                        $db->prepare("INSERT INTO competition_waitlist (competition_id, member_id, club_id, position) VALUES (?, ?, ?, ?)")
+                           ->execute([(int)$id, $memberId, (int)$competition['club_id'], $position]);
+                    } catch (\PDOException) {
+                        $db->prepare("INSERT INTO competition_waitlist (competition_id, member_id, position) VALUES (?, ?, ?)")
+                           ->execute([(int)$id, $memberId, $position]);
+                    }
 
                     Session::flash('info', 'Zawody są pełne. Zostałeś/aś dodany/a do listy rezerwowej (pozycja ' . $position . '). Powiadomimy Cię, gdy pojawi się wolne miejsce.');
                 }
@@ -541,8 +555,9 @@ class MemberPortalController
     public function fees(): void
     {
         $memberId = MemberAuth::id();
+        $memberClubId = MemberAuth::clubId();
         $year     = (int)($_GET['year'] ?? date('Y'));
-        $payments = $this->portalModel->getFeesSummary($memberId, $year);
+        $payments = $this->portalModel->getFeesSummary($memberId, $year, $memberClubId);
 
         // Przelewy24 per-club check
         $p24Enabled     = false;
@@ -566,11 +581,11 @@ class MemberPortalController
                     $opStmt = $db->prepare("
                         SELECT id, description, amount, status, created_at, p24_order_id
                         FROM   online_payments
-                        WHERE  member_id = ?
+                        WHERE  member_id = ? AND club_id = ?
                         ORDER  BY created_at DESC
                         LIMIT  5
                     ");
-                    $opStmt->execute([$memberId]);
+                    $opStmt->execute([$memberId, $clubId]);
                     $onlinePayments = $opStmt->fetchAll();
                 }
             }
@@ -673,19 +688,30 @@ class MemberPortalController
     public function trainings(): void
     {
         $memberId = MemberAuth::id();
+        $clubId   = MemberAuth::clubId();
         $db       = Database::getInstance();
 
-        $stmt = $db->prepare("
-            SELECT t.*, u.full_name AS instructor_name,
-                   ta.id AS enrolled_id, ta.attended
-            FROM trainings t
-            LEFT JOIN users u ON u.id = t.instructor_id
-            LEFT JOIN training_attendees ta ON ta.training_id = t.id AND ta.member_id = ?
-            WHERE t.training_date >= CURDATE()
-              AND t.status = 'planowany'
-            ORDER BY t.training_date ASC, t.time_start ASC
-        ");
-        $stmt->execute([$memberId]);
+        $sql = "SELECT t.*, u.full_name AS instructor_name,
+                       ta.id AS enrolled_id, ta.attended
+                FROM trainings t
+                LEFT JOIN users u ON u.id = t.instructor_id
+                LEFT JOIN training_attendees ta ON ta.training_id = t.id AND ta.member_id = ?
+                WHERE t.training_date >= CURDATE()
+                  AND t.status = 'planowany'";
+        $params = [$memberId];
+        if ($clubId !== null) {
+            $sql .= " AND t.club_id = ?";
+            $params[] = $clubId;
+        }
+        // is_public=1 — show only trainings explicitly published to athletes.
+        // Tolerant of legacy rows where column might not exist yet.
+        try {
+            $db->query("SELECT is_public FROM trainings LIMIT 0");
+            $sql .= " AND t.is_public = 1";
+        } catch (\PDOException) {}
+        $sql .= " ORDER BY t.training_date ASC, t.time_start ASC";
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
         $upcomingTrainings = $stmt->fetchAll();
 
         $this->render('portal/trainings', [

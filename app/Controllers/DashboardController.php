@@ -46,17 +46,19 @@ class DashboardController extends BaseController
         // Member stats by status
         $memberByStatus = $memberModel->countByStatus();
 
-        // Payments by month (current year)
+        $cid = \App\Helpers\ClubContext::current();
+
+        // Payments by month (current year) — scoped to current club
         $paymentsByMonth = [];
         try {
-            $stmt = \App\Helpers\Database::pdo()->prepare("
-                SELECT MONTH(payment_date) AS m, SUM(amount) AS total
-                FROM payments
-                WHERE YEAR(payment_date) = ?
-                GROUP BY MONTH(payment_date)
-                ORDER BY m
-            ");
-            $stmt->execute([$year]);
+            $sql = "SELECT MONTH(payment_date) AS m, SUM(amount) AS total
+                    FROM payments
+                    WHERE YEAR(payment_date) = ?";
+            $params = [$year];
+            if ($cid !== null) { $sql .= " AND club_id = ?"; $params[] = $cid; }
+            $sql .= " GROUP BY MONTH(payment_date) ORDER BY m";
+            $stmt = \App\Helpers\Database::pdo()->prepare($sql);
+            $stmt->execute($params);
             $rows = $stmt->fetchAll();
             $monthTotals = array_column($rows, 'total', 'm');
             for ($m = 1; $m <= 12; $m++) {
@@ -66,31 +68,33 @@ class DashboardController extends BaseController
             $paymentsByMonth = array_fill(0, 12, 0);
         }
 
-        // Competitions per discipline (all time)
+        // Competitions per discipline (all time) — scoped to current club
         $compStats = [];
         try {
-            $stmt = \App\Helpers\Database::pdo()->prepare("
-                SELECT d.name AS discipline, COUNT(c.id) AS cnt
-                FROM competitions c
-                JOIN disciplines d ON d.id = c.discipline_id
-                GROUP BY d.id, d.name
-                ORDER BY cnt DESC
-                LIMIT 10
-            ");
-            $stmt->execute();
+            $sql = "SELECT d.name AS discipline, COUNT(c.id) AS cnt
+                    FROM competitions c
+                    JOIN disciplines d ON d.id = c.discipline_id";
+            $params = [];
+            if ($cid !== null) { $sql .= " WHERE c.club_id = ?"; $params[] = $cid; }
+            $sql .= " GROUP BY d.id, d.name ORDER BY cnt DESC LIMIT 10";
+            $stmt = \App\Helpers\Database::pdo()->prepare($sql);
+            $stmt->execute($params);
             $compStats = $stmt->fetchAll();
         } catch (\Throwable) {}
 
-        // Active licenses by type
+        // Active licenses by type — scoped to current club (via member)
         $licStats = [];
         try {
-            $stmt = \App\Helpers\Database::pdo()->query("
-                SELECT lt.name, COUNT(l.id) AS cnt
-                FROM licenses l
-                JOIN license_types lt ON lt.id = l.license_type_id
-                WHERE l.status = 'aktywna'
-                GROUP BY lt.id, lt.name
-            ");
+            $sql = "SELECT lt.name, COUNT(l.id) AS cnt
+                    FROM licenses l
+                    JOIN license_types lt ON lt.id = l.license_type_id
+                    JOIN members m ON m.id = l.member_id
+                    WHERE l.status = 'aktywna'";
+            $params = [];
+            if ($cid !== null) { $sql .= " AND m.club_id = ?"; $params[] = $cid; }
+            $sql .= " GROUP BY lt.id, lt.name";
+            $stmt = \App\Helpers\Database::pdo()->prepare($sql);
+            $stmt->execute($params);
             $licStats = $stmt->fetchAll();
         } catch (\Throwable) {}
 
