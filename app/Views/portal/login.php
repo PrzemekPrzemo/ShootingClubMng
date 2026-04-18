@@ -20,10 +20,10 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
     <?php else: ?>
         <?= $loginIcon ?>
     <?php endif; ?>
-    <h4 class="mt-3 mb-0" style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.65rem;letter-spacing:4px;text-transform:uppercase;color:#fff;line-height:1.1">
+    <h4 class="mt-3 mb-0" style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.65rem;letter-spacing:4px;text-transform:uppercase;color:var(--sht-brand);line-height:1.1">
         <?= e($systemBranding['name'] ?? 'SHOOTERO') ?>
     </h4>
-    <p class="mt-2 mb-0" style="color:#D4A373;font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:2px;font-size:.7rem;text-transform:uppercase">
+    <p class="mt-2 mb-0" style="color:var(--sht-gold);font-family:'Poppins',sans-serif;font-weight:500;letter-spacing:2px;font-size:.7rem;text-transform:uppercase">
         Zarządzaj klubem&nbsp;&nbsp;•&nbsp;&nbsp;Wspieraj ludzi
     </p>
 </div>
@@ -41,7 +41,7 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
 <!-- Member login form -->
 <div id="form-member">
     <div class="mb-3">
-        <label class="form-label fw-semibold small" style="color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;font-size:.72rem">Adres e-mail</label>
+        <label class="form-label fw-semibold small" style="color:var(--sht-muted);text-transform:uppercase;letter-spacing:.5px;font-size:.72rem">Adres e-mail</label>
         <form method="post" action="<?= url('portal/login') ?>">
             <?= csrf_field() ?>
             <input type="hidden" name="_ctx" value="member">
@@ -51,7 +51,7 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
                        value="<?= e($_POST['email'] ?? '') ?>">
             </div>
             <div class="mb-4">
-                <label class="form-label fw-semibold small" style="color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;font-size:.72rem">Hasło</label>
+                <label class="form-label fw-semibold small" style="color:var(--sht-muted);text-transform:uppercase;letter-spacing:.5px;font-size:.72rem">Hasło</label>
                 <input type="password" name="password" class="form-control" required autocomplete="current-password"
                        placeholder="Hasło lub PESEL (pierwsze logowanie)">
             </div>
@@ -62,7 +62,7 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
         </form>
     </div>
     <div class="text-center mt-3">
-        <a href="<?= url('portal/reset-password') ?>" class="small" style="color:#475569">Zapomniałem/am hasła</a>
+        <a href="<?= url('portal/reset-password') ?>" class="small" style="color:var(--sht-muted)">Zapomniałem/am hasła</a>
     </div>
 </div>
 
@@ -71,13 +71,13 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
     <form method="post" action="<?= url('auth/login') ?>">
         <?= csrf_field() ?>
         <div class="mb-3">
-            <label class="form-label fw-semibold small" style="color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;font-size:.72rem">Login</label>
+            <label class="form-label fw-semibold small" style="color:var(--sht-muted);text-transform:uppercase;letter-spacing:.5px;font-size:.72rem">Login</label>
             <input type="text" name="username" class="form-control" required autocomplete="username"
                    placeholder="Login administratora"
                    value="<?= e($_POST['username'] ?? '') ?>">
         </div>
         <div class="mb-4">
-            <label class="form-label fw-semibold small" style="color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;font-size:.72rem">Hasło</label>
+            <label class="form-label fw-semibold small" style="color:var(--sht-muted);text-transform:uppercase;letter-spacing:.5px;font-size:.72rem">Hasło</label>
             <input type="password" name="password" class="form-control" required autocomplete="current-password"
                    placeholder="Hasło">
         </div>
@@ -88,10 +88,10 @@ $loginIcon = '<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000
     </form>
 </div>
 
-<div class="text-center mt-4 pt-2" style="border-top:1px solid rgba(255,255,255,.06)">
-    <p class="mb-0" style="color:#334155;font-size:.72rem">
+<div class="text-center mt-4 pt-2" style="border-top:1px solid var(--sht-border)">
+    <p class="mb-0" style="color:var(--sht-dim);font-size:.72rem">
         &copy; <?= date('Y') ?>
-        <span style="font-family:'Poppins',sans-serif;font-weight:800;letter-spacing:1px;color:#1e293b">
+        <span style="font-family:'Poppins',sans-serif;font-weight:800;letter-spacing:1px;color:var(--sht-brand)">
             <?= e($systemBranding['name'] ?? 'Shootero') ?>
         </span>
     </p>
